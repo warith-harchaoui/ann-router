@@ -27,6 +27,10 @@ env/
 *.tv
 *.faiss
 
+# Local Postgres/pgvector test server (see INSTALL.md — never commit the data dir)
+.pgdata/
+.pgdata.log
+
 # Editor / OS noise
 .DS_Store
 .idea/

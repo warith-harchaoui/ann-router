@@ -75,10 +75,46 @@ pip install -e '.[dev]'             # the above + pytest for the test suite
 | Backend  | Status on this Mac | Why / how to get it |
 | -------- | ------------------ | ------------------- |
 | **scann** | not installable | Google ScaNN ships wheels for **Linux/x86** only. The adapter is present with a lazy import; its tests skip. Install on Linux with `pip install scann`. |
-| **pgvector** | installs, tests skip | The Python side (`pgvector` + `psycopg`) installs, but the backend needs a **live PostgreSQL** with the `vector` extension. Point `ANN_ROUTER_PG_DSN` at one to enable it (e.g. the `pgvector/pgvector` Docker image), otherwise its tests skip cleanly. |
+| **pgvector** | installs; needs a server | The Python side (`pgvector` + `psycopg`) installs, but the backend needs a **live PostgreSQL** with the `vector` extension. Point `ANN_ROUTER_PG_DSN` at one to enable it, otherwise its tests skip cleanly. No Docker needed — see the disk-frugal conda-forge recipe below. |
 
 Neither absence breaks anything: importing `ann_router` never requires an engine,
 and the router routes around uninstalled backends with an explained fallback.
+
+### 5a. Enabling pgvector without Docker (conda-forge, disk-frugal)
+
+You do **not** need Docker to exercise the pgvector backend. A local PostgreSQL
+server plus the `vector` extension both come from conda-forge (~200 MB), which is
+much lighter than pulling a Docker image and works on Apple Silicon:
+
+```bash
+# 1. Add a real Postgres server + the pgvector extension to the env
+conda install -n ann-router -c conda-forge postgresql pgvector -y
+
+# 2. initdb a throwaway data dir (kept inside the repo, gitignored) and start it.
+#    Use trust auth on loopback only — this is a local test server, not production.
+export PGDATA="$PWD/.pgdata"            # .pgdata/ and .pgdata.log are in .gitignore
+export PGPORT=5432                      # fall back to 5433 if 5432 is taken
+initdb -D "$PGDATA" -U "$USER" --auth=trust -E UTF8
+pg_ctl -D "$PGDATA" -l "$PWD/.pgdata.log" \
+       -o "-p $PGPORT -k /tmp -c listen_addresses=127.0.0.1" start
+
+# 3. Create the database and the extension
+createdb -h 127.0.0.1 -p "$PGPORT" -U "$USER" annrouter
+psql -h 127.0.0.1 -p "$PGPORT" -U "$USER" -d annrouter -c "CREATE EXTENSION vector;"
+
+# 4. Point the backend at it and run the pgvector tests
+export ANN_ROUTER_PG_DSN="postgresql://$USER@127.0.0.1:$PGPORT/annrouter"
+pytest -q -k pgvector          # 4 passed (recall@10 = 1.00, save/load skips by design)
+
+# 5. When done: stop the server and delete the throwaway data dir
+pg_ctl -D "$PGDATA" stop -m fast
+rm -rf "$PGDATA" "$PWD/.pgdata.log"
+```
+
+With the DSN exported, the full suite reports **114 passed, 7 skipped** (only
+scann and the two by-design store-persistence save/load cases remain skipped).
+The `save_load_round_trip` case is *meant* to skip for pgvector: it persists via
+its DSN + table, not `save()`/`load()` — the same design as qdrant.
 
 ## 6. Verify
 
@@ -89,5 +125,6 @@ pytest -q                                 # full suite (skips uninstallable)
 ```
 
 Expected on this Mac: `['exact', 'turbovec', 'hnsw', 'faiss', 'annoy', 'qdrant',
-'pgvector']` available; `pytest` reports **103 passed, 10 skipped** (scann +
-pgvector-server paths).
+'pgvector']` available; `pytest` reports **111 passed, 10 skipped** without a
+Postgres server (scann + pgvector-server paths), or **114 passed, 7 skipped**
+once `ANN_ROUTER_PG_DSN` points at a live pgvector server (see § 5a).
