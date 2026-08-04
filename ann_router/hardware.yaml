@@ -1,0 +1,19 @@
+# ann-router hardware hints — how each accelerator class steers the router.
+#
+# Mirrors the shape of best-engine-ai-helper's hardware.yaml. `detect.py` probes
+# the live machine and classifies it into one of these three profiles; this file
+# documents what each profile unlocks in the policy, and is the seam where
+# per-chip tuning notes would be added.
+version: "1.0.0"
+
+profiles:
+  - hardware: cpu
+    summary: Generic CPU. The default; narrows the field to in-memory/DB engines.
+    unlocks: "hnsw / turbovec / annoy / qdrant / pgvector (no GPU-only path)."
+  - hardware: apple_silicon
+    summary: Apple M-series (arm64 macOS). turbovec's Rust/NEON path is especially strong.
+    unlocks: "Same as CPU, with turbovec favoured for dynamic corpora."
+    notes: "Install annoy via conda-forge (python-annoy); the PyPI source wheel is miscompiled here."
+  - hardware: gpu
+    summary: CUDA GPU present. Enables FAISS batch/IVF-PQ at very large scale.
+    unlocks: "faiss (very large + batch) in addition to every CPU-path backend."

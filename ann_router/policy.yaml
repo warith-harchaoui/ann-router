@@ -1,0 +1,29 @@
+# ann-router selection policy — the tunable thresholds behind the decision tree.
+#
+# These mirror the versioned constants in ann_router/policy.py. The Python
+# constants are the canonical defaults; this file lets an operator OVERRIDE them
+# without editing code (load it via ann_router.config.policy_thresholds(path=...)
+# or point ANN_ROUTER_POLICY at a copy). Bumping any value is a policy change:
+# move `version`, add a CHANGELOG entry, and re-check the recall tests.
+#
+# YAML is used (over JSON) precisely so each threshold can carry its rationale.
+version: "1.0.0"
+
+thresholds:
+  # Below this corpus size a brute-force scan is already instant AND exact
+  # (recall 1.0), so an approximate index would only add build cost. Grounded in
+  # the roitelet crossover study at an interactive 10 ms budget.
+  EXACT_MAX_N: 10000
+
+  # "Very large volume" — where FAISS IVF+PQ quantisation and GPU batch
+  # throughput begin to dominate a graph index.
+  FAISS_MIN_N: 1000000
+
+  # ScaNN's anisotropic quantisation only earns its build cost at large scale
+  # AND when the recall target is high enough to need its accuracy edge.
+  SCANN_MIN_N: 1000000
+  SCANN_MIN_RECALL: 0.98
+
+  # At/above this target the workload is "high precision": steer toward
+  # exact/HNSW/ScaNN and away from aggressive quantisation.
+  HIGH_RECALL: 0.95

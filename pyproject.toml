@@ -1,0 +1,114 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ann-router"
+version = "0.1.0"
+description = "Route to the right approximate-nearest-neighbour backend from measured problem criteria (exact/turbovec/HNSW/FAISS/Annoy/ScaNN/Qdrant/pgvector), with a justified, discussable rationale."
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "Warith HARCHAOUI", email = "warithmetics@deraison.ai"},
+]
+keywords = [
+    "ann", "approximate-nearest-neighbor", "vector-search", "router",
+    "faiss", "hnsw", "annoy", "scann", "qdrant", "pgvector", "turbovec", "embeddings",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+# Core stays minimal: numpy (exact backend + all array plumbing) and os-helper
+# (logging/config/hashing/timing) — the two the whole suite shares. Every engine
+# is an optional extra below, so `import ann_router` costs nothing heavy.
+dependencies = [
+    "numpy>=1.23",
+    "os-helper>=2.0.0,<3",
+    "pyyaml>=6.0,<7",
+]
+
+[project.optional-dependencies]
+# One extra per backend so users install only the engines they route to.
+hnsw = ["hnswlib>=0.7,<1"]
+faiss = ["faiss-cpu>=1.7"]
+annoy = ["annoy>=1.17,<2"]
+scann = ["scann>=1.2"]                     # Linux/x86 only — see INSTALL.md
+turbovec = ["turbovec>=0.5"]
+qdrant = ["qdrant-client>=1.7"]
+pgvector = ["pgvector>=0.2", "psycopg[binary]>=3.1"]
+# The other four "doors" beyond the library + argparse CLI.
+cli = ["click>=8.1,<9"]                     # optional click twin (argparse is always on)
+api = ["fastapi>=0.111,<1", "uvicorn>=0.30,<1"]
+mcp = ["mcp>=1.0"]
+# Everything that installs cleanly on macOS/Apple Silicon (scann excluded).
+all = [
+    "hnswlib>=0.7,<1", "faiss-cpu>=1.7", "annoy>=1.17,<2", "turbovec>=0.5",
+    "qdrant-client>=1.7", "pgvector>=0.2", "psycopg[binary]>=3.1",
+    "click>=8.1,<9", "fastapi>=0.111,<1", "uvicorn>=0.30,<1",
+]
+# CI/dev: the test runner plus every pip-installable backend so the recall suite
+# actually exercises them (scann is skipped by importorskip where absent).
+dev = [
+    "pytest>=8",
+    "hnswlib>=0.7,<1", "faiss-cpu>=1.7", "annoy>=1.17,<2", "turbovec>=0.5",
+    "qdrant-client>=1.7", "pgvector>=0.2", "psycopg[binary]>=3.1",
+    "click>=8.1,<9", "fastapi>=0.111,<1", "uvicorn>=0.30,<1", "httpx>=0.27",
+]
+
+[project.scripts]
+# argparse CLI — no runtime dependency beyond the stdlib + core package.
+ann-router = "ann_router.cli_argparse:main"
+# click twin — install with the [cli] extra.
+ann-router-click = "ann_router.cli_click:cli"
+
+[project.urls]
+Homepage = "https://github.com/warith-harchaoui/ann-router"
+Issues = "https://github.com/warith-harchaoui/ann-router/issues"
+
+[tool.setuptools.packages.find]
+include = ["ann_router*"]
+exclude = ["tests*", "assets*"]
+
+[tool.setuptools.package-data]
+# Ship the commented YAML config (policy thresholds + backend/hardware catalogs)
+# inside the package so ann_router.config can read them in any install layout.
+"ann_router" = ["*.yaml"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["assets"]
+
+[tool.ruff.lint]
+# Same conservative starter set as os-helper: pyflakes, pycodestyle, warnings,
+# isort, bugbear, comprehensions, pyupgrade, simplify.
+select = ["E", "F", "W", "I", "B", "C4", "UP", "SIM"]
+ignore = [
+    "E501",   # line length is handled contextually
+    "B008",   # function call in default arg — noisy for our style
+    "SIM108", # ternary-vs-if is a readability judgement call
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.pytest.ini_options]
+# Run the unit suite plus the docstring Examples on the pure/core modules (the
+# coding standard puts a runnable Example on every function). The optional
+# backend modules, the click twin, the API and the MCP server are excluded from
+# --doctest-modules because collecting them would require optional deps / a
+# running server; their behaviour is covered by tests/ with importorskip.
+addopts = "--doctest-modules --ignore=ann_router/backends --ignore=ann_router/cli_click.py --ignore=ann_router/api.py --ignore=ann_router/mcp_server.py"
+testpaths = ["ann_router", "tests"]

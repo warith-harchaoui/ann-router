@@ -1,0 +1,43 @@
+# ann-router backend catalog — the human-facing description of each engine.
+#
+# One entry per backend the router can choose from. The machine-readable
+# capability flags live in code (each adapter's `capabilities()` classmethod, so
+# they are readable without importing the engine); THIS file is the prose
+# catalog: when the router reaches for each backend and how to install it. It is
+# surfaced by `ann-router capabilities` and by the docs, and is the place a
+# contributor documents a newly added backend.
+version: "1.0.0"
+
+backends:
+  - name: exact
+    summary: Pure-numpy brute-force full scan. Always available; the reference truth.
+    when: "n < 10k, or any time perfect recall on a small corpus is wanted."
+    pip_extra: ""            # numpy is a core dependency
+  - name: turbovec
+    summary: Rust/PyO3 TurboQuant (2-4 bit, ~16x) index; O(1) add_with_ids/remove(id).
+    when: "Corpus receives frequent updates and must not be rebuilt."
+    pip_extra: turbovec
+  - name: hnsw
+    summary: hnswlib graph index; best recall/latency of the in-memory engines.
+    when: "Stable in-memory corpus, high precision (deletes only via tombstones)."
+    pip_extra: hnsw
+  - name: faiss
+    summary: FAISS IVF(+PQ) with id mapping and optional GPU acceleration.
+    when: "Very large static corpus with a GPU and/or batch queries."
+    pip_extra: faiss
+  - name: annoy
+    summary: Random-projection forest; frozen after build, memory-mapped from disk.
+    when: "Read-only corpus under a tight memory budget."
+    pip_extra: annoy
+  - name: scann
+    summary: Anisotropic (score-aware) quantisation for maximum recall at scale.
+    when: "Maximum recall on a very large static corpus (Linux/x86 only)."
+    pip_extra: scann
+  - name: qdrant
+    summary: On-disk HNSW + per-point JSON payloads with query-time filtering.
+    when: "Persistence and/or structured metadata filtering."
+    pip_extra: qdrant
+  - name: pgvector
+    summary: Vectors + HNSW inside PostgreSQL, filtered with plain SQL WHERE.
+    when: "Persistence + metadata filtering when a Postgres is already in place."
+    pip_extra: pgvector

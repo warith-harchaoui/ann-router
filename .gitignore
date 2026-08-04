@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Local index artefacts produced by `ann-router build`
+*.idx
+*.idx.meta.json
+*.ann
+*.ann.ids.npy
+*.tv
+*.faiss
+
+# Editor / OS noise
+.DS_Store
+.idea/
+.vscode/
+
+# Real config files (keep the *.example / packaged YAML tracked)
+*config.json
+!*config.json.example
