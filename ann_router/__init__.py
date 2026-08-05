@@ -1,6 +1,6 @@
 """ann-router — pick the right ANN vector-search backend from measured criteria.
 
-``ann-router`` is a brique in Warith Harchaoui's *sev7n AI Helpers* suite. Like
+``ann-router`` is a brique in Warith Harchaoui's *AI Helpers* suite. Like
 its sibling ``best-engine-ai-helper`` (which picks the best local LLM for a
 machine), it is a **router**: you describe the vector-search problem — corpus
 size, dimensionality, recall target, latency/memory budgets, update pattern,

@@ -1,6 +1,6 @@
 # Landscape
 
-[🇫🇷 PAYSAGE.md](PAYSAGE.md) · 🇬🇧 English
+[🇫🇷](PAYSAGE.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](LANDSCAPE.md)
 
 How `ann-router` compares to *just picking one engine*. Each tool is rated on
 **this project's job — selecting the right ANN backend from measured criteria** —
@@ -11,19 +11,21 @@ not penalised for excelling at a different job (serving one engine well).
 `ann-router` does not compete with FAISS, HNSW, Qdrant or the rest — it
 **orchestrates** them. They solve *indexing and serving*; ann-router solves
 *which one to use, and why*. The closest analogue is not another vector library
-but its own sibling `best-engine-ai-helper`, which routes over LLMs.
+but its own sibling [best-engine-ai-helper](https://github.com/warith-harchaoui/best-engine-ai-helper), which routes over LLMs.
 
 ## At a glance
 
-| | Measured selection | Justified rationale | Multi-engine | Handles churn | Metadata filter | Persistence | Recall-tested router |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **ann-router** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| Just use **FAISS** | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐ | ⭐ |
-| Just use **HNSW (hnswlib)** | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ |
-| Just use **Annoy** | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ |
-| Just use **Qdrant** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ |
-| Just use **pgvector** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ |
-| **LangChain VectorStores** | ⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐ |
+![Positioning map: ann-router vs. single-engine choices](assets/landscape.white.svg)
+
+| Fast Vector Search Tool | Measured selection | Justified rationale | Multi-engine | Handles churn | Metadata filter | Persistence | Recall-tested router | GPU acceleration | Vector compression | Distributed scaling | Managed cloud |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **ann-router** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| **FAISS** | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐ |
+| **HNSW** | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ |
+| **Annoy** | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐ |
+| **Qdrant** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **pgvector** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **LangChain VectorStores** | ⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
 
 (A single engine scores ⭐ on "measured selection" because it *is* the selection —
 there is nothing to decide. That is the point ann-router addresses.)
@@ -59,11 +61,6 @@ The dynamic-corpus specialist: O(1) add/remove and 2-4 bit TurboQuant (~16×)
 compression, strong on Apple Silicon. Recall is data-dependent (quantisation is
 lossy), so ann-router picks it for the *frequent-updates* branch, not for
 maximal-recall static workloads.
-
-### ScaNN
-Highest recall at scale via anisotropic quantisation — but Linux/x86-only wheels.
-ann-router names it for the max-recall-at-scale corner and cleanly falls back
-(with an explanation) where it cannot be installed.
 
 ### LangChain VectorStores
 A broad adapter layer over many stores — closest in spirit — but it unifies

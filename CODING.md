@@ -1,6 +1,6 @@
 # Some Coding Standards
 
-A practical coding standard for the *sev7n AI Helpers* suite, adapted for
+A practical coding standard for the *AI Helpers* suite, adapted for
 `ann-router`. Code here should be readable, maintainable, testable, and easy for
 downstream users to adopt — every project should read like a **teaching
 artefact**, not a private side project. The normative source is

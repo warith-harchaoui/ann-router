@@ -6,7 +6,7 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [0.1.0] — 2026-08-04
 
-Initial release. First cut of the ANN vector-search router for the *sev7n AI
+Initial release. First cut of the ANN vector-search router for the *AI
 Helpers* suite.
 
 ### Added

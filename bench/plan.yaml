@@ -1,0 +1,35 @@
+# The calibration sweep plan — the axes the harness measures over.
+#
+# This file DOCUMENTS the grid; the defaults are also baked into bench/harness.py
+# so the CLI runs without it. Edit here to record what a full campaign covers.
+version: "0.1.0"
+
+axes:
+  # Corpus sizes: a logarithmic grid (~2 points/decade) to bracket crossovers,
+  # then bisection refines between adjacent points. 10M is feasible only at low
+  # dim on a 96 GiB machine (see mem_budget_gb); larger cells are skipped, logged.
+  n: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000,
+      500000, 1000000, 2000000, 5000000, 10000000]
+  dim: [128, 384, 768]           # 384/768 are the common embedding widths
+  k: [10]                         # neighbours per query
+  target_recall: [0.90, 0.95, 0.98]
+  metric: [cosine]
+
+measurement:
+  nq: 500                         # queries per cell (latency percentiles + recall)
+  seed: 0                         # deterministic corpus/query/ground-truth seed
+  mem_budget_gb: 60               # skip (don't run) any corpus larger than this
+
+# Query-time quality knobs the harness sweeps to hit each recall target. exact
+# has none (recall 1.0); turbovec's bit_width is a build knob (rebuild per rung).
+knobs:
+  hnsw:     {knob: ef,        ladder: [16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]}
+  faiss:    {knob: nprobe,    ladder: [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256]}
+  annoy:    {knob: search_k,  ladder: [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]}
+  turbovec: {knob: bit_width, ladder: [2, 3, 4, 8]}
+
+# Backends measurable on this machine are auto-detected. Known gaps:
+#   scann    - no Apple-Silicon wheel (impossible here); heuristic retained.
+#   qdrant   - needs a running server; measured only when reachable.
+#   pgvector - needs a Postgres+pgvector; measured only when reachable.
+coverage_notes: "exact, turbovec, hnsw, faiss, annoy are directly measurable."

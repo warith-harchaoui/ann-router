@@ -1,6 +1,6 @@
 # Paysage
 
-🇫🇷 Français · [🇬🇧 English LANDSCAPE.md](LANDSCAPE.md)
+[🇫🇷](PAYSAGE.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](LANDSCAPE.md)
 
 Comment `ann-router` se compare au fait de *choisir un seul moteur*. Chaque outil
 est noté sur **le travail de ce projet — sélectionner le bon backend ANN à partir
@@ -17,15 +17,17 @@ entre des LLM.
 
 ## En un coup d'œil
 
-| | Sélection mesurée | Justification | Multi-moteur | Gère le churn | Filtre métadonnées | Persistance | Routeur testé en rappel |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **ann-router** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **FAISS** seul | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐ | ⭐ |
-| **HNSW (hnswlib)** seul | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ |
-| **Annoy** seul | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ |
-| **Qdrant** seul | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ |
-| **pgvector** seul | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ |
-| **LangChain VectorStores** | ⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐ |
+![Carte de positionnement : ann-router face au choix d'un seul moteur](assets/paysage.white.svg)
+
+| Outil de recherche vectorielle rapide | Sélection mesurée | Justification | Multi-moteur | Gère le churn | Filtre métadonnées | Persistance | Routeur testé en rappel | Accélération GPU | Compression vectorielle | Passage à l'échelle | Cloud managé |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **ann-router** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
+| **FAISS** | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐ | ⭐ |
+| **HNSW** | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ |
+| **Annoy** | ⭐ | ⭐ | ⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐ |
+| **Qdrant** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **pgvector** | ⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **LangChain VectorStores** | ⭐⭐ | ⭐ | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | ⭐ | ⭐⭐ | ⭐ | ⭐⭐⭐ | ⭐⭐⭐ |
 
 (Un moteur unique obtient ⭐ en « sélection mesurée » parce qu'il *est* la
 sélection — il n'y a rien à décider. C'est précisément ce que traite ann-router.)
@@ -62,11 +64,6 @@ Le spécialiste du corpus dynamique : ajout/suppression O(1) et TurboQuant 2-4
 bits (~16×), fort sur Apple Silicon. Le rappel dépend des données (la
 quantification est avec perte), donc ann-router le choisit pour la branche
 *mises à jour fréquentes*, pas pour le rappel maximal en statique.
-
-### ScaNN
-Rappel le plus élevé à l'échelle via quantification anisotrope — mais des wheels
-Linux/x86 uniquement. ann-router le nomme pour le coin rappel-maximal-à-l'échelle
-et se rabat proprement (avec explication) là où il n'est pas installable.
 
 ### LangChain VectorStores
 Une large couche d'adaptateurs sur de nombreux stores — le plus proche en

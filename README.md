@@ -1,32 +1,42 @@
 # ann-router
 
-[🇫🇷 LISEZMOI.md](LISEZMOI.md) · 🇬🇧 English
+[🇫🇷](LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](README.md)
 
 ![License](https://img.shields.io/badge/license-BSD--3--Clause-blue)
 ![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
 ![Local-first](https://img.shields.io/badge/local--first-yes-brightgreen)
 
-`ann-router` belongs to the **sev7n AI Helpers** suite. It is a *router*: you
-describe your approximate-nearest-neighbour (ANN) vector-search problem — in
-*measured* terms — and it selects, **justifies**, and can **instantiate** the
-right backend engine, instead of marrying you to a single library.
+`ann-router` belongs to the **AI Helpers** suite. It is a *router*: you describe
+your approximate-nearest-neighbour (ANN) vector-search problem in *measured*
+terms, and it selects, **justifies**, and can **instantiate** the right engine,
+instead of marrying you to a single library.
+
+Finding the vectors closest to a query vector inside a large database of vectors
+is a very common problem in artificial intelligence. Naively, it has linear
+complexity in the number of vectors in the database. That is often unacceptable,
+so we run an *approximate* search with far lower complexity in the number of
+vectors — reasonable for our applications at millions, even billions, of vectors.
+
+**It is an indispensable component for RAG.**
 
 It is the vector-search sibling of
 [`best-engine-ai-helper`](https://github.com/warith-harchaoui/best-engine-ai-helper)
-(which picks the best local LLM for a machine). Same philosophy: **measure the
-criteria → select the engine → return a discussable rationale.**
+(which picks the best local LLM for a machine).
+
+Same philosophy: **measure the criteria → select the engine → return a
+discussable rationale.**
 
 The engines it routes among:
 
 > **exact (brute force) · turbovec · HNSW (hnswlib) · FAISS (IVF/PQ) · Annoy ·
 > ScaNN · Qdrant · pgvector**
 
-Importing the package is cheap and dependency-free — no engine's optional
-dependency is loaded at import time, so `import ann_router` works with only
-numpy installed, and a backend whose dependency is absent simply reports itself
-unavailable while the router routes around it.
+Importing the package is cheap and dependency-free: no engine's optional
+dependency is loaded at import time, so `import ann_router` works with only numpy
+installed, and a backend whose dependency is absent simply reports itself
+unavailable while the router routes around it — this is lazy importing.
 
-## Why route instead of just picking FAISS?
+## Why route instead of just picking FAISS (or any one engine)?
 
 Because the right engine is a *function of the problem*, and the problem changes:
 a 5k-vector corpus wants an exact scan (instant, recall 1.0); a corpus with
@@ -147,11 +157,6 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 ## Author
 
 [Warith HARCHAOUI](https://harchaoui.org/warith), Ph.D.
-
-## Acknowledgements
-
-Built on the shipped brute-force → turbovec routing prototype from the
-`roitelet` lab, generalised to eight backends behind one interface.
 
 ## License
 

@@ -26,7 +26,7 @@ triggers:
 # ann-router
 
 Route to the right ANN vector-search backend from *measured* criteria, instead
-of marrying a single library. Part of the sev7n AI Helpers suite; the
+of marrying a single library. Part of the AI Helpers suite; the
 vector-search sibling of `best-engine-ai-helper`.
 
 ## When to reach for this skill

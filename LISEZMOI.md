@@ -1,33 +1,52 @@
 # ann-router
 
-🇫🇷 Français · [🇬🇧 English README.md](README.md)
+[🇫🇷](LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](README.md)
 
 ![Licence](https://img.shields.io/badge/licence-BSD--3--Clause-blue)
 ![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
 ![Local-first](https://img.shields.io/badge/local--first-oui-brightgreen)
 
-`ann-router` fait partie de la suite **sev7n AI Helpers**. C'est un *routeur* :
+`ann-router` fait partie de la suite **AI Helpers**. C'est un *routeur* :
 vous décrivez votre problème de recherche de plus proches voisins approchés
 (ANN) en termes *mesurés*, et il sélectionne, **justifie** et peut **instancier**
 le bon moteur, au lieu de vous marier à une seule bibliothèque.
 
+Rechercher les vecteurs les plus proches d'un vecteur de requête dans une base de nombreux vecteurs est un problème très courant en intelligence artificielle. Naïvement le problème a une complexité linéaire en le nombre de vecteurs dans la base. Souvent ce n'est pas acceptable donc on fait une recherche approchée pour avec une complexité beaucoup plus faible en le nombre de vecteurs dans la vase et raisonnable pour nos applications à millions voire milliards de vecteurs.
+
+**C'est un composant indispensable pour les RAG.**
+
 C'est le pendant « recherche vectorielle » de
 [`best-engine-ai-helper`](https://github.com/warith-harchaoui/best-engine-ai-helper)
-(qui choisit le meilleur LLM local pour une machine). Même philosophie :
+(qui choisit le meilleur LLM local pour une machine).
+
+Même philosophie :
 **mesurer les critères → choisir le moteur → renvoyer une justification
 discutable.**
 
 Les moteurs entre lesquels il arbitre :
 
-> **exact (force brute) · turbovec · HNSW (hnswlib) · FAISS (IVF/PQ) · Annoy ·
-> ScaNN · Qdrant · pgvector**
++ naïf, *exact* (force brute)
+
++ turbovec
+
++ HNSW (hnswlib)
+
++ FAISS (IVF/PQ)
+
++ Annoy
+
++ ScaNN
+
++ Qdrant
+
++ pgvector
 
 Importer le paquet est peu coûteux et sans dépendance : aucune dépendance
 optionnelle de moteur n'est chargée à l'import, donc `import ann_router`
 fonctionne avec numpy seul, et un backend dont la dépendance est absente se
-signale simplement indisponible pendant que le routeur le contourne.
+signale simplement indisponible pendant que le routeur le contourne. Il s'agit donc de _lazy import_.
 
-## Pourquoi router plutôt que choisir FAISS d'office ?
+## Pourquoi router plutôt que choisir FAISS d'office (ou un autre) ?
 
 Parce que le bon moteur est une *fonction du problème*, et le problème change :
 un corpus de 5 000 vecteurs veut un balayage exact (instantané, rappel 1.0) ;
@@ -101,12 +120,22 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
 2. **CLI** — `ann-router` (argparse, toujours disponible) et le jumeau
    `ann-router-click` (extra `[cli]`). Sous-commandes : `route`, `build`,
    `search`, `bench`, `capabilities`.
-3. **API HTTP** — `uvicorn ann_router.api:app` (extra `[api]`).
-4. **Serveur MCP** — `python -m ann_router.mcp_server` (extra `[mcp]`).
+3. **API HTTP** — `uvicorn ann_router.api:app` (extra `[api]`) : `POST /route`,
+   `GET /capabilities`, `GET /bench`.
+4. **Serveur MCP** — `python -m ann_router.mcp_server` (extra `[mcp]`) : expose
+   `route`, `capabilities`, `bench` comme outils d'agent.
 5. **Skill** — `skills/ann-router/SKILL.md`, pour qu'un agent sache quand
    dégainer le routeur.
 
+```bash
+ann-router route --n-vectors 2000000 --dim 768 --dynamic --markdown
+ann-router bench --n 5000 --dim 128 -k 10
+ann-router capabilities
+```
+
 ## Comment fonctionne la sélection
+
+L'arbre de décision (réglable via `policy.yaml` / `ANN_ROUTER_POLICY`) :
 
 | # | Si les critères disent… | Router vers | Parce que |
 | - | ----------------------- | ----------- | --------- |
@@ -121,6 +150,20 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
 Le routeur renvoie non seulement le nom mais les **critères qui l'ont dicté** et
 les **alternatives considérées** (y compris un moteur préféré mais non installé
 dont il a dû se rabattre), pour que le choix soit auditable et surchargeable.
+
+## Les critères (la spécification d'entrée)
+
+`n_vectors`, `dim`, `target_recall`, `latency_budget_ms`, `memory_budget_gb`,
+`dynamic`, `metadata_filtering`, `hardware` (`cpu`/`gpu`/`apple_silicon`,
+auto-détectable), `persistence`, `batch_queries`, `metric`
+(`cosine`/`l2`/`ip`). Seuls `n_vectors` et `dim` sont obligatoires.
+
+## Pour aller plus loin
+
+- [EXAMPLES.md](EXAMPLES.md) — un livre de recettes exécutable.
+- [PAYSAGE.md](PAYSAGE.md) — comment ann-router se compare au choix d'un seul moteur.
+- [CODING.md](CODING.md) — le standard de code que ce dépôt s'impose.
+- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md) · [TRIGGERS.md](TRIGGERS.md)
 
 ## Auteur
 

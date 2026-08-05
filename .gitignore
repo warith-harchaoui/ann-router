@@ -39,3 +39,9 @@ env/
 # Real config files (keep the *.example / packaged YAML tracked)
 *config.json
 !*config.json.example
+
+# Private data (not tracked)
+.private/
+
+# Local build/helper scripts (not tracked)
+scripts/
