@@ -1,6 +1,5 @@
 # ann-router
 
-<img src="assets/logo.png" alt="ann-router logo" width="180">
 
 [🇫🇷](LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](README.md)
 
@@ -12,6 +11,9 @@
 your approximate-nearest-neighbour (ANN) vector-search problem in *measured*
 terms, and it selects, **justifies**, and can **instantiate** the right engine,
 instead of marrying you to a single library.
+
+<img src="assets/logo.png" alt="ann-router logo">
+
 
 Finding the vectors closest to a query vector inside a large database of vectors
 is a very common problem in artificial intelligence. Naively, it has linear
