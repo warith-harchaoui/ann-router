@@ -60,7 +60,7 @@ MEM_BUDGET_BYTES = int(os.environ.get("ANN_BENCH_MEM_GB", "60")) * (1024**3)
 _EF_LADDER = [16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]
 _NPROBE_LADDER = [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256]
 _SEARCHK_LADDER = [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]
-_BITS_LADDER = [2, 3, 4, 8]  # turbovec: a *build* knob, so each rung rebuilds.
+_BITS_LADDER = [2, 3, 4]  # turbovec: a *build* knob (only 2/3/4 valid), so each rung rebuilds.
 
 
 def _set_hnsw_ef(idx, v: int) -> None:
@@ -484,6 +484,55 @@ def cmd_bisect(args) -> None:
     )
 
 
+def cmd_dryrun(args) -> None:
+    """Fast, exhaustive-over-backends sanity sweep — catches breakage cheaply.
+
+    Runs every available backend (plus any explicitly requested) on a tiny grid
+    (small ``n``/``dim``/``nq``) so the whole thing finishes in seconds, not
+    hours. Results are never written to :data:`STORE` — this is a smoke test,
+    not a measurement — so it is safe to run before, after, or during a real
+    sweep without disturbing cached cells.
+
+    A backend is flagged ``FAIL`` when it crashes (``status == "error"``) or
+    when it "succeeds" with recall far below what a trivial corpus should give
+    (``< 0.5`` — the threshold that would have caught the annoy/py3.13 wheel
+    bug this mode was built to catch: a broken environment silently recording
+    near-zero recall as if it were a real measurement). ``skipped`` (missing
+    dependency, no DSN, ...) is reported but not a failure.
+    """
+    ns = args.ns or [200, 2_000]
+    dims = args.dims or [16, 128]
+    targets = args.targets or [0.9]
+    backends = args.backends or available_backends()
+
+    rows: list[tuple[str, int, int, str, float | None, str]] = []
+    for b in sorted(backends):
+        for n in ns:
+            for d in dims:
+                for r in targets:
+                    m = measure_cell(b, n, d, args.k, r, args.metric, args.nq, args.seed)
+                    rows.append((b, n, d, m.status, m.achieved_recall, m.note))
+
+    fails, warns = [], []
+    print(f"{'backend':10s} {'n':>7s} {'dim':>5s}  status   recall  note")
+    for b, n, d, status, recall, note in rows:
+        bad = status == "error" or (status == "ok" and (recall or 0.0) < 0.5)
+        flag = "FAIL" if bad else ("WARN" if status == "skipped" else "PASS")
+        (fails if flag == "FAIL" else warns if flag == "WARN" else []).append((b, n, d))
+        recall_s = f"{recall:.3f}" if recall is not None else "   -"
+        print(f"{b:10s} {n:>7,d} {d:>5d}  {flag:<4s} {recall_s}  {note}")
+
+    print(
+        f"\n[dry-run] {len(rows)} cells, {len(warns)} skipped, {len(fails)} FAILED "
+        f"across {len(set(b for b, *_ in rows))} backend(s)"
+    )
+    if fails:
+        broken = sorted({b for b, *_ in fails})
+        print(f"[dry-run] broken backends: {broken}")
+        if not args.allow_fail:
+            raise SystemExit(1)
+
+
 def cmd_status(args) -> None:
     """Summarise how much of the coarse plan is measured."""
     store = load_store()
@@ -535,6 +584,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("status", help="show sweep progress")
     s.set_defaults(func=cmd_status)
+
+    dr = sub.add_parser(
+        "dry-run", help="fast exhaustive-over-backends smoke test (never touches STORE)"
+    )
+    dr.add_argument("--ns", type=int, nargs="+", default=None, help="default: 200 2000")
+    dr.add_argument("--dims", type=int, nargs="+", default=None, help="default: 16 128")
+    dr.add_argument("--targets", type=float, nargs="+", default=None, help="default: 0.9")
+    dr.add_argument("--k", type=int, default=5)
+    dr.add_argument("--backends", nargs="+", default=None)
+    dr.add_argument("--metric", default="cosine")
+    dr.add_argument("--nq", type=int, default=50)
+    dr.add_argument("--seed", type=int, default=0)
+    dr.add_argument(
+        "--allow-fail", action="store_true", help="exit 0 even if a backend fails (for CI triage)"
+    )
+    dr.set_defaults(func=cmd_dryrun)
     return p
 
 

@@ -1,5 +1,7 @@
 # ann-router
 
+<img src="assets/logo.png" alt="logo ann-router" width="180">
+
 [🇫🇷](LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](README.md)
 
 ![Licence](https://img.shields.io/badge/licence-BSD--3--Clause-blue)

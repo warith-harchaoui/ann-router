@@ -1,5 +1,7 @@
 # ann-router
 
+<img src="assets/logo.png" alt="ann-router logo" width="180">
+
 [🇫🇷](LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](README.md)
 
 ![License](https://img.shields.io/badge/license-BSD--3--Clause-blue)
@@ -50,8 +52,11 @@ constant inserts/deletes wants turbovec (O(1) mutation); one needing SQL
 Core (library + always-on argparse CLI):
 
 ```bash
-pip install -e ~/os-helper      # suite foundation
-pip install -e .                # or: pip install ann-router
+
+git clone https://github.com/warith-harchaoui/ann-router.git
+cd ann-router
+pip install 'os-helper'
+pip install .
 ```
 
 Add engines as needed (per-backend extras), or everything at once:

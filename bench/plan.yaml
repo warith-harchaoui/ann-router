@@ -26,7 +26,7 @@ knobs:
   hnsw:     {knob: ef,        ladder: [16, 24, 32, 48, 64, 96, 128, 192, 256, 384, 512, 768, 1024]}
   faiss:    {knob: nprobe,    ladder: [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256]}
   annoy:    {knob: search_k,  ladder: [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]}
-  turbovec: {knob: bit_width, ladder: [2, 3, 4, 8]}
+  turbovec: {knob: bit_width, ladder: [2, 3, 4]}  # turbovec only accepts 2/3/4
 
 # Backends measurable on this machine are auto-detected. Known gaps:
 #   scann    - no Apple-Silicon wheel (impossible here); heuristic retained.

@@ -31,6 +31,10 @@ env/
 .pgdata/
 .pgdata.log
 
+# bench/: measurements.yaml IS the tracked evidence; the ground-truth cache is
+# pure regenerable derived data (see bench/datagen.py) and not worth the bytes.
+bench/results/gt/
+
 # Editor / OS noise
 .DS_Store
 .idea/

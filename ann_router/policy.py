@@ -63,6 +63,19 @@ THRESHOLDS: dict[str, float] = {
     "HIGH_RECALL": HIGH_RECALL,
 }
 
+# --- TEMPORARY: provisional routing while bench/ calibration is in flight -------
+# EXACT_MAX_N is trustworthy (pure brute-force math), but every threshold above it
+# (FAISS_MIN_N, SCANN_MIN_N, HIGH_RECALL, ...) is still *guessed*, not measured —
+# see bench/README.md and .private/next.md. Until the calibration sweep lands and
+# ann_router/policy.yaml is bumped from bench/results/calibrated_policy.yaml,
+# ann_router.router.route() overrides every non-exact pick to turbovec (a safe,
+# always-correct default) rather than trusting a guessed crossover. This constant
+# does NOT touch rank_backends() itself — the decision tree above stays the
+# documented, tested target policy; only the live router applies the override.
+# Flip this to False (and delete the override block in router.route()) once
+# calibration is applied.
+PROVISIONAL_ROUTING: bool = True
+
 
 def raw_memory_gb(c: Criteria) -> float:
     """Estimate the RAM a *full-precision* (float32) flat index would need.
