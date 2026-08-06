@@ -22,20 +22,24 @@ venv/
 env/
 .env
 
-# Local index artefacts produced by `ann-router build`
+# Local index artefacts produced by `ann-router build` / `ANNIndex.save()`.
+# `index_path` is caller-chosen with no fixed extension, so these can only
+# cover the two extensions the docs actually recommend (README/EXAMPLES.md
+# use `.idx` for the CLI, `.hnsw` for direct backend use) plus the sidecars
+# every build always writes: `_core_cli.do_build`'s `.meta.json`, and
+# `AnnoyIndex.save()`'s `.ids.npy`.
 *.idx
-*.idx.meta.json
-*.ann
-*.ann.ids.npy
-*.tv
-*.faiss
+*.hnsw
+*.meta.json
+*.ids.npy
 
 # Local Postgres/pgvector test server (see INSTALL.md — never commit the data dir)
 .pgdata/
 .pgdata.log
 
-# bench/: measurements.yaml IS the tracked evidence; the ground-truth cache is
-# pure regenerable derived data (see bench/datagen.py) and not worth the bytes.
+# bench/: measurements.yaml, calibrated_policy.yaml and decision_tree.md ARE
+# the tracked evidence (see bench/README.md); the ground-truth cache is pure
+# regenerable derived data (see bench/datagen.py) and not worth the bytes.
 bench/results/gt/
 
 # Editor / OS noise
@@ -43,12 +47,9 @@ bench/results/gt/
 .idea/
 .vscode/
 
-# Real config files (keep the *.example / packaged YAML tracked)
-*config.json
-!*config.json.example
-
-# Private data (not tracked)
+# Personal session scratch notes — safe to keep or delete, never shipped.
+# (The comparison CSVs that used to live here now live in references/, and
+# their generator in scripts/, tracked: both are the reproducible source of
+# committed docs (LANDSCAPE.md/PAYSAGE.md/assets/*), not private data — see
+# CHANGELOG.md.)
 .private/
-
-# Local build/helper scripts (not tracked)
-scripts/

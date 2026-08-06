@@ -166,7 +166,10 @@ def calibrate(store: dict, dims: list[int]) -> dict:
     rows = _ok(store)
     measured_backends = sorted({r["backend"] for r in rows})
     doc = {
-        "source": str(STORE),
+        # Relative to the repo root, not absolute — this document is committed,
+        # so an absolute path would leak the machine it was generated on and
+        # churn on every re-run from a different clone location.
+        "source": str(STORE.relative_to(RESULTS.parent.parent)),
         "n_cells": len(store),
         "measured_backends": measured_backends,
         "unmeasured_backends": [b for b in ("qdrant", "pgvector") if b not in measured_backends],

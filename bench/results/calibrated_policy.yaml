@@ -1,4 +1,4 @@
-source: /Users/warithharchaoui/ann-router/bench/results/measurements.yaml
+source: bench/results/measurements.yaml
 n_cells: 491
 measured_backends:
 - annoy

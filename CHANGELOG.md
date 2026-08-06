@@ -55,6 +55,20 @@ All notable changes to `ann-router` are documented here. The format follows
 - Fixed the `turbovec` `bit_width` sweep ladder (`bench/harness.py`,
   `bench/plan.yaml`): `8` is not a valid `bit_width` (only 2/3/4 are) and was
   crashing every turbovec calibration cell.
+- **`.gitignore` reviewed end to end**, not just appended to. The comparison
+  CSVs behind `LANDSCAPE.md`/`PAYSAGE.md` (`references/landscape-{en,fr}.csv`,
+  moved from `.private/`) and their generator (`scripts/sync_docs_from_csv.py`)
+  are now tracked: both are the reproducible source of already-committed docs
+  and contain nothing private (public 1-5 competitive ratings, no secrets),
+  so a fresh clone could not previously regenerate those tables/SVGs at all.
+  `.private/` stays ignored for genuine personal session notes. The local
+  index-artifact patterns (`*.ann`, `*.tv`, `*.faiss`) were replaced with
+  what the code and docs actually produce (`*.idx`, `*.hnsw`, `*.meta.json`,
+  `*.ids.npy`) — the old ones matched no real backend output. The dead
+  `*config.json` rule (no JSON config anywhere in this project — it's all
+  YAML) was dropped. `bench.calibrate`'s `source:` field in
+  `calibrated_policy.yaml`/`decision_tree.md` now records a repo-relative
+  path instead of the generating machine's absolute path.
 
 ### Removed
 - **ScaNN dropped entirely** as a supported backend (adapter, registry entry,
