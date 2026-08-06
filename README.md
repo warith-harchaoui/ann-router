@@ -204,6 +204,11 @@ flowchart TD
 | 5 | read-only + tight memory | **Annoy** | frozen, memory-mapped, very lean |
 | 6 | stable in-memory (default) | **HNSW** | best recall/latency when the index rarely changes |
 
+Row 1's `EXACT_MAX_N` scales with `Criteria.latency_budget_ms`: a brute-force
+scan's cost is ~linear in n for fixed dim, so a budget looser than the 10 ms
+reference extends the exact/ANN crossover proportionally, and a tighter one
+shrinks it — see `ann_router.policy.effective_exact_max_n`.
+
 `EXACT_MAX_N`/`FAISS_MIN_N` are being calibrated from measured recall/latency
 data rather than guessed — see
 [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)

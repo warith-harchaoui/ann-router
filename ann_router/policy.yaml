@@ -15,6 +15,12 @@ thresholds:
   # the roitelet crossover study at an interactive 10 ms budget.
   EXACT_MAX_N: 10000
 
+  # The per-query latency budget EXACT_MAX_N above was calibrated against.
+  # A caller's Criteria.latency_budget_ms scales EXACT_MAX_N relative to this
+  # reference (see ann_router.policy.effective_exact_max_n) — must match
+  # bench.calibrate.INTERACTIVE_BUDGET_MS.
+  LATENCY_REFERENCE_MS: 10.0
+
   # "Very large volume" — where FAISS IVF+PQ quantisation and GPU batch
   # throughput begin to dominate a graph index.
   FAISS_MIN_N: 1000000

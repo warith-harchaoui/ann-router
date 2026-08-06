@@ -10,7 +10,8 @@ availability and instantiates the winner.
 The decision tree reproduced here is the suite's own documented policy (and the
 one already shipped, in two-branch form, inside the ``roitelet`` prototype):
 
-1. ``n < EXACT_MAX_N``                          -> **exact** (approximation is pointless)
+1. ``n < EXACT_MAX_N`` (scaled by ``latency_budget_ms``, see
+   :func:`effective_exact_max_n`)                -> **exact** (approximation is pointless)
 2. else frequent updates                        -> **turbovec** (O(1) add/remove)
 3. else very large volume + GPU/batch           -> **faiss** (IVF+PQ, scales)
 4. else persistence + metadata filters          -> **qdrant / pgvector**
@@ -40,8 +41,17 @@ POLICY_VERSION = "1.0.0"
 
 # Below this corpus size a vectorised brute-force scan is already sub-millisecond
 # and, being exact, has recall 1.0 — so an approximate index only adds cost.
-# Grounded in the roitelet crossover study (interactive 10 ms budget, D=768).
+# Grounded in the roitelet crossover study (interactive 10 ms budget, D=768),
+# and this is exactly the reference budget LATENCY_REFERENCE_MS names below —
+# bench.calibrate.exact_max_n() derives EXACT_MAX_N against that same budget.
 EXACT_MAX_N: int = 10_000
+
+# The per-query latency budget EXACT_MAX_N was calibrated against (see
+# bench.calibrate.INTERACTIVE_BUDGET_MS, which must match this). A caller's
+# own Criteria.latency_budget_ms scales the exact/ANN crossover relative to
+# this reference: brute force is one O(n*dim) matmul, so its cost is ~linear
+# in n for fixed dim, and a budget k times looser affords ~k times the n.
+LATENCY_REFERENCE_MS: float = 10.0
 
 # "Very large volume" — the regime where FAISS's IVF+PQ quantisation and GPU
 # batch throughput start to dominate a graph index.
@@ -54,6 +64,7 @@ HIGH_RECALL: float = 0.95
 # Bundled so the whole set can be overridden atomically by a caller / policy.yaml.
 THRESHOLDS: dict[str, float] = {
     "EXACT_MAX_N": EXACT_MAX_N,
+    "LATENCY_REFERENCE_MS": LATENCY_REFERENCE_MS,
     "FAISS_MIN_N": FAISS_MIN_N,
     "HIGH_RECALL": HIGH_RECALL,
 }
@@ -109,6 +120,40 @@ def _db_in_place(c: Criteria) -> bool:
     return bool(c.extra.get("pg_dsn") or c.extra.get("db_in_place"))
 
 
+def effective_exact_max_n(c: Criteria, t: dict) -> float:
+    """Scale ``EXACT_MAX_N`` by how loose/tight the caller's latency budget is.
+
+    ``EXACT_MAX_N`` is calibrated at a reference budget
+    (:data:`LATENCY_REFERENCE_MS`); a brute-force scan is one ``O(n * dim)``
+    matmul, so its cost is ~linear in ``n`` for fixed ``dim`` and a budget
+    ``k`` times looser (or tighter) than the reference affords ``k`` times
+    the corpus size. This is the one place ``Criteria.latency_budget_ms``
+    is load-bearing in the decision tree — every rule below compares against
+    this scaled value, never the raw threshold, so the tree stays gapless.
+
+    Parameters
+    ----------
+    c : Criteria
+        The problem description (reads ``latency_budget_ms``).
+    t : dict
+        The merged thresholds (reads ``EXACT_MAX_N``, ``LATENCY_REFERENCE_MS``).
+
+    Returns
+    -------
+    float
+        The latency-adjusted exact/ANN crossover.
+
+    Examples
+    --------
+    >>> t = {"EXACT_MAX_N": 10_000, "LATENCY_REFERENCE_MS": 10.0}
+    >>> effective_exact_max_n(Criteria(n_vectors=1, dim=8, latency_budget_ms=10.0), t)
+    10000.0
+    >>> effective_exact_max_n(Criteria(n_vectors=1, dim=8, latency_budget_ms=1.0), t)
+    1000.0
+    """
+    return t["EXACT_MAX_N"] * (c.latency_budget_ms / t["LATENCY_REFERENCE_MS"])
+
+
 @dataclass
 class Rule:
     """One branch of the decision tree: a backend, a guard, and its rationale.
@@ -134,15 +179,17 @@ class Rule:
 _RULES: list[Rule] = [
     Rule(
         "exact",
-        lambda c, t: c.n_vectors < t["EXACT_MAX_N"],
+        lambda c, t: c.n_vectors < effective_exact_max_n(c, t),
         lambda c, t: (
-            f"n={c.n_vectors:,} < {int(t['EXACT_MAX_N']):,}: a brute-force scan is already "
-            "instant and exact (recall 1.0), so approximation would only add build cost."
+            f"n={c.n_vectors:,} < {int(effective_exact_max_n(c, t)):,} "
+            f"(EXACT_MAX_N={int(t['EXACT_MAX_N']):,} scaled to a {c.latency_budget_ms:g} ms "
+            "budget): a brute-force scan is already instant and exact (recall 1.0), so "
+            "approximation would only add build cost."
         ),
     ),
     Rule(
         "turbovec",
-        lambda c, t: c.n_vectors >= t["EXACT_MAX_N"] and c.dynamic,
+        lambda c, t: c.n_vectors >= effective_exact_max_n(c, t) and c.dynamic,
         lambda c, t: (
             "corpus receives frequent updates: turbovec offers O(1) add_with_ids/remove(id) "
             "with no index rebuild, plus TurboQuant 2-4 bit (~16x) compression — graph "
@@ -152,7 +199,7 @@ _RULES: list[Rule] = [
     Rule(
         "faiss",
         lambda c, t: (
-            c.n_vectors >= t["EXACT_MAX_N"]
+            c.n_vectors >= effective_exact_max_n(c, t)
             and not c.dynamic
             and c.n_vectors >= t["FAISS_MIN_N"]
             and (c.hardware == "gpu" or c.batch_queries)
@@ -166,7 +213,7 @@ _RULES: list[Rule] = [
     Rule(
         "pgvector",
         lambda c, t: (
-            c.n_vectors >= t["EXACT_MAX_N"]
+            c.n_vectors >= effective_exact_max_n(c, t)
             and not c.dynamic
             and (c.persistence or c.metadata_filtering)
             and _db_in_place(c)
@@ -180,7 +227,7 @@ _RULES: list[Rule] = [
     Rule(
         "qdrant",
         lambda c, t: (
-            c.n_vectors >= t["EXACT_MAX_N"]
+            c.n_vectors >= effective_exact_max_n(c, t)
             and not c.dynamic
             and (c.persistence or c.metadata_filtering)
         ),
@@ -192,7 +239,9 @@ _RULES: list[Rule] = [
     ),
     Rule(
         "annoy",
-        lambda c, t: c.n_vectors >= t["EXACT_MAX_N"] and not c.dynamic and _tight_memory(c),
+        lambda c, t: (
+            c.n_vectors >= effective_exact_max_n(c, t) and not c.dynamic and _tight_memory(c)
+        ),
         lambda c, t: (
             f"read-only corpus under a tight memory budget "
             f"(~{raw_memory_gb(c):.1f} GB raw > {c.memory_budget_gb} GB budget): Annoy freezes "
@@ -203,7 +252,7 @@ _RULES: list[Rule] = [
         "hnsw",
         # The catch-all in-memory default for any non-trivial static corpus, and
         # the fallback for a dynamic corpus when turbovec is unavailable.
-        lambda c, t: c.n_vectors >= t["EXACT_MAX_N"],
+        lambda c, t: c.n_vectors >= effective_exact_max_n(c, t),
         lambda c, t: (
             "stable in-memory corpus, high precision wanted: hnswlib gives the best "
             "recall/latency of the in-memory engines when the index rarely changes "

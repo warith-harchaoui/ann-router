@@ -28,6 +28,14 @@ All notable changes to `ann-router` are documented here. The format follows
   GitLab CI (`.gitlab-ci.yml`) — a `test` job runs the suite on the
   always-available core install, and a `package`/`package` stage only runs
   (never fails) when `test` succeeds, via a `needs:` dependency.
+- **`Criteria.latency_budget_ms` is now load-bearing**: it was collected but
+  never consulted. `ann_router.policy.effective_exact_max_n` scales
+  `EXACT_MAX_N` by `latency_budget_ms / LATENCY_REFERENCE_MS` (a new
+  threshold, default 10 ms — the same reference `bench.calibrate.exact_max_n`
+  was already calibrated against) before every rule's n-vectors comparison,
+  since a brute-force scan's cost is ~linear in n for fixed dim: a tighter
+  budget shrinks the exact/ANN crossover, a looser one extends it. Every
+  other threshold (`FAISS_MIN_N`, `HIGH_RECALL`) is unaffected.
 
 ### Changed
 - **`ann_router.policy.PROVISIONAL_ROUTING`** (new, default `True`): until the

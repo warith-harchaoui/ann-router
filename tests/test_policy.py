@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from ann_router.policy import EXACT_MAX_N, rank_backends
+from ann_router.policy import EXACT_MAX_N, effective_exact_max_n, rank_backends
 from ann_router.spec import Criteria
 
 
@@ -79,3 +79,24 @@ def test_every_shortlist_ends_with_a_universal_fallback() -> None:
     c = Criteria(n_vectors=1_000_000, dim=512)
     tail = rank_backends(c)[-1]["backend"]
     assert tail in {"hnsw", "exact"}
+
+
+def test_latency_budget_scales_the_exact_crossover() -> None:
+    # A tighter-than-reference budget affords fewer vectors to brute-force; a
+    # looser one affords more. Reference is 10 ms (LATENCY_REFERENCE_MS).
+    t = {"EXACT_MAX_N": EXACT_MAX_N, "LATENCY_REFERENCE_MS": 10.0}
+    tight = Criteria(n_vectors=1, dim=8, latency_budget_ms=1.0)
+    loose = Criteria(n_vectors=1, dim=8, latency_budget_ms=100.0)
+    default = Criteria(n_vectors=1, dim=8)
+    assert effective_exact_max_n(tight, t) == EXACT_MAX_N / 10
+    assert effective_exact_max_n(loose, t) == EXACT_MAX_N * 10
+    assert effective_exact_max_n(default, t) == EXACT_MAX_N
+
+
+def test_tight_latency_budget_pushes_a_borderline_corpus_off_exact() -> None:
+    # Same n, only the budget changes: n sits just above the tightened
+    # crossover but just below the reference one.
+    n = int(EXACT_MAX_N * 0.5)
+    assert rank_backends(Criteria(n_vectors=n, dim=128))[0]["backend"] == "exact"
+    tight = Criteria(n_vectors=n, dim=128, latency_budget_ms=1.0)  # affords EXACT_MAX_N/10
+    assert rank_backends(tight)[0]["backend"] != "exact"

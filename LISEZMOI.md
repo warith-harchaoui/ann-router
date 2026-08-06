@@ -203,6 +203,12 @@ flowchart TD
 | 5 | lecture seule + mémoire serrée | **Annoy** | figé, mappé en mémoire, très léger |
 | 6 | corpus stable en mémoire (défaut) | **HNSW** | meilleur rappel/latence quand l'index change rarement |
 
+La ligne 1 : `EXACT_MAX_N` s'ajuste selon `Criteria.latency_budget_ms`. Un
+balayage force brute a un coût quasi linéaire en n à dim fixe donc un budget
+plus large que la référence de 10 ms étend proportionnellement le seuil
+exact/ANN et un budget plus serré le réduit — voir
+`ann_router.policy.effective_exact_max_n`.
+
 `EXACT_MAX_N`/`FAISS_MIN_N` sont en cours de calibrage à partir de données
 mesurées de rappel/latence plutôt que devinés — voir
 [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)
