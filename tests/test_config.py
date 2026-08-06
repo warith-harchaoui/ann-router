@@ -4,7 +4,7 @@ Proves the shipped policy.yaml is genuinely load-bearing: an external override
 file changes the routing crossover, and the catalogs stay in sync with the
 registry.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from ann_router.spec import Criteria
 
 
 def test_packaged_thresholds_match_code_defaults() -> None:
+    """policy.yaml's thresholds never silently diverge from the code constants."""
     # The shipped policy.yaml must not silently diverge from the code constants.
     packaged = policy_thresholds()
     for key, value in THRESHOLDS.items():
@@ -24,6 +25,7 @@ def test_packaged_thresholds_match_code_defaults() -> None:
 
 
 def test_external_override_moves_the_crossover(tmp_path) -> None:
+    """A user policy.yaml override raises the exact->ANN crossover end to end."""
     # A user override file must raise the exact->ANN crossover.
     override = tmp_path / "policy.yaml"
     override.write_text("thresholds:\n  EXACT_MAX_N: 100000\n")
@@ -35,6 +37,7 @@ def test_external_override_moves_the_crossover(tmp_path) -> None:
 
 
 def test_route_uses_env_override(monkeypatch, tmp_path) -> None:
+    """route() with no explicit thresholds picks up ANN_ROUTER_POLICY."""
     override = tmp_path / "p.yaml"
     override.write_text("thresholds:\n  EXACT_MAX_N: 100000\n")
     monkeypatch.setenv("ANN_ROUTER_POLICY", str(override))
@@ -43,9 +46,11 @@ def test_route_uses_env_override(monkeypatch, tmp_path) -> None:
 
 
 def test_catalog_covers_every_registered_backend() -> None:
+    """backend_catalog() names exactly the registered backends, no more, no less."""
     names = {b["name"] for b in backend_catalog()}
     assert names == set(BACKENDS)
 
 
 def test_hardware_profiles_are_the_three_classes() -> None:
+    """hardware_profiles() enumerates exactly cpu/apple_silicon/gpu."""
     assert {p["hardware"] for p in hardware_profiles()} == {"cpu", "apple_silicon", "gpu"}

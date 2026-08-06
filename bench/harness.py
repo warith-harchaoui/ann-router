@@ -27,7 +27,7 @@ and derives the justified thresholds.
 Consumes: :mod:`bench.datagen`, :mod:`ann_router.registry`, PyYAML.
 Produces: the ``coarse`` / ``bisect`` / ``status`` CLI and ``measure_cell``.
 
-Author: Warith Harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -64,11 +64,29 @@ _BITS_LADDER = [2, 3, 4]  # turbovec: a *build* knob (only 2/3/4 valid), so each
 
 
 def _set_hnsw_ef(idx, v: int) -> None:
+    """Set an HNSW index's query-time ``ef`` (search-width) knob.
+
+    Parameters
+    ----------
+    idx : ann_router.backends.hnsw.HNSWIndex
+        A built HNSW index.
+    v : int
+        The rung of ``_EF_LADDER`` to set.
+    """
     idx._index.set_ef(int(v))
     idx._ef = int(v)
 
 
 def _set_faiss_nprobe(idx, v: int) -> None:
+    """Set a FAISS index's query-time ``nprobe`` (cells-probed) knob.
+
+    Parameters
+    ----------
+    idx : ann_router.backends.faiss_backend.FaissIndex
+        A built FAISS index.
+    v : int
+        The rung of ``_NPROBE_LADDER`` to set.
+    """
     import faiss
 
     try:
@@ -78,6 +96,15 @@ def _set_faiss_nprobe(idx, v: int) -> None:
 
 
 def _set_annoy_searchk(idx, v: int) -> None:
+    """Set an Annoy index's query-time ``search_k`` (nodes-inspected) knob.
+
+    Parameters
+    ----------
+    idx : ann_router.backends.annoy_backend.AnnoyIndex
+        A built Annoy index.
+    v : int
+        The rung of ``_SEARCHK_LADDER`` to set.
+    """
     idx._search_k = int(v)
 
 
@@ -130,7 +157,26 @@ class Measurement:
 def cell_id(
     backend: str, n: int, dim: int, k: int, target: float, metric: str, nq: int, seed: int
 ) -> str:
-    """Return the canonical string key for a cell in the store."""
+    """Return the canonical string key for a cell in the store.
+
+    Parameters
+    ----------
+    backend : str
+        Registry name.
+    n, dim, k : int
+        Corpus size, dimensionality, neighbours per query.
+    target : float
+        Target recall@k.
+    metric : str
+        Distance metric.
+    nq, seed : int
+        Query count and base seed.
+
+    Returns
+    -------
+    str
+        The cell's canonical key, e.g. ``"exact|n1000|d128|k10|r0.95|cosine|q500|s0"``.
+    """
     return f"{backend}|n{n}|d{dim}|k{k}|r{target}|{metric}|q{nq}|s{seed}"
 
 
@@ -142,7 +188,13 @@ def load_store() -> dict:
 
 
 def save_store(store: dict) -> None:
-    """Atomically write the measurements YAML (crash-safe for day-long runs)."""
+    """Atomically write the measurements YAML (crash-safe for day-long runs).
+
+    Parameters
+    ----------
+    store : dict
+        The full measurements mapping to persist.
+    """
     RESULTS.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=RESULTS, suffix=".tmp")
     with os.fdopen(fd, "w") as fh:
@@ -151,7 +203,22 @@ def save_store(store: dict) -> None:
 
 
 def _recall_at_k(pred: np.ndarray, gt: np.ndarray, k: int) -> float:
-    """Mean fraction of the exact top-k recovered per query (ignores -1 pads)."""
+    """Mean fraction of the exact top-k recovered per query (ignores -1 pads).
+
+    Parameters
+    ----------
+    pred : numpy.ndarray
+        Shape ``(nq, k)`` a backend's predicted neighbour ids.
+    gt : numpy.ndarray
+        Shape ``(nq, k)`` the exact ground-truth neighbour ids.
+    k : int
+        Neighbours per query.
+
+    Returns
+    -------
+    float
+        Mean recall@k over all queries.
+    """
     hits = 0
     for p, g in zip(pred, gt, strict=False):
         hits += len(set(p.tolist()) & set(g[:k].tolist()))
@@ -159,7 +226,22 @@ def _recall_at_k(pred: np.ndarray, gt: np.ndarray, k: int) -> float:
 
 
 def _latencies_ms(idx, queries: np.ndarray, k: int) -> tuple[float, float, float]:
-    """Per-query search latency percentiles over the query set, in ms."""
+    """Per-query search latency percentiles over the query set, in ms.
+
+    Parameters
+    ----------
+    idx : ann_router.base.ANNIndex
+        A built index to query.
+    queries : numpy.ndarray
+        Shape ``(nq, dim)``.
+    k : int
+        Neighbours per query.
+
+    Returns
+    -------
+    p50, p95, mean : float
+        Latency percentiles/mean, in milliseconds.
+    """
     times = np.empty(len(queries))
     for i, q in enumerate(queries):
         t0 = time.perf_counter()
@@ -169,7 +251,18 @@ def _latencies_ms(idx, queries: np.ndarray, k: int) -> tuple[float, float, float
 
 
 def _index_bytes(idx) -> int | None:
-    """Size on disk of a ``save``-round-trip, a clean proxy for index RAM."""
+    """Size on disk of a ``save``-round-trip, a clean proxy for index RAM.
+
+    Parameters
+    ----------
+    idx : ann_router.base.ANNIndex
+        A built index.
+
+    Returns
+    -------
+    int or None
+        Bytes on disk, or ``None`` if ``save`` failed or wrote nothing.
+    """
     try:
         with tempfile.TemporaryDirectory() as d:
             path = os.path.join(d, "idx")
@@ -183,6 +276,13 @@ def _index_bytes(idx) -> int | None:
 
 
 def _detect_hw() -> str:
+    """Classify the local hardware, never raising.
+
+    Returns
+    -------
+    str
+        ``"gpu"``/``"apple_silicon"``/``"cpu"``, or ``"unknown"`` on failure.
+    """
     try:
         from ann_router.detect import detect_hardware
 
@@ -285,7 +385,28 @@ def _run_cell(
     nq: int,
     seed: int,
 ) -> Measurement:
-    """Build, sweep the quality knob to the target, and record — one cell."""
+    """Build, sweep the quality knob to the target, and record — one cell.
+
+    Parameters
+    ----------
+    base : dict
+        The base :class:`Measurement` fields already known before running.
+    backend : str
+        Registry name.
+    n, dim, k : int
+        Corpus size, dimensionality, neighbours per query.
+    target : float
+        Recall@k target to sweep the knob toward.
+    metric : str
+        Distance metric.
+    nq, seed : int
+        Query count and base seed.
+
+    Returns
+    -------
+    Measurement
+        The measured cell, ``status="ok"``.
+    """
     queries, gt = datagen.ground_truth(n, dim, k, nq, seed)
     corpus = datagen.make_corpus(n, dim, seed)
     cls = get_backend(backend)
@@ -295,6 +416,17 @@ def _run_cell(
     fallback: dict | None = None  # best-recall point if the target is never met
 
     def record(idx, knob, build_s):
+        """Score one operating point and update ``best``/``fallback``.
+
+        Parameters
+        ----------
+        idx : ann_router.base.ANNIndex
+            The built index at this operating point.
+        knob : float or None
+            The value of the backend's quality knob at this point.
+        build_s : float
+            Build time in seconds.
+        """
         nonlocal best, fallback
         p50, p95, mean = _latencies_ms(idx, queries, k)
         pred, _ = idx.search(queries, k)
@@ -356,7 +488,18 @@ def _run_cell(
 
 
 def _coarse_ns(max_n: int) -> list[int]:
-    """A logarithmic n grid (~2 points/decade) up to ``max_n``."""
+    """A logarithmic n grid (~2 points/decade) up to ``max_n``.
+
+    Parameters
+    ----------
+    max_n : int
+        Largest corpus size to include.
+
+    Returns
+    -------
+    list of int
+        The grid values ``<= max_n``.
+    """
     grid = [
         1_000,
         2_000,
@@ -376,7 +519,14 @@ def _coarse_ns(max_n: int) -> list[int]:
 
 
 def cmd_coarse(args) -> None:
-    """Run coarse-grid cells (ascending n), bounded by budget — one 'piece'."""
+    """Run coarse-grid cells (ascending n), bounded by budget — one 'piece'.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed ``coarse`` subcommand arguments (dims, targets, k, max_n,
+        max_cells, time_budget, backends, metric, nq, seed).
+    """
     store = load_store()
     backends = args.backends or available_backends()
     ns = _coarse_ns(args.max_n)
@@ -408,11 +558,44 @@ def _fit_predict_crossover(
 ) -> int | None:
     """Log-log interpolate each backend's p50(n) and predict where they cross.
 
-    Returns the predicted crossover ``n`` (int) or ``None`` if there aren't
-    enough measured points to fit both curves.
+    Parameters
+    ----------
+    store : dict
+        The full measurements mapping.
+    a, b : str
+        The two backends to compare (crossover is where ``a`` and ``b``'s
+        fitted p50(n) lines meet).
+    dim, k : int
+        Dimensionality and neighbours-per-query to filter measured points by.
+    target : float
+        Unused by the current point filter (see ``pts`` below) — accepted for
+        a call-site signature symmetric with :func:`cmd_bisect`.
+    metric : str
+        Distance metric to filter measured points by.
+    nq, seed : int
+        Unused by the current point filter (see ``pts`` below) — accepted for
+        the same reason as ``target``.
+
+    Returns
+    -------
+    int or None
+        The predicted crossover ``n``, or ``None`` if there aren't enough
+        measured points (``< 2``) to fit both backends' curves.
     """
 
     def pts(backend):
+        """Return ``(log(n), log(p50))`` measured points for ``backend``.
+
+        Parameters
+        ----------
+        backend : str
+            The backend to collect points for.
+
+        Returns
+        -------
+        xs, ys : numpy.ndarray
+            Log-corpus-size and log-p50-latency arrays, same length.
+        """
         xs, ys = [], []
         for v in store.values():
             if (
@@ -444,10 +627,30 @@ def cmd_bisect(args) -> None:
     Seeds the bracket from the interpolated prediction, then refines by bisection
     (each step measures both backends at one n; cells are cached). Prints and
     records the crossover.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed ``bisect`` subcommand arguments (a, b, dim, k, target, lo, hi,
+        rounds, metric, nq, seed).
     """
     store = load_store()
 
     def p50(backend, n):
+        """Return backend's measured p50 latency at corpus size ``n``.
+
+        Parameters
+        ----------
+        backend : str
+            The backend to measure.
+        n : int
+            Corpus size.
+
+        Returns
+        -------
+        float or None
+            p50 latency in ms, or ``None`` if the cell errored/was skipped.
+        """
         m = measure_cell(
             backend, n, args.dim, args.k, args.target, args.metric, args.nq, args.seed, store=store
         )
@@ -461,7 +664,19 @@ def cmd_bisect(args) -> None:
         print(f"[bisect] interpolation predicts crossover near n={pred:,}; bracketing it")
         lo, hi = max(args.lo, pred // 4), min(args.hi, pred * 4)
 
-    def faster_a(n):  # True when A is faster than B at n (A wins below crossover)
+    def faster_a(n):
+        """Return whether backend A is faster than B at corpus size ``n``.
+
+        Parameters
+        ----------
+        n : int
+            Corpus size to compare at.
+
+        Returns
+        -------
+        bool or None
+            ``True`` if A's p50 < B's p50, ``None`` if either is unmeasurable.
+        """
         pa, pb = p50(args.a, n), p50(args.b, n)
         if pa is None or pb is None:
             return None
@@ -499,6 +714,17 @@ def cmd_dryrun(args) -> None:
     bug this mode was built to catch: a broken environment silently recording
     near-zero recall as if it were a real measurement). ``skipped`` (missing
     dependency, no DSN, ...) is reported but not a failure.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed ``dry-run`` subcommand arguments (ns, dims, targets, k,
+        backends, metric, nq, seed, allow_fail).
+
+    Raises
+    ------
+    SystemExit
+        If any backend FAILed and ``args.allow_fail`` is not set.
     """
     ns = args.ns or [200, 2_000]
     dims = args.dims or [16, 128]
@@ -534,7 +760,14 @@ def cmd_dryrun(args) -> None:
 
 
 def cmd_status(args) -> None:
-    """Summarise how much of the coarse plan is measured."""
+    """Summarise how much of the coarse plan is measured.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Unused — the ``status`` subcommand takes no flags; accepted only so
+        every subcommand's ``func`` shares the same call signature.
+    """
     store = load_store()
     by_status: dict[str, int] = {}
     by_backend: dict[str, int] = {}
@@ -604,6 +837,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Entry point for ``python -m bench.harness``: parse argv and dispatch."""
     args = build_parser().parse_args()
     args.func(args)
 

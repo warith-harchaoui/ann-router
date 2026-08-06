@@ -11,7 +11,7 @@ tombstone-only and the policy keeps dynamic workloads on turbovec instead.
 Consumes: ``hnswlib`` (optional, ``pip install 'ann-router[hnsw]'``).
 Produces: :class:`HNSWIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -103,18 +103,40 @@ class HNSWIndex(ANNIndex):
         return True
 
     def _new_index(self, capacity: int):
-        """Allocate a fresh hnswlib index sized for ``capacity`` elements."""
+        """Allocate a fresh hnswlib index sized for ``capacity`` elements.
+
+        Parameters
+        ----------
+        capacity : int
+            Maximum element count the index should be allocated for.
+
+        Returns
+        -------
+        hnswlib.Index
+            The freshly allocated, initialised native index.
+        """
         hnswlib = _require()
         index = hnswlib.Index(space=_SPACE[self.metric], dim=self.dim)
-        index.init_index(
-            max_elements=capacity, ef_construction=self._ef_construction, M=self._M
-        )
+        index.init_index(max_elements=capacity, ef_construction=self._ef_construction, M=self._M)
         index.set_ef(self._ef)
         self._capacity = capacity
         return index
 
     def build(self, vectors: np.ndarray, ids: np.ndarray | None = None) -> HNSWIndex:
-        """Build the graph from an initial corpus."""
+        """Build the graph from an initial corpus.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(n, dim)``.
+        ids : numpy.ndarray, optional
+            Shape ``(n,)``; defaults to ``range(n)``.
+
+        Returns
+        -------
+        HNSWIndex
+            ``self``.
+        """
         arr = self._as_f32(vectors)
         n = arr.shape[0]
         # Over-allocate 2x so the first stream of adds does not trigger a resize.
@@ -124,12 +146,26 @@ class HNSWIndex(ANNIndex):
         return self
 
     def add(self, vectors: np.ndarray) -> None:
-        """Append vectors with the next contiguous ids."""
+        """Append vectors with the next contiguous ids.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        """
         cur = self._index.get_current_count()  # type: ignore[union-attr]
         self.add_with_ids(vectors, np.arange(cur, cur + len(vectors)))
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
-        """Append vectors with explicit ids, growing capacity if needed."""
+        """Append vectors with explicit ids, growing capacity if needed.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids.
+        """
         arr = self._as_f32(vectors)
         need = self._index.get_current_count() + arr.shape[0]  # type: ignore[union-attr]
         if need > self._capacity:
@@ -139,25 +175,63 @@ class HNSWIndex(ANNIndex):
         self._index.add_items(arr, np.asarray(ids))  # type: ignore[union-attr]
 
     def remove(self, ids: np.ndarray) -> None:
-        """Tombstone the given ids (graph is not reclaimed — rebuild for that)."""
+        """Tombstone the given ids (graph is not reclaimed — rebuild for that).
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids to tombstone.
+        """
         for i in np.asarray(ids).tolist():
             # mark_deleted excludes the label from results but keeps the node in
             # the graph; this is the documented HNSW deletion limitation.
             self._index.mark_deleted(int(i))  # type: ignore[union-attr]
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return approximate top-``k`` neighbours per query."""
+        """Return approximate top-``k`` neighbours per query.
+
+        Parameters
+        ----------
+        queries : numpy.ndarray
+            Shape ``(q, dim)``.
+        k : int
+            Neighbours per query.
+
+        Returns
+        -------
+        ids : numpy.ndarray
+            Shape ``(q, k)`` neighbour ids.
+        distances : numpy.ndarray
+            Shape ``(q, k)`` distances under the index metric.
+        """
         arr = self._as_f32(queries)
         count = self._index.get_current_count()  # type: ignore[union-attr]
         labels, distances = self._index.knn_query(arr, k=min(k, count))  # type: ignore[union-attr]
         return labels.astype(np.int64), distances.astype(np.float32)
 
     def save(self, path: str) -> None:
-        """Persist the graph via hnswlib's native serialiser."""
+        """Persist the graph via hnswlib's native serialiser.
+
+        Parameters
+        ----------
+        path : str
+            Destination file path.
+        """
         self._index.save_index(path)  # type: ignore[union-attr]
 
     def load(self, path: str) -> HNSWIndex:
-        """Load a graph written by :meth:`save`."""
+        """Load a graph written by :meth:`save`.
+
+        Parameters
+        ----------
+        path : str
+            Source path produced by :meth:`save`.
+
+        Returns
+        -------
+        HNSWIndex
+            ``self``, populated from disk.
+        """
         hnswlib = _require()
         index = hnswlib.Index(space=_SPACE[self.metric], dim=self.dim)
         index.load_index(path)

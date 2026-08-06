@@ -16,7 +16,7 @@ numbers::
     python scripts/sync_docs_from_csv.py            # tables + SVGs
     python scripts/sync_docs_from_csv.py --no-svg   # tables only (skip standpoint)
 
-Author: Warith Harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations

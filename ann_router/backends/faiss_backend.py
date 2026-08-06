@@ -14,7 +14,7 @@ external ids survive.
 Consumes: ``faiss`` (optional, ``pip install 'ann-router[faiss]'`` → faiss-cpu).
 Produces: :class:`FaissIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -37,7 +37,20 @@ def _require():
 
 
 def _metric_flag(faiss, metric: MetricName) -> int:
-    """Map our metric name to a FAISS metric constant (cosine == IP on unit norm)."""
+    """Map our metric name to a FAISS metric constant (cosine == IP on unit norm).
+
+    Parameters
+    ----------
+    faiss : module
+        The imported ``faiss`` module (for its metric constants).
+    metric : {"cosine", "l2", "ip"}
+        Our metric name.
+
+    Returns
+    -------
+    int
+        ``faiss.METRIC_INNER_PRODUCT`` or ``faiss.METRIC_L2``.
+    """
     # FAISS has no cosine metric; cosine is inner product over L2-normalised
     # vectors, so we normalise on ingest and use METRIC_INNER_PRODUCT here.
     if metric in ("cosine", "ip"):
@@ -111,7 +124,18 @@ class FaissIndex(ANNIndex):
         return True
 
     def _prep(self, vectors: np.ndarray) -> np.ndarray:
-        """Coerce to float32 and L2-normalise when the metric is cosine."""
+        """Coerce to float32 and L2-normalise when the metric is cosine.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Any 2-D array of vectors.
+
+        Returns
+        -------
+        numpy.ndarray
+            Contiguous float32, L2-normalised per row when the metric is cosine.
+        """
         arr = self._as_f32(vectors)
         if self._cosine:
             faiss = _require()
@@ -130,7 +154,20 @@ class FaissIndex(ANNIndex):
         return 1
 
     def build(self, vectors: np.ndarray, ids: np.ndarray | None = None) -> FaissIndex:
-        """Train and populate the IVF(-PQ) index."""
+        """Train and populate the IVF(-PQ) index.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(n, dim)``.
+        ids : numpy.ndarray, optional
+            Shape ``(n,)``; defaults to ``range(n)``.
+
+        Returns
+        -------
+        FaissIndex
+            ``self``.
+        """
         faiss = _require()
         arr = self._prep(vectors)
         n = arr.shape[0]
@@ -140,8 +177,11 @@ class FaissIndex(ANNIndex):
         if nlist == "auto":
             nlist = int(max(1, min(4 * int(np.sqrt(n)), n // 39 or 1)))
         metric = _metric_flag(faiss, self.metric)
-        quantiser = faiss.IndexFlatIP(self.dim) if metric == faiss.METRIC_INNER_PRODUCT \
+        quantiser = (
+            faiss.IndexFlatIP(self.dim)
+            if metric == faiss.METRIC_INNER_PRODUCT
             else faiss.IndexFlatL2(self.dim)
+        )
         want_pq = self._use_pq is True or (self._use_pq == "auto" and n >= self._pq_threshold)
         if want_pq:
             # 8 bits per sub-quantiser is the FAISS default and a good recall
@@ -158,36 +198,93 @@ class FaissIndex(ANNIndex):
         return self
 
     def add(self, vectors: np.ndarray) -> None:
-        """Append vectors with the next contiguous ids."""
+        """Append vectors with the next contiguous ids.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        """
         cur = self._index.ntotal  # type: ignore[union-attr]
         self.add_with_ids(vectors, np.arange(cur, cur + len(vectors)))
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
-        """Append vectors with explicit ids (index must already be trained)."""
+        """Append vectors with explicit ids (index must already be trained).
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids.
+
+        Raises
+        ------
+        NotSupported
+            If called before :meth:`build` (IVF needs training first).
+        """
         if self._index is None:
             raise NotSupported("faiss: call build() before add (IVF needs training first)")
         arr = self._prep(vectors)
         self._index.add_with_ids(arr, np.asarray(ids, dtype=np.int64))  # type: ignore[union-attr]
 
     def remove(self, ids: np.ndarray) -> None:
-        """Remove vectors by id via the id map."""
+        """Remove vectors by id via the id map.
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids to drop.
+        """
         faiss = _require()
         sel = faiss.IDSelectorBatch(np.asarray(ids, dtype=np.int64))
         self._index.remove_ids(sel)  # type: ignore[union-attr]
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return approximate top-``k`` neighbours per query."""
+        """Return approximate top-``k`` neighbours per query.
+
+        Parameters
+        ----------
+        queries : numpy.ndarray
+            Shape ``(q, dim)``.
+        k : int
+            Neighbours per query.
+
+        Returns
+        -------
+        ids : numpy.ndarray
+            Shape ``(q, k)`` neighbour ids.
+        distances : numpy.ndarray
+            Shape ``(q, k)`` distances under the index metric.
+        """
         arr = self._prep(queries)
         distances, labels = self._index.search(arr, k)  # type: ignore[union-attr]
         return labels.astype(np.int64), distances.astype(np.float32)
 
     def save(self, path: str) -> None:
-        """Persist via faiss.write_index."""
+        """Persist via faiss.write_index.
+
+        Parameters
+        ----------
+        path : str
+            Destination file path.
+        """
         faiss = _require()
         faiss.write_index(self._index, path)
 
     def load(self, path: str) -> FaissIndex:
-        """Load an index written by :meth:`save`."""
+        """Load an index written by :meth:`save`.
+
+        Parameters
+        ----------
+        path : str
+            Source path produced by :meth:`save`.
+
+        Returns
+        -------
+        FaissIndex
+            ``self``, populated from disk.
+        """
         faiss = _require()
         self._index = faiss.read_index(path)
         return self

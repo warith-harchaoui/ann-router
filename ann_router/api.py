@@ -22,7 +22,7 @@ Run it with::
 Consumes: ``fastapi`` (optional), ``ann_router._core_cli``.
 Produces: :data:`app` (the ASGI application), :func:`create_app`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -90,7 +90,20 @@ def create_app() -> FastAPI:
 
     @app.post("/route", operation_id="route")
     def route_endpoint(body: CriteriaModel, markdown: bool = False) -> dict:
-        """Route a criteria payload and return the justified decision."""
+        """Route a criteria payload and return the justified decision.
+
+        Parameters
+        ----------
+        body : CriteriaModel
+            The problem description (request body).
+        markdown : bool, optional
+            Return a Markdown report instead of JSON. Defaults to ``False``.
+
+        Returns
+        -------
+        dict
+            The routing decision (or ``{"markdown": ...}`` when requested).
+        """
         # Validate through the dataclass so the HTTP path enforces the same
         # invariants as the library before answering.
         criteria = Criteria.from_dict(body.model_dump()).to_dict()
@@ -99,7 +112,22 @@ def create_app() -> FastAPI:
 
     @app.get("/bench", operation_id="bench")
     def bench(n: int = 5000, dim: int = 128, k: int = 10) -> dict:
-        """Benchmark installed backends vs the exact ground truth."""
+        """Benchmark installed backends vs the exact ground truth.
+
+        Parameters
+        ----------
+        n : int, optional
+            Synthetic corpus size. Defaults to 5000.
+        dim : int, optional
+            Embedding dimensionality. Defaults to 128.
+        k : int, optional
+            Neighbours per query. Defaults to 10.
+
+        Returns
+        -------
+        dict
+            Per-backend recall/latency results.
+        """
         return core.do_bench(n=n, dim=dim, k=k)
 
     return app

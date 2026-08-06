@@ -6,7 +6,7 @@ over the Streamable HTTP transport ``fastapi-mcp`` mounts at ``/mcp``) through
 FastAPI's ``TestClient`` — not just "the app object exists". The session
 manager needs the app's lifespan running, hence ``with TestClient(app) as``.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -16,6 +16,13 @@ import pytest
 
 @pytest.fixture
 def client():
+    """A ``TestClient`` (lifespan started) over an MCP-mounted app.
+
+    Returns
+    -------
+    fastapi.testclient.TestClient
+        A client wrapping a fresh app with :func:`build_server` mounted.
+    """
     pytest.importorskip("fastapi_mcp")
     from fastapi.testclient import TestClient
 
@@ -29,7 +36,26 @@ def client():
 
 
 def _mcp_call(client, method: str, params: dict, session_id: str | None = None) -> tuple:
-    """POST one JSON-RPC message to /mcp; returns (response, mcp-session-id)."""
+    """POST one JSON-RPC message to /mcp; returns (response, mcp-session-id).
+
+    Parameters
+    ----------
+    client : fastapi.testclient.TestClient
+        A client over an MCP-mounted app.
+    method : str
+        The JSON-RPC method (``"initialize"``, ``"tools/list"``, ``"tools/call"``).
+    params : dict
+        The JSON-RPC ``params`` payload.
+    session_id : str, optional
+        An existing MCP session id to send in the ``mcp-session-id`` header.
+
+    Returns
+    -------
+    response : httpx.Response
+        The raw HTTP response.
+    session_id : str or None
+        The ``mcp-session-id`` response header, if present.
+    """
     headers = {"accept": "application/json, text/event-stream"}
     if session_id:
         headers["mcp-session-id"] = session_id
@@ -42,7 +68,18 @@ def _mcp_call(client, method: str, params: dict, session_id: str | None = None) 
 
 
 def _mcp_session(client) -> str:
-    """Complete the MCP initialize handshake and return the session id."""
+    """Complete the MCP initialize handshake and return the session id.
+
+    Parameters
+    ----------
+    client : fastapi.testclient.TestClient
+        A client over an MCP-mounted app.
+
+    Returns
+    -------
+    str
+        The negotiated ``mcp-session-id``.
+    """
     resp, session_id = _mcp_call(
         client,
         "initialize",
@@ -58,6 +95,7 @@ def _mcp_session(client) -> str:
 
 
 def test_build_server_name_defaults_to_app_title() -> None:
+    """build_server()'s MCP server name defaults to the app's title."""
     pytest.importorskip("fastapi_mcp")
     from ann_router.api import create_app
     from ann_router.mcp_server import build_server
@@ -67,6 +105,7 @@ def test_build_server_name_defaults_to_app_title() -> None:
 
 
 def test_mcp_route_is_mounted_on_the_app() -> None:
+    """mcp_server.app serves /mcp alongside the plain REST routes."""
     pytest.importorskip("fastapi_mcp")
     from ann_router.mcp_server import app
 
@@ -76,6 +115,7 @@ def test_mcp_route_is_mounted_on_the_app() -> None:
 
 
 def test_exposed_tools_are_exactly_route_capabilities_bench(client) -> None:
+    """tools/list returns exactly route/capabilities/bench, nothing leaked from /docs."""
     session_id = _mcp_session(client)
     resp, _ = _mcp_call(client, "tools/list", {}, session_id)
     assert resp.status_code == 200
@@ -84,6 +124,7 @@ def test_exposed_tools_are_exactly_route_capabilities_bench(client) -> None:
 
 
 def test_route_tool_call_matches_the_library_decision(client) -> None:
+    """tools/call on 'route' returns the same decision the library would."""
     session_id = _mcp_session(client)
     resp, _ = _mcp_call(
         client,
@@ -98,6 +139,7 @@ def test_route_tool_call_matches_the_library_decision(client) -> None:
 
 
 def test_capabilities_tool_call_lists_exact(client) -> None:
+    """tools/call on 'capabilities' lists exact among the available backends."""
     session_id = _mcp_session(client)
     resp, _ = _mcp_call(client, "tools/call", {"name": "capabilities", "arguments": {}}, session_id)
     body = resp.json()["result"]

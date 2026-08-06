@@ -10,7 +10,7 @@ cannot work and honestly raise :class:`NotSupported` rather than pretending.
 Consumes: ``annoy`` (optional, ``pip install 'ann-router[annoy]'``).
 Produces: :class:`AnnoyIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -98,7 +98,20 @@ class AnnoyIndex(ANNIndex):
         return True
 
     def build(self, vectors: np.ndarray, ids: np.ndarray | None = None) -> AnnoyIndex:
-        """Build and freeze the projection forest."""
+        """Build and freeze the projection forest.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(n, dim)``.
+        ids : numpy.ndarray, optional
+            Shape ``(n,)``; defaults to ``range(n)``.
+
+        Returns
+        -------
+        AnnoyIndex
+            ``self``.
+        """
         native = _require()
         arr = self._as_f32(vectors)
         index = native(self.dim, _ANNOY_METRIC[self.metric])
@@ -112,19 +125,69 @@ class AnnoyIndex(ANNIndex):
         return self
 
     def add(self, vectors: np.ndarray) -> None:
-        """Not supported — Annoy is frozen after :meth:`build`."""
+        """Not supported — Annoy is frozen after :meth:`build`.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``. Unused — always raises.
+
+        Raises
+        ------
+        NotSupported
+            Always; the forest is frozen after ``build()``.
+        """
         raise NotSupported("annoy: add() unsupported — the forest is frozen after build()")
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
-        """Not supported — Annoy is frozen after :meth:`build`."""
+        """Not supported — Annoy is frozen after :meth:`build`.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``. Unused — always raises.
+        ids : numpy.ndarray
+            Shape ``(m,)``. Unused — always raises.
+
+        Raises
+        ------
+        NotSupported
+            Always; the forest is frozen after ``build()``.
+        """
         raise NotSupported("annoy: add_with_ids() unsupported — rebuild the index instead")
 
     def remove(self, ids: np.ndarray) -> None:
-        """Not supported — Annoy cannot delete; rebuild without the ids."""
+        """Not supported — Annoy cannot delete; rebuild without the ids.
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(m,)``. Unused — always raises.
+
+        Raises
+        ------
+        NotSupported
+            Always; Annoy has no delete operation.
+        """
         raise NotSupported("annoy: remove() unsupported — rebuild the index without those ids")
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return approximate top-``k`` neighbours per query."""
+        """Return approximate top-``k`` neighbours per query.
+
+        Parameters
+        ----------
+        queries : numpy.ndarray
+            Shape ``(q, dim)``.
+        k : int
+            Neighbours per query.
+
+        Returns
+        -------
+        ids : numpy.ndarray
+            Shape ``(q, k)`` neighbour ids.
+        distances : numpy.ndarray
+            Shape ``(q, k)`` distances under the index metric.
+        """
         arr = self._as_f32(queries)
         out_ids, out_dists = [], []
         for q in arr:
@@ -142,12 +205,28 @@ class AnnoyIndex(ANNIndex):
 
         The Annoy file itself has no room for external ids, so the id table is
         written alongside as ``<path>.ids.npy``.
+
+        Parameters
+        ----------
+        path : str
+            Destination file path.
         """
         self._index.save(path)  # type: ignore[union-attr]
         np.save(path + ".ids.npy", self._ids)
 
     def load(self, path: str) -> AnnoyIndex:
-        """Memory-map a forest written by :meth:`save`."""
+        """Memory-map a forest written by :meth:`save`.
+
+        Parameters
+        ----------
+        path : str
+            Source path produced by :meth:`save`.
+
+        Returns
+        -------
+        AnnoyIndex
+            ``self``, populated from disk.
+        """
         native = _require()
         index = native(self.dim, _ANNOY_METRIC[self.metric])
         index.load(path)  # mmaps the file — this is Annoy's low-RAM superpower

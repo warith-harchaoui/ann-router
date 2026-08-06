@@ -11,7 +11,7 @@ exposes a ``search_filter`` extension for the payload path.
 Consumes: ``qdrant-client`` (optional, ``pip install 'ann-router[qdrant]'``).
 Produces: :class:`QdrantIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -134,8 +134,18 @@ class QdrantIndex(ANNIndex):
         self._upsert(arr, labels, payloads)
         return self
 
-    def _upsert(self, arr, labels, payloads) -> None:
-        """Upsert a batch of points, caching payloads for later reads."""
+    def _upsert(self, arr: np.ndarray, labels: np.ndarray, payloads: list[dict] | None) -> None:
+        """Upsert a batch of points, caching payloads for later reads.
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+            Shape ``(m, dim)`` float32 vectors.
+        labels : numpy.ndarray
+            Shape ``(m,)`` integer point ids.
+        payloads : list of dict, optional
+            One JSON-serialisable payload per row, or ``None`` for empty payloads.
+        """
         _, models = _require()
         points = []
         for row, pid in enumerate(labels.tolist()):
@@ -147,16 +157,36 @@ class QdrantIndex(ANNIndex):
         self._index.upsert(collection_name=self._collection, points=points)  # type: ignore[union-attr]
 
     def add(self, vectors: np.ndarray) -> None:
-        """Append vectors with the next contiguous ids."""
+        """Append vectors with the next contiguous ids.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        """
         existing = max(self._payloads) + 1 if self._payloads else 0
         self.add_with_ids(vectors, np.arange(existing, existing + len(vectors)))
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
-        """Append vectors with explicit ids."""
+        """Append vectors with explicit ids.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids.
+        """
         self._upsert(self._as_f32(vectors), np.asarray(ids), None)
 
     def remove(self, ids: np.ndarray) -> None:
-        """Delete points by id."""
+        """Delete points by id.
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids to drop.
+        """
         _, models = _require()
         self._index.delete(  # type: ignore[union-attr]
             collection_name=self._collection,
@@ -166,7 +196,22 @@ class QdrantIndex(ANNIndex):
             self._payloads.pop(int(i), None)
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return approximate top-``k`` neighbours per query (no filter)."""
+        """Return approximate top-``k`` neighbours per query (no filter).
+
+        Parameters
+        ----------
+        queries : numpy.ndarray
+            Shape ``(q, dim)``.
+        k : int
+            Neighbours per query.
+
+        Returns
+        -------
+        ids : numpy.ndarray
+            Shape ``(q, k)`` neighbour ids.
+        distances : numpy.ndarray
+            Shape ``(q, k)`` scores.
+        """
         return self.search_filter(queries, k, where=None)
 
     def search_filter(
@@ -219,6 +264,11 @@ class QdrantIndex(ANNIndex):
     def save(self, path: str) -> None:
         """No-op for embedded on-disk / remote collections (already persistent).
 
+        Parameters
+        ----------
+        path : str
+            Unused — accepted only to satisfy the shared interface.
+
         Notes
         -----
         Qdrant persists itself when ``location`` is a directory or a server URL;
@@ -229,7 +279,18 @@ class QdrantIndex(ANNIndex):
         return None
 
     def load(self, path: str) -> QdrantIndex:
-        """Reconnect to an on-disk collection at ``path``."""
+        """Reconnect to an on-disk collection at ``path``.
+
+        Parameters
+        ----------
+        path : str
+            The on-disk ``location`` to reconnect to.
+
+        Returns
+        -------
+        QdrantIndex
+            ``self``, reconnected.
+        """
         QdrantClient, _ = _require()
         self._location = path
         self._index = QdrantClient(location=path)

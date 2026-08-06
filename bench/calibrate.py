@@ -25,7 +25,7 @@ Consumes: ``results/measurements.yaml``, PyYAML.
 Produces: ``results/calibrated_policy.yaml`` and a stdout summary. With
 ``--apply`` it would patch ``ann_router/policy.yaml`` (off by default).
 
-Author: Warith Harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -44,15 +44,52 @@ INTERACTIVE_BUDGET_MS = 10.0  # the latency budget EXACT_MAX_N is defined agains
 
 
 def _ok(store: dict) -> list[dict]:
+    """Return only the successfully measured rows of ``store``.
+
+    Parameters
+    ----------
+    store : dict
+        The full ``measurements.yaml`` mapping.
+
+    Returns
+    -------
+    list of dict
+        Rows whose ``status`` is ``"ok"``.
+    """
     return [v for v in store.values() if v.get("status") == "ok"]
 
 
-def _by(rows, **eq):
+def _by(rows: list[dict], **eq: object) -> list[dict]:
+    """Filter ``rows`` to those matching every ``key=value`` in ``eq``.
+
+    Parameters
+    ----------
+    rows : list of dict
+        Measured rows to filter.
+    **eq
+        Field/value pairs every returned row must match.
+
+    Returns
+    -------
+    list of dict
+        The matching subset, in the original order.
+    """
     return [r for r in rows if all(r.get(kk) == vv for kk, vv in eq.items())]
 
 
 def _evidence(r: dict) -> dict:
-    """A compact, quotable subset of a measured row for the justification trail."""
+    """A compact, quotable subset of a measured row for the justification trail.
+
+    Parameters
+    ----------
+    r : dict
+        One measured row.
+
+    Returns
+    -------
+    dict
+        The row, narrowed to the fields worth quoting as evidence.
+    """
     return {
         kk: r.get(kk)
         for kk in (
@@ -110,8 +147,23 @@ def exact_max_n(rows, dim: int, budget_ms: float = INTERACTIVE_BUDGET_MS) -> dic
     }
 
 
-def faiss_min_n(rows, dim: int, target: float) -> dict:
-    """Smallest n where FAISS meets the target with lower p50 than HNSW."""
+def faiss_min_n(rows: list[dict], dim: int, target: float) -> dict:
+    """Smallest n where FAISS meets the target with lower p50 than HNSW.
+
+    Parameters
+    ----------
+    rows : list of dict
+        All ``ok`` measurement rows.
+    dim : int
+        Dimensionality to calibrate for.
+    target : float
+        Recall@k target both backends must meet.
+
+    Returns
+    -------
+    dict
+        ``{value, method, evidence}`` — ``value`` is ``None`` if FAISS never won.
+    """
     ns = sorted({r["n"] for r in rows if r["dim"] == dim})
     for n in ns:
         f = _by(rows, backend="faiss", dim=dim, n=n, target_recall=target)
@@ -129,8 +181,21 @@ def faiss_min_n(rows, dim: int, target: float) -> dict:
     }
 
 
-def high_recall(rows, dim: int) -> dict:
-    """Recall target at/above which quantised backends stop meeting it."""
+def high_recall(rows: list[dict], dim: int) -> dict:
+    """Recall target at/above which quantised backends stop meeting it.
+
+    Parameters
+    ----------
+    rows : list of dict
+        All ``ok`` measurement rows.
+    dim : int
+        Dimensionality to calibrate for.
+
+    Returns
+    -------
+    dict
+        ``{value, method, evidence}`` — ``value`` is ``None`` if no miss was observed.
+    """
     caps = []
     for backend in ("turbovec", "faiss"):
         for r in _by(rows, backend=backend, dim=dim):
@@ -146,8 +211,19 @@ def high_recall(rows, dim: int) -> dict:
     }
 
 
-def compression_factors(rows) -> dict:
-    """Median ``raw_bytes / index_bytes`` per backend — the memory evidence."""
+def compression_factors(rows: list[dict]) -> dict:
+    """Median ``raw_bytes / index_bytes`` per backend — the memory evidence.
+
+    Parameters
+    ----------
+    rows : list of dict
+        All ``ok`` measurement rows.
+
+    Returns
+    -------
+    dict
+        ``{backend: ratio}`` for every backend with at least one measured ratio.
+    """
     out = {}
     for backend in sorted({r["backend"] for r in rows}):
         ratios = [
@@ -162,7 +238,20 @@ def compression_factors(rows) -> dict:
 
 
 def calibrate(store: dict, dims: list[int]) -> dict:
-    """Assemble the full calibrated-policy document from the store."""
+    """Assemble the full calibrated-policy document from the store.
+
+    Parameters
+    ----------
+    store : dict
+        The full ``measurements.yaml`` mapping.
+    dims : list of int
+        Dimensionalities to derive thresholds for.
+
+    Returns
+    -------
+    dict
+        The calibrated-policy document (source, counts, thresholds, evidence).
+    """
     rows = _ok(store)
     measured_backends = sorted({r["backend"] for r in rows})
     doc = {
@@ -199,7 +288,21 @@ _PALETTE = {
 
 
 def _fmt_threshold(per_dim: dict, key: str) -> str:
-    """Render a per-dim calibrated value as ``d128=…, d384=…, d768=…`` for a label."""
+    """Render a per-dim calibrated value as ``d128=…, d384=…, d768=…`` for a label.
+
+    Parameters
+    ----------
+    per_dim : dict
+        ``{dim: {value, method, evidence}}`` (one of ``doc["thresholds"][...]``).
+    key : str
+        Unused — kept for a self-describing call site; the threshold name is
+        implied by which ``per_dim`` the caller passes.
+
+    Returns
+    -------
+    str
+        A comma-joined ``d<dim>=<value>`` label.
+    """
     parts = []
     for dim, entry in per_dim.items():
         v = entry.get("value") if isinstance(entry, dict) else entry
@@ -275,6 +378,7 @@ def mermaid_decision_tree(doc: dict) -> str:
 
 
 def main() -> None:
+    """Entry point for ``python -m bench.calibrate``: derive and write the thresholds."""
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--dims", type=int, nargs="+", default=[128, 384, 768])
     ap.add_argument(

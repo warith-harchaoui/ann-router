@@ -10,7 +10,7 @@ routes small problems here instead of paying an index-build cost for nothing.
 Consumes: ``ann_router.base`` (the ANNIndex contract), numpy.
 Produces: :class:`ExactIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -123,7 +123,18 @@ class ExactIndex(ANNIndex):
         return True
 
     def _ingest(self, vectors: np.ndarray) -> np.ndarray:
-        """Coerce and (for cosine) normalise vectors on the way into the store."""
+        """Coerce and (for cosine) normalise vectors on the way into the store.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Any 2-D array of vectors.
+
+        Returns
+        -------
+        numpy.ndarray
+            Contiguous float32, unit-norm per row when the metric is cosine.
+        """
         arr = self._as_f32(vectors)
         # Cosine similarity == dot product once both sides are unit-norm, so we
         # normalise once at ingest and reuse it for every future query.
@@ -263,7 +274,22 @@ class ExactIndex(ANNIndex):
         return self._pad(ids, k), self._pad(dists, k, fill=np.inf)
 
     def _topk(self, scores: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return the indices and values of the ``k`` smallest scores per row."""
+        """Return the indices and values of the ``k`` smallest scores per row.
+
+        Parameters
+        ----------
+        scores : numpy.ndarray
+            Shape ``(q, n)`` per-query, per-candidate scores (lower = closer).
+        k : int
+            Number of smallest scores to keep per row.
+
+        Returns
+        -------
+        idx : numpy.ndarray
+            Shape ``(q, k)`` column indices of the ``k`` smallest, sorted ascending.
+        numpy.ndarray
+            Shape ``(q, k)`` the corresponding scores.
+        """
         # argpartition is O(n) and gives an unsorted k-set; we then sort only
         # those k, which is the standard fast top-k idiom.
         part = np.argpartition(scores, kth=k - 1, axis=1)[:, :k]
@@ -274,7 +300,22 @@ class ExactIndex(ANNIndex):
         return idx, scores[row, idx]
 
     def _pad(self, arr: np.ndarray, k: int, fill: float = -1) -> np.ndarray:
-        """Right-pad each row to width ``k`` when the corpus has fewer points."""
+        """Right-pad each row to width ``k`` when the corpus has fewer points.
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+            Shape ``(q, m)`` with ``m <= k``.
+        k : int
+            Target row width.
+        fill : float, optional
+            Padding value. Defaults to ``-1``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Shape ``(q, k)``.
+        """
         if arr.shape[1] == k:
             return arr
         pad = np.full((arr.shape[0], k - arr.shape[1]), fill, dtype=arr.dtype)

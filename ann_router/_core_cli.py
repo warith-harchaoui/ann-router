@@ -11,7 +11,7 @@ Consumes: ``ann_router`` (route/auto_index), numpy, ``os_helper`` (io/logging).
 Produces: :func:`do_route`, :func:`do_build`, :func:`do_search`, :func:`do_bench`,
 :func:`do_capabilities`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -81,7 +81,18 @@ def do_route(criteria: dict, as_markdown: bool = False) -> dict | str:
 
 
 def _load_vectors(path: str) -> np.ndarray:
-    """Load an ``.npy`` matrix of vectors, coerced to float32."""
+    """Load an ``.npy`` matrix of vectors, coerced to float32.
+
+    Parameters
+    ----------
+    path : str
+        Path to an ``.npy`` file of shape ``(n, dim)``.
+
+    Returns
+    -------
+    numpy.ndarray
+        The matrix, cast to float32.
+    """
     # np.load handles the common .npy case; callers pass a matrix (n, dim).
     return np.load(path).astype(np.float32)
 
@@ -218,14 +229,27 @@ def do_bench(n: int = 5000, dim: int = 128, k: int = 10, seed: int = 20260804) -
     # Clustered data mimics real embeddings far better than uniform noise, where
     # every method (including exact's "truth") would be near-degenerate.
     centers = rng.standard_normal((max(2, n // 160), dim)).astype(np.float32)
-    corpus = (centers[rng.integers(0, len(centers), n)]
-              + 0.4 * rng.standard_normal((n, dim))).astype(np.float32)
-    queries = (centers[rng.integers(0, len(centers), 50)]
-               + 0.4 * rng.standard_normal((50, dim))).astype(np.float32)
+    corpus = (
+        centers[rng.integers(0, len(centers), n)] + 0.4 * rng.standard_normal((n, dim))
+    ).astype(np.float32)
+    queries = (
+        centers[rng.integers(0, len(centers), 50)] + 0.4 * rng.standard_normal((50, dim))
+    ).astype(np.float32)
     truth, _ = ExactIndex(dim=dim).build(corpus).search(queries, k)
 
     def recall(ids: np.ndarray) -> float:
-        # Mean fraction of the exact top-k that the backend also returned.
+        """Mean fraction of the exact top-k that a backend's ``ids`` also returned.
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(nq, k)`` a backend's predicted neighbour ids.
+
+        Returns
+        -------
+        float
+            Mean recall@k against ``truth``.
+        """
         return float(np.mean([len(set(a) & set(b)) / k for a, b in zip(truth, ids, strict=False)]))
 
     results: dict[str, dict] = {}

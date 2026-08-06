@@ -5,7 +5,7 @@ the *policy* (before availability is applied) must prefer the backend the suite'
 documentation promises. These rows ARE the decision tree, pinned so a change to
 the branch logic is a visible, reviewed diff.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -46,12 +46,14 @@ from ann_router.spec import Criteria
     ],
 )
 def test_policy_picks_expected_backend(criteria: Criteria, expected_top: str) -> None:
+    """rank_backends() picks the documented backend for each representative criteria row."""
     # rank_backends is availability-agnostic, so this tests the pure decision.
     shortlist = rank_backends(criteria)
     assert shortlist[0]["backend"] == expected_top
 
 
 def test_gpu_needed_for_faiss_branch() -> None:
+    """A very large corpus WITHOUT gpu/batch falls to hnsw, not faiss."""
     # A very large corpus WITHOUT gpu/batch must not fall into the FAISS branch;
     # it should default to the stable in-memory engine instead.
     c = Criteria(n_vectors=2_000_000, dim=768)  # no gpu, no batch, static
@@ -59,6 +61,7 @@ def test_gpu_needed_for_faiss_branch() -> None:
 
 
 def test_dynamic_beats_persistence() -> None:
+    """A dynamic corpus routes to turbovec even when it also wants filtering."""
     # Priority order: a dynamic corpus routes to turbovec even if it also wants
     # persistence/filtering (churn is the dominant constraint).
     c = Criteria(n_vectors=300_000, dim=256, dynamic=True, metadata_filtering=True)
@@ -66,6 +69,7 @@ def test_dynamic_beats_persistence() -> None:
 
 
 def test_thresholds_are_tunable() -> None:
+    """Overriding EXACT_MAX_N moves the exact->ANN crossover."""
     # Overriding EXACT_MAX_N must move the exact->ANN crossover.
     c = Criteria(n_vectors=20_000, dim=128)
     assert rank_backends(c)[0]["backend"] == "hnsw"  # default: above 10k
@@ -74,6 +78,7 @@ def test_thresholds_are_tunable() -> None:
 
 
 def test_every_shortlist_ends_with_a_universal_fallback() -> None:
+    """The last eligible rule is always one of the always-usable engines."""
     # The last eligible rule must always be one of the always-usable engines so
     # routing can never return an empty shortlist.
     c = Criteria(n_vectors=1_000_000, dim=512)
@@ -82,6 +87,7 @@ def test_every_shortlist_ends_with_a_universal_fallback() -> None:
 
 
 def test_latency_budget_scales_the_exact_crossover() -> None:
+    """effective_exact_max_n() scales EXACT_MAX_N proportionally to latency_budget_ms."""
     # A tighter-than-reference budget affords fewer vectors to brute-force; a
     # looser one affords more. Reference is 10 ms (LATENCY_REFERENCE_MS).
     t = {"EXACT_MAX_N": EXACT_MAX_N, "LATENCY_REFERENCE_MS": 10.0}
@@ -94,6 +100,7 @@ def test_latency_budget_scales_the_exact_crossover() -> None:
 
 
 def test_tight_latency_budget_pushes_a_borderline_corpus_off_exact() -> None:
+    """A tightened budget pushes a mid-size n off exact while the default keeps it."""
     # Same n, only the budget changes: n sits just above the tightened
     # crossover but just below the reference one.
     n = int(EXACT_MAX_N * 0.5)

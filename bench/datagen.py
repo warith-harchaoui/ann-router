@@ -18,7 +18,7 @@ Design choices that keep a 10M-scale sweep affordable and resumable:
 Consumes: numpy, faiss (for the exact search; falls back to chunked numpy).
 Produces: :func:`make_corpus`, :func:`make_queries`, :func:`ground_truth`.
 
-Author: Warith Harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -30,20 +30,60 @@ import numpy as np
 GT_DIR = Path(__file__).resolve().parent / "results" / "gt"
 
 
-# Number of latent clusters the corpus is drawn around, as a function of size.
-# ~sqrt(n) clusters keeps a roughly constant per-cluster population as n grows.
 def _n_clusters(n: int) -> int:
+    """Number of latent clusters the corpus is drawn around, as a function of size.
+
+    ``~sqrt(n)`` clusters keeps a roughly constant per-cluster population as n
+    grows, clamped to ``[8, 4096]``.
+
+    Parameters
+    ----------
+    n : int
+        Corpus size.
+
+    Returns
+    -------
+    int
+        Cluster count.
+    """
     return int(max(8, min(4096, round(n**0.5))))
 
 
 def _rng(seed: int, salt: int) -> np.random.Generator:
-    """Return a generator seeded reproducibly from ``(seed, salt)``."""
+    """Return a generator seeded reproducibly from ``(seed, salt)``.
+
+    Parameters
+    ----------
+    seed : int
+        Base seed.
+    salt : int
+        A second value mixed in so distinct random streams (corpus vs.
+        queries vs. cluster centres) never coincide.
+
+    Returns
+    -------
+    numpy.random.Generator
+        A generator seeded from the combined ``(seed, salt)``.
+    """
     # SeedSequence mixes the two so corpus and query streams never coincide.
     return np.random.default_rng(np.random.SeedSequence([seed, salt]))
 
 
 def corpus_bytes(n: int, dim: int) -> int:
-    """Return the float32 RAM footprint of an ``(n, dim)`` corpus, in bytes."""
+    """Return the float32 RAM footprint of an ``(n, dim)`` corpus, in bytes.
+
+    Parameters
+    ----------
+    n : int
+        Corpus size.
+    dim : int
+        Dimensionality.
+
+    Returns
+    -------
+    int
+        ``n * dim * 4`` bytes.
+    """
     return n * dim * 4
 
 
@@ -114,6 +154,20 @@ def _exact_topk(corpus: np.ndarray, queries: np.ndarray, k: int) -> np.ndarray:
     Uses a FAISS flat inner-product index (corpus is unit-norm, so IP == cosine)
     when available, else a chunked numpy scan that never materialises the full
     ``nq x n`` score matrix.
+
+    Parameters
+    ----------
+    corpus : numpy.ndarray
+        Shape ``(n, dim)``, unit-norm rows.
+    queries : numpy.ndarray
+        Shape ``(nq, dim)``, unit-norm rows.
+    k : int
+        Neighbours per query.
+
+    Returns
+    -------
+    numpy.ndarray
+        Shape ``(nq, k)`` int64 exact neighbour ids.
     """
     try:
         import faiss

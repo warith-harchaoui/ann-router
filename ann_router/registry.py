@@ -12,7 +12,7 @@ Consumes: the seven ``ann_router.backends.*`` adapter modules.
 Produces: :data:`BACKENDS`, :func:`get_backend`, :func:`available_backends`,
 :func:`all_capabilities`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations

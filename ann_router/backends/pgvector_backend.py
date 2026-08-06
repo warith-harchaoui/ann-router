@@ -12,7 +12,7 @@ Consumes: ``pgvector`` + ``psycopg`` (optional, ``pip install 'ann-router[pgvect
 and a reachable PostgreSQL with the ``vector`` extension.
 Produces: :class:`PgVectorIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -120,7 +120,22 @@ class PgVectorIndex(ANNIndex):
         ids: np.ndarray | None = None,
         payloads: list[dict] | None = None,
     ) -> PgVectorIndex:
-        """(Re)create the table, insert the corpus, and build the HNSW index."""
+        """(Re)create the table, insert the corpus, and build the HNSW index.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(n, dim)``.
+        ids : numpy.ndarray, optional
+            Shape ``(n,)``; defaults to ``range(n)``.
+        payloads : list of dict, optional
+            One JSON-serialisable payload per row, aligned with ``vectors``.
+
+        Returns
+        -------
+        PgVectorIndex
+            ``self``.
+        """
         import json
 
         arr = self._as_f32(vectors)
@@ -142,19 +157,31 @@ class PgVectorIndex(ANNIndex):
                 )
         # HNSW on the right operator class so the ORDER BY uses the index.
         opclass = {"cosine": "vector_cosine_ops", "l2": "vector_l2_ops", "ip": "vector_ip_ops"}
-        conn.execute(
-            f"CREATE INDEX ON {self._table} USING hnsw (embedding {opclass[self.metric]})"
-        )
+        conn.execute(f"CREATE INDEX ON {self._table} USING hnsw (embedding {opclass[self.metric]})")
         return self
 
     def add(self, vectors: np.ndarray) -> None:
-        """Append vectors with ids continuing past the current max."""
+        """Append vectors with ids continuing past the current max.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        """
         cur = self._index.execute(f"SELECT COALESCE(MAX(id), -1) FROM {self._table}")  # type: ignore[union-attr]
         start = cur.fetchone()[0] + 1
         self.add_with_ids(vectors, np.arange(start, start + len(vectors)))
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
-        """Append vectors with explicit ids."""
+        """Append vectors with explicit ids.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids.
+        """
         arr = self._as_f32(vectors)
         with self._index.cursor() as cur:  # type: ignore[union-attr]
             for row, pid in enumerate(np.asarray(ids).tolist()):
@@ -164,14 +191,35 @@ class PgVectorIndex(ANNIndex):
                 )
 
     def remove(self, ids: np.ndarray) -> None:
-        """Delete rows by id."""
+        """Delete rows by id.
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids to drop.
+        """
         id_list = [int(i) for i in np.asarray(ids)]
         self._index.execute(  # type: ignore[union-attr]
             f"DELETE FROM {self._table} WHERE id = ANY(%s)", (id_list,)
         )
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return approximate top-``k`` neighbours per query (no filter)."""
+        """Return approximate top-``k`` neighbours per query (no filter).
+
+        Parameters
+        ----------
+        queries : numpy.ndarray
+            Shape ``(q, dim)``.
+        k : int
+            Neighbours per query.
+
+        Returns
+        -------
+        ids : numpy.ndarray
+            Shape ``(q, k)`` neighbour ids.
+        distances : numpy.ndarray
+            Shape ``(q, k)`` distances under the metric operator.
+        """
         return self.search_filter(queries, k, where=None)
 
     def search_filter(
@@ -223,6 +271,11 @@ class PgVectorIndex(ANNIndex):
     def save(self, path: str) -> None:
         """No-op — the table lives in PostgreSQL and is already durable.
 
+        Parameters
+        ----------
+        path : str
+            Unused — accepted only to satisfy the shared interface.
+
         Notes
         -----
         Persistence is the database's job; there is nothing to serialise. Use
@@ -231,7 +284,18 @@ class PgVectorIndex(ANNIndex):
         return None
 
     def load(self, path: str) -> PgVectorIndex:
-        """Reconnect to the existing table (``path`` may override the DSN)."""
+        """Reconnect to the existing table (``path`` may override the DSN).
+
+        Parameters
+        ----------
+        path : str
+            A DSN to reconnect with, or falsy to reuse the constructor's DSN.
+
+        Returns
+        -------
+        PgVectorIndex
+            ``self``, reconnected.
+        """
         if path:
             self._dsn = path
         self._index = self._connect()

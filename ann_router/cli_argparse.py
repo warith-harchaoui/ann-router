@@ -11,7 +11,7 @@ Subcommands: ``route``, ``build``, ``search``, ``bench``, ``capabilities``.
 Consumes: ``ann_router._core_cli``, ``os_helper`` (logging to stderr).
 Produces: :func:`main` (the ``ann-router`` console-script entry point).
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -27,7 +27,13 @@ from . import _core_cli as core
 
 
 def _add_criteria_flags(p: argparse.ArgumentParser) -> None:
-    """Attach the shared ``Criteria`` flags to a subparser."""
+    """Attach the shared ``Criteria`` flags to a subparser.
+
+    Parameters
+    ----------
+    p : argparse.ArgumentParser
+        The subparser to attach flags to (mutated in place).
+    """
     # These mirror the Criteria dataclass one-for-one so `route`/`build` accept
     # the full problem description on the command line.
     p.add_argument("--n-vectors", type=int, required=True, help="corpus size")
@@ -44,7 +50,18 @@ def _add_criteria_flags(p: argparse.ArgumentParser) -> None:
 
 
 def _criteria_from_args(args: argparse.Namespace) -> dict:
-    """Fold parsed argparse flags into a ``Criteria`` mapping."""
+    """Fold parsed argparse flags into a ``Criteria`` mapping.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments (from a parser built with :func:`_add_criteria_flags`).
+
+    Returns
+    -------
+    dict
+        A ``Criteria``-shaped mapping.
+    """
     # Auto-detect the hardware when the user did not pin it, so routing reflects
     # the real machine (GPU/Apple-Silicon change the decision).
     from .detect import detect_hardware
@@ -116,7 +133,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _dispatch(args: argparse.Namespace) -> dict | str:
-    """Route a parsed namespace to the matching core function."""
+    """Route a parsed namespace to the matching core function.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        Parsed CLI arguments, including ``command``.
+
+    Returns
+    -------
+    dict or str
+        The core function's result (JSON-ready dict, or a Markdown string).
+    """
     if args.command == "route":
         return core.do_route(_criteria_from_args(args), as_markdown=args.markdown)
     if args.command == "build":

@@ -24,7 +24,7 @@ definitively abandoned it as a supported backend (see CHANGELOG.md).
 Consumes: ``ann_router.spec``.
 Produces: :func:`rank_backends`, plus the ``THRESHOLDS`` constants.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -107,14 +107,36 @@ def raw_memory_gb(c: Criteria) -> float:
 
 
 def _tight_memory(c: Criteria) -> bool:
-    """Return ``True`` when a full-precision index would blow the memory budget."""
+    """Return ``True`` when a full-precision index would blow the memory budget.
+
+    Parameters
+    ----------
+    c : Criteria
+        The problem description.
+
+    Returns
+    -------
+    bool
+        ``True`` when a budget is declared and the raw float index exceeds it.
+    """
     # No budget declared == not memory-constrained. A budget smaller than the
     # raw float index means we need a lean (mmap/quantised) backend.
     return c.memory_budget_gb is not None and raw_memory_gb(c) > c.memory_budget_gb
 
 
 def _db_in_place(c: Criteria) -> bool:
-    """Return ``True`` when the caller signalled an existing SQL database."""
+    """Return ``True`` when the caller signalled an existing SQL database.
+
+    Parameters
+    ----------
+    c : Criteria
+        The problem description.
+
+    Returns
+    -------
+    bool
+        ``True`` when ``c.extra`` carries a ``pg_dsn`` or ``db_in_place`` flag.
+    """
     # A DSN in `extra` (or an explicit flag) means "reuse the DB you already run"
     # — the tie-breaker that prefers pgvector over standing up Qdrant.
     return bool(c.extra.get("pg_dsn") or c.extra.get("db_in_place"))

@@ -12,7 +12,7 @@ one. :func:`test_capability_descriptor_is_consistent` stays a separate,
 always-run check since it needs no dependency at all — it reads a classmethod
 off the un-instantiated class.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -45,6 +45,7 @@ def _skip_if_unavailable(name: str) -> type[ANNIndex]:
 
 @pytest.mark.parametrize("name", ALL_BACKENDS)
 def test_capability_descriptor_is_consistent(name: str) -> None:
+    """Every backend's capabilities() is readable without its dependency installed."""
     # Descriptor is readable WITHOUT importing the dependency — that is the whole
     # point of keeping it a classmethod on an un-instantiated class.
     cap = BACKENDS[name].capabilities()

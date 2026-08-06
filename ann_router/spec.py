@@ -14,7 +14,7 @@ Consumes: nothing (pure data).
 Produces: ``Criteria`` and ``BackendChoice`` values consumed by
 ``ann_router.policy`` and ``ann_router.router``.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations

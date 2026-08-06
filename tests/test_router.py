@@ -5,7 +5,7 @@ it: that it only ever returns an *installed* backend, that it explains a fallbac
 when the policy's first pick is missing, that ``auto_index`` really builds a
 working index, and that the Markdown report is well-formed.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from ann_router.spec import Criteria
 
 
 def test_route_returns_only_available_backend() -> None:
+    """route() never returns a backend that isn't actually installed here."""
     # Whatever the criteria, the chosen backend must actually be installed here.
     for c in [
         Criteria(n_vectors=1_000, dim=32),
@@ -30,6 +31,7 @@ def test_route_returns_only_available_backend() -> None:
 
 
 def test_unavailable_top_pick_falls_back_with_explanation(monkeypatch) -> None:
+    """When the top pick is unavailable, route() falls back and explains why."""
     # Force the policy's top pick (hnsw, the static-corpus default) unavailable
     # and confirm the router falls back to the next eligible backend AND says
     # why in the rationale — the "discussable fallback" the house style requires.
@@ -42,6 +44,7 @@ def test_unavailable_top_pick_falls_back_with_explanation(monkeypatch) -> None:
 
 
 def test_considered_list_marks_exactly_one_choice() -> None:
+    """Exactly one row of choice.considered is flagged as chosen."""
     choice = route(Criteria(n_vectors=200_000, dim=768, metadata_filtering=True))
     chosen = [row for row in choice.considered if row["chosen"]]
     assert len(chosen) == 1
@@ -49,6 +52,7 @@ def test_considered_list_marks_exactly_one_choice() -> None:
 
 
 def test_auto_index_builds_queryable_index() -> None:
+    """auto_index() routes, builds, and returns a searchable index."""
     rng = np.random.default_rng(0)
     vecs = rng.standard_normal((3_000, 48)).astype(np.float32)
     index, choice = auto_index(vecs, Criteria(n_vectors=3_000, dim=48))
@@ -60,6 +64,7 @@ def test_auto_index_builds_queryable_index() -> None:
 
 
 def test_auto_index_trusts_the_array_shape() -> None:
+    """auto_index() uses the array's real dim even if Criteria.dim disagrees."""
     # Even if Criteria.dim is wrong, the built index uses the array's real dim.
     rng = np.random.default_rng(1)
     vecs = rng.standard_normal((1_500, 24)).astype(np.float32)
@@ -68,6 +73,7 @@ def test_auto_index_trusts_the_array_shape() -> None:
 
 
 def test_markdown_report_is_wellformed() -> None:
+    """to_markdown() produces a report with the expected headings."""
     md = to_markdown(route(Criteria(n_vectors=1_000, dim=64)))
     assert md.startswith("# ann-router decision:")
     assert "Rationale" in md
@@ -75,11 +81,13 @@ def test_markdown_report_is_wellformed() -> None:
 
 
 def test_get_backend_rejects_unknown_name() -> None:
+    """get_backend() raises KeyError for a name not in the registry."""
     with pytest.raises(KeyError):
         get_backend("does-not-exist")
 
 
 def test_recommended_config_scales_with_target_recall() -> None:
+    """Higher target_recall pushes hnsw/annoy configs toward more work."""
     # Higher target_recall should push each backend's config toward more work
     # (bigger graph/forest/PQ search), not just carry the metric through.
     lo = Criteria(n_vectors=500_000, dim=768, target_recall=0.90)
@@ -90,6 +98,7 @@ def test_recommended_config_scales_with_target_recall() -> None:
 
 
 def test_recommended_config_carries_dsn_for_db_backends() -> None:
+    """A pg_dsn in Criteria.extra flows into pgvector/qdrant configs, not others."""
     c = Criteria(n_vectors=500_000, dim=768, extra={"pg_dsn": "postgres://x"})
     assert _recommended_config("pgvector", c)["dsn"] == "postgres://x"
     assert _recommended_config("qdrant", c)["dsn"] == "postgres://x"

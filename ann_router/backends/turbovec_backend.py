@@ -14,7 +14,7 @@ already ships inside the ``roitelet`` prototype's ``core/personal.py``.
 Consumes: ``turbovec`` (optional, ``pip install 'ann-router[turbovec]'``).
 Produces: :class:`TurboVecIndex`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -98,7 +98,18 @@ class TurboVecIndex(ANNIndex):
         return True
 
     def _prep(self, vectors: np.ndarray) -> np.ndarray:
-        """Coerce to float32 and L2-normalise when the metric needs it."""
+        """Coerce to float32 and L2-normalise when the metric needs it.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Any 2-D array of vectors.
+
+        Returns
+        -------
+        numpy.ndarray
+            Contiguous float32, L2-normalised per row for cosine/l2 metrics.
+        """
         arr = self._as_f32(vectors)
         if self._normalise:
             norms = np.linalg.norm(arr, axis=1, keepdims=True)
@@ -107,7 +118,20 @@ class TurboVecIndex(ANNIndex):
         return arr
 
     def build(self, vectors: np.ndarray, ids: np.ndarray | None = None) -> TurboVecIndex:
-        """Create the index and insert the initial corpus."""
+        """Create the index and insert the initial corpus.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(n, dim)``.
+        ids : numpy.ndarray, optional
+            Shape ``(n,)``; defaults to ``range(n)``.
+
+        Returns
+        -------
+        TurboVecIndex
+            ``self``.
+        """
         turbovec = _require()
         self._index = turbovec.IdMapIndex(dim=self.dim, bit_width=self._bit_width)
         arr = self._prep(vectors)
@@ -116,7 +140,13 @@ class TurboVecIndex(ANNIndex):
         return self
 
     def add(self, vectors: np.ndarray) -> None:
-        """Append vectors with the next contiguous ids."""
+        """Append vectors with the next contiguous ids.
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        """
         # turbovec has no count getter we rely on, so track the high-water mark
         # from the corpus we have inserted so far via a private counter.
         start = getattr(self, "_next_id", None)
@@ -125,7 +155,15 @@ class TurboVecIndex(ANNIndex):
         self.add_with_ids(vectors, np.arange(start, start + len(vectors)))
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
-        """Append vectors with explicit ids (O(1), no rebuild)."""
+        """Append vectors with explicit ids (O(1), no rebuild).
+
+        Parameters
+        ----------
+        vectors : numpy.ndarray
+            Shape ``(m, dim)``.
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids.
+        """
         if self._index is None:
             turbovec = _require()
             self._index = turbovec.IdMapIndex(dim=self.dim, bit_width=self._bit_width)
@@ -136,12 +174,33 @@ class TurboVecIndex(ANNIndex):
         self._next_id = int(labels.max()) + 1 if labels.size else getattr(self, "_next_id", 0)
 
     def remove(self, ids: np.ndarray) -> None:
-        """Delete vectors by id — O(1) each, no structural degradation."""
+        """Delete vectors by id — O(1) each, no structural degradation.
+
+        Parameters
+        ----------
+        ids : numpy.ndarray
+            Shape ``(m,)`` integer ids to drop.
+        """
         for i in np.asarray(ids, dtype=np.uint64).tolist():
             self._index.remove(int(i))  # type: ignore[union-attr]
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
-        """Return approximate top-``k`` neighbours per query."""
+        """Return approximate top-``k`` neighbours per query.
+
+        Parameters
+        ----------
+        queries : numpy.ndarray
+            Shape ``(q, dim)``.
+        k : int
+            Neighbours per query.
+
+        Returns
+        -------
+        ids : numpy.ndarray
+            Shape ``(q, k)`` neighbour ids.
+        distances : numpy.ndarray
+            Shape ``(q, k)`` distances under the index metric.
+        """
         arr = self._prep(queries)
         # turbovec returns (distances, ids); the package contract is (ids, dist),
         # so we swap the two halves of the tuple here.
@@ -149,11 +208,28 @@ class TurboVecIndex(ANNIndex):
         return np.asarray(ids, dtype=np.int64), np.asarray(distances, dtype=np.float32)
 
     def save(self, path: str) -> None:
-        """Persist via turbovec's native ``write``."""
+        """Persist via turbovec's native ``write``.
+
+        Parameters
+        ----------
+        path : str
+            Destination file path.
+        """
         self._index.write(path)  # type: ignore[union-attr]
 
     def load(self, path: str) -> TurboVecIndex:
-        """Load an index written by :meth:`save`."""
+        """Load an index written by :meth:`save`.
+
+        Parameters
+        ----------
+        path : str
+            Source path produced by :meth:`save`.
+
+        Returns
+        -------
+        TurboVecIndex
+            ``self``, populated from disk.
+        """
         turbovec = _require()
         self._index = turbovec.IdMapIndex.load(path)
         return self

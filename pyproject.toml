@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10,<3.14"
 license = {text = "BSD-3-Clause"}
 authors = [
-    {name = "Warith HARCHAOUI", email = "warithmetics@deraison.ai"},
+    {name = "Warith Harchaoui", email = "warith.harchaoui@deraison.ai"},
 ]
 keywords = [
     "ann", "approximate-nearest-neighbor", "vector-search", "router",

@@ -5,7 +5,7 @@ their numeric ranges, that they round-trip losslessly through JSON (the CLI/API/
 MCP wire format), and that ``from_dict`` is forgiving of unknown keys so older
 clients keep working.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ from ann_router.spec import BackendChoice, Criteria
 
 
 def test_defaults_match_house_policy() -> None:
+    """Criteria's documented defaults (target_recall, budget, metric) hold."""
     # The documented defaults are load-bearing (they define the "common" case).
     c = Criteria(n_vectors=100, dim=8)
     assert c.target_recall == 0.95
@@ -35,11 +36,13 @@ def test_defaults_match_house_policy() -> None:
     ],
 )
 def test_validate_rejects_bad_ranges(kwargs: dict) -> None:
+    """validate() raises on out-of-range n_vectors/dim/target_recall/budgets."""
     with pytest.raises(ValueError):
         Criteria(**kwargs).validate()
 
 
 def test_round_trip_through_dict() -> None:
+    """to_dict() / from_dict() are inverses, including dynamic and extra."""
     # to_dict / from_dict must be inverses for the JSON surfaces to be lossless.
     c = Criteria(n_vectors=42, dim=16, dynamic=True, extra={"pg_dsn": "x"})
     again = Criteria.from_dict(c.to_dict())
@@ -47,12 +50,14 @@ def test_round_trip_through_dict() -> None:
 
 
 def test_from_dict_ignores_unknown_keys() -> None:
+    """from_dict() tolerates an unknown key without raising."""
     # Forward-compat: an extra key from a newer/older client must not crash.
     c = Criteria.from_dict({"n_vectors": 10, "dim": 4, "future_flag": True})
     assert c.n_vectors == 10 and c.dim == 4
 
 
 def test_backend_choice_is_json_ready() -> None:
+    """BackendChoice.to_dict() carries the backend name and config through."""
     choice = BackendChoice(backend="exact", rationale="tiny", config={"metric": "cosine"})
     payload = choice.to_dict()
     assert payload["backend"] == "exact"

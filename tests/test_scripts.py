@@ -6,7 +6,7 @@ heavy, network-adjacent tool, out of scope for this ultra-light suite. Every
 test below drives the CSV -> Markdown-table path only (``--no-svg``), which
 is also the only path CI can run.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
@@ -27,11 +27,13 @@ _spec.loader.exec_module(sync_docs)
 
 
 def test_decorate_bolds_the_label() -> None:
+    """decorate() bolds a label the same way regardless of language."""
     assert sync_docs.decorate("FAISS", "en") == "**FAISS**"
     assert sync_docs.decorate("FAISS", "fr") == "**FAISS**"  # lang is a uniform-call-site no-op
 
 
 def test_build_table_renders_stars_from_ratings(tmp_path) -> None:
+    """build_table() turns integer ratings into the right star counts."""
     csv_path = tmp_path / "ratings.csv"
     csv_path.write_text("Tool,Speed,Filtering\nFAISS,5,1\nQdrant,3,5\n", encoding="utf-8")
     lines = sync_docs.build_table(csv_path, "en")
@@ -42,6 +44,7 @@ def test_build_table_renders_stars_from_ratings(tmp_path) -> None:
 
 
 def test_replace_table_swaps_only_the_pipe_block(tmp_path) -> None:
+    """replace_table() swaps the table block, leaving surrounding prose untouched."""
     md_path = tmp_path / "doc.md"
     md_path.write_text(
         "# Title\n\nSome prose.\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\nMore prose.\n",
@@ -56,6 +59,7 @@ def test_replace_table_swaps_only_the_pipe_block(tmp_path) -> None:
 
 
 def test_replace_table_is_a_noop_when_unchanged(tmp_path) -> None:
+    """replace_table() returns False and skips the write when the table is identical."""
     md_path = tmp_path / "doc.md"
     table = ["| A | B |", "| --- | --- |", "| 1 | 2 |"]
     md_path.write_text("# Title\n\n" + "\n".join(table) + "\n", encoding="utf-8")
@@ -63,6 +67,7 @@ def test_replace_table_is_a_noop_when_unchanged(tmp_path) -> None:
 
 
 def test_replace_table_raises_when_no_table_present(tmp_path) -> None:
+    """replace_table() raises SystemExit when the doc has no pipe-table block."""
     md_path = tmp_path / "doc.md"
     md_path.write_text("# Title\n\nNo table here.\n", encoding="utf-8")
     with pytest.raises(SystemExit):
@@ -70,6 +75,7 @@ def test_replace_table_raises_when_no_table_present(tmp_path) -> None:
 
 
 def test_main_updates_the_configured_docs_with_no_svg(tmp_path, monkeypatch, capsys) -> None:
+    """main() --no-svg updates every configured doc's table from its CSV."""
     csv_path = tmp_path / "ratings.csv"
     csv_path.write_text("Tool,Speed\nFAISS,5\n", encoding="utf-8")
     md_path = tmp_path / "doc.md"

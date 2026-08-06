@@ -16,7 +16,7 @@ engines — from a pure-numpy brute-force scan to Qdrant — can be driven throu
 Consumes: ``ann_router.spec`` (metric names).
 Produces: the base classes every module in ``ann_router.backends`` subclasses.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations

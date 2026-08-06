@@ -15,7 +15,7 @@ Consumes: ``ann_router.policy``, ``ann_router.registry``, ``ann_router.spec``,
 ``os_helper`` (logging).
 Produces: :func:`route`, :func:`auto_index`, :func:`to_markdown`.
 
-Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
 
 from __future__ import annotations
