@@ -6,6 +6,20 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+- **MCP door rebuilt on `fastapi-mcp`**: `ann_router/mcp_server.py` no longer
+  hand-writes three `@server.tool()` wrappers duplicating `api.py`'s
+  route/capabilities/bench parameter lists and docstrings. It now mounts
+  `fastapi-mcp` on a fresh copy of the same FastAPI app (each route tagged
+  with an explicit `operation_id`), so the three MCP tools are generated
+  from — and always match — the REST API's schema. This is an architectural
+  change: MCP is now served over **Streamable HTTP** (`/mcp` on a running
+  app, default port 8019), not stdio; `pip install 'ann-router[mcp]'` now
+  pulls in `fastapi`/`uvicorn` too. Verified end to end (initialize handshake,
+  `tools/list`, `tools/call` for all three tools) against a live server, not
+  just import-time. `mcp<2` is pinned — `fastapi-mcp==0.4.0` breaks against
+  the `mcp==2.0.0` `Server()` signature change.
+
 ### Added
 - **`bench/` calibration sweep run to completion**: 491 measured cells across
   `exact, turbovec, hnsw, faiss, annoy, qdrant, pgvector` (n up to 1,000,000;

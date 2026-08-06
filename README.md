@@ -145,8 +145,10 @@ with the `pip install` line that fixes it.
    `capabilities`.
 3. **HTTP API** — `uvicorn ann_router.api:app` (`[api]` extra, or the Docker
    image above): `POST /route`, `GET /capabilities`, `GET /bench`.
-4. **MCP server** — `python -m ann_router.mcp_server` (`[mcp]` extra): exposes
-   `route`, `capabilities`, `bench` as agent tools.
+4. **MCP server** — `python -m ann_router.mcp_server` (`[mcp]` extra): the same
+   `route`/`capabilities`/`bench` operations as the HTTP API, auto-exposed as
+   MCP tools via [`fastapi-mcp`](https://github.com/tadata-org/fastapi_mcp) at
+   `http://127.0.0.1:8019/mcp` (Streamable HTTP, not stdio).
 5. **Skill** — `skills/ann-router/SKILL.md`, so an agent knows when to reach for
    the router.
 

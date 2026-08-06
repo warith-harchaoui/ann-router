@@ -8,6 +8,12 @@ does not use — the same quarantine os-helper applies to its GUI. Every endpoin
 delegates to :mod:`ann_router._core_cli`, so the HTTP behaviour matches the CLI
 and library exactly.
 
+Each route carries an explicit ``operation_id`` (``route``/``capabilities``/
+``bench``) — not just OpenAPI hygiene: :mod:`ann_router.mcp_server` mounts
+``fastapi-mcp`` on a copy of this same app and selects exactly these
+operation ids as the exposed MCP tools, so the id *is* the tool name an agent
+calls. Rename a route here and the MCP door renames with it, automatically.
+
 Run it with::
 
     pip install 'ann-router[api]'
@@ -77,12 +83,12 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
 
-    @app.get("/capabilities")
+    @app.get("/capabilities", operation_id="capabilities")
     def capabilities() -> dict:
         """Return the availability + capability matrix of every backend."""
         return core.do_capabilities()
 
-    @app.post("/route")
+    @app.post("/route", operation_id="route")
     def route_endpoint(body: CriteriaModel, markdown: bool = False) -> dict:
         """Route a criteria payload and return the justified decision."""
         # Validate through the dataclass so the HTTP path enforces the same
@@ -91,7 +97,7 @@ def create_app() -> FastAPI:
         result = core.do_route(criteria, as_markdown=markdown)
         return {"markdown": result} if markdown else result
 
-    @app.get("/bench")
+    @app.get("/bench", operation_id="bench")
     def bench(n: int = 5000, dim: int = 128, k: int = 10) -> dict:
         """Benchmark installed backends vs the exact ground truth."""
         return core.do_bench(n=n, dim=dim, k=k)

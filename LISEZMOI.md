@@ -144,8 +144,11 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
    `search`, `bench`, `capabilities`.
 3. **API HTTP** — `uvicorn ann_router.api:app` (extra `[api]` ou l'image
    Docker ci-dessus) : `POST /route`, `GET /capabilities`, `GET /bench`.
-4. **Serveur MCP** — `python -m ann_router.mcp_server` (extra `[mcp]`) : expose
-   `route`, `capabilities`, `bench` comme outils d'agent.
+4. **Serveur MCP** — `python -m ann_router.mcp_server` (extra `[mcp]`) : les
+   mêmes opérations `route`/`capabilities`/`bench` que l'API HTTP, exposées
+   automatiquement comme outils MCP via
+   [`fastapi-mcp`](https://github.com/tadata-org/fastapi_mcp) sur
+   `http://127.0.0.1:8019/mcp` (Streamable HTTP, pas stdio).
 5. **Skill** — `skills/ann-router/SKILL.md`, pour qu'un agent sache quand
    dégainer le routeur.
 

@@ -1,104 +1,98 @@
-"""MCP server — the agent-tool door (optional ``[mcp]`` extra).
+"""MCP server — the agent-tool door (optional ``[mcp]`` extra), via fastapi-mcp.
 
-The fifth surface (paired with the ``skills/ann-router`` skill) lets an AI agent
-call the router as Model-Context-Protocol tools: ``route``, ``capabilities`` and
-``bench``. The ``mcp`` SDK is optional and imported lazily so the core package
-stays dependency-free; every tool delegates to :mod:`ann_router._core_cli`, so an
-agent, the CLI and the library all get identical answers.
+The fifth surface (paired with the ``skills/ann-router`` skill) lets an AI
+agent call the router as Model-Context-Protocol tools. Rather than hand
+-writing a parallel set of ``@server.tool()`` wrappers (the previous design,
+which duplicated every endpoint's parameter list and docstring against
+:mod:`ann_router.api`), this module mounts ``fastapi-mcp`` on a copy of that
+same FastAPI app: the three REST operations already tagged with an explicit
+``operation_id`` there (``route``/``capabilities``/``bench``) become the three
+MCP tools here, automatically, with the same request/response schema. Rename
+or extend a route in ``api.py`` and this door follows without a second edit.
+
+This is an architectural change from the pre-fastapi-mcp version: MCP is now
+served over **Streamable HTTP** (mounted at ``/mcp`` on a running app), not
+stdio — a stdio subprocess client (spawn-and-talk-over-stdin/stdout) is not
+what ``fastapi-mcp`` offers; an HTTP-based MCP client pointed at the running
+server's ``/mcp`` endpoint is. The upside: the exact same three tools are also
+just REST endpoints an agent (or a human with curl) can hit directly.
 
 Run it with::
 
     pip install 'ann-router[mcp]'
-    python -m ann_router.mcp_server        # stdio transport
+    uvicorn ann_router.mcp_server:app --port 8019   # or: python -m ann_router.mcp_server
 
-Consumes: ``mcp`` (optional), ``ann_router._core_cli``.
-Produces: :func:`build_server`, :func:`main`.
+MCP endpoint: ``http://127.0.0.1:8019/mcp``. Runs on a different port from
+:mod:`ann_router.api`'s 8018 by default so both doors can run side by side.
+
+Consumes: ``fastapi-mcp`` (optional, pulls in ``fastapi``/``mcp``),
+:mod:`ann_router.api`.
+Produces: :data:`app` (the ASGI application), :func:`build_server`.
 
 Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
 
-from . import _core_cli as core
+try:
+    from fastapi_mcp import FastApiMCP
+except ImportError as exc:  # pragma: no cover - exercised only without the extra
+    raise ImportError(
+        "the MCP server needs the [mcp] extra. Run: pip install 'ann-router[mcp]'"
+    ) from exc
+
+from .api import create_app
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from fastapi import FastAPI
+
+# The only REST operations exposed as MCP tools — matches the operation_id set
+# on each route in ann_router.api.create_app(). An explicit allowlist (rather
+# than excluding FastAPI's auto /docs, /openapi.json) so a future route added
+# to the API door doesn't silently become an MCP tool without a deliberate opt-in.
+_EXPOSED_OPERATIONS = ["route", "capabilities", "bench"]
 
 
-def build_server():
-    """Construct the MCP server with the three ann-router tools registered.
+def build_server(app: FastAPI) -> FastApiMCP:
+    """Mount the MCP server (route/capabilities/bench tools) onto ``app``.
+
+    Parameters
+    ----------
+    app : fastapi.FastAPI
+        The app to mount onto — typically a fresh :func:`ann_router.api.create_app`
+        instance, so this module's :data:`app` stays independent of
+        :mod:`ann_router.api`'s own module-level one.
 
     Returns
     -------
-    mcp.server.fastmcp.FastMCP
-        A server exposing ``route``, ``capabilities`` and ``bench``.
-
-    Raises
-    ------
-    ImportError
-        If the ``[mcp]`` extra is not installed.
+    fastapi_mcp.FastApiMCP
+        The mounted server descriptor (``.name`` defaults to ``app.title``).
 
     Examples
     --------
-    >>> server = build_server()  # doctest: +SKIP
-    >>> server.name  # doctest: +SKIP
+    >>> from ann_router.api import create_app
+    >>> mcp = build_server(create_app())  # doctest: +SKIP
+    >>> mcp.name  # doctest: +SKIP
     'ann-router'
     """
-    try:
-        from mcp.server.fastmcp import FastMCP
-    except ImportError as exc:  # pragma: no cover - exercised only without the extra
-        raise ImportError(
-            "the MCP server needs the [mcp] extra. Run: pip install 'ann-router[mcp]'"
-        ) from exc
+    mcp = FastApiMCP(app, include_operations=_EXPOSED_OPERATIONS)
+    mcp.mount_http()
+    return mcp
 
-    server = FastMCP("ann-router")
 
-    @server.tool()
-    def route(
-        n_vectors: int,
-        dim: int,
-        target_recall: float = 0.95,
-        latency_budget_ms: float = 10.0,
-        memory_budget_gb: float | None = None,
-        dynamic: bool = False,
-        metadata_filtering: bool = False,
-        hardware: str = "cpu",
-        persistence: bool = False,
-        batch_queries: bool = False,
-        metric: str = "cosine",
-    ) -> dict[str, Any]:
-        """Choose the best ANN backend for the described problem, with rationale."""
-        # Forward the flat tool arguments straight into the shared core.
-        criteria = {
-            "n_vectors": n_vectors,
-            "dim": dim,
-            "target_recall": target_recall,
-            "latency_budget_ms": latency_budget_ms,
-            "memory_budget_gb": memory_budget_gb,
-            "dynamic": dynamic,
-            "metadata_filtering": metadata_filtering,
-            "hardware": hardware,
-            "persistence": persistence,
-            "batch_queries": batch_queries,
-            "metric": metric,
-        }
-        return core.do_route(criteria)
-
-    @server.tool()
-    def capabilities() -> dict[str, Any]:
-        """List every backend, whether it is installed, and what it can do."""
-        return core.do_capabilities()
-
-    @server.tool()
-    def bench(n: int = 5000, dim: int = 128, k: int = 10) -> dict[str, Any]:
-        """Benchmark installed backends' recall@k against the exact ground truth."""
-        return core.do_bench(n=n, dim=dim, k=k)
-
-    return server
+# A fresh app (not ann_router.api's module-level one) with the MCP server
+# mounted at /mcp, so `uvicorn ann_router.mcp_server:app` works out of the box.
+app = create_app()
+build_server(app)
 
 
 def main() -> None:
-    """Run the MCP server over stdio (the ``python -m ann_router.mcp_server`` path)."""
-    build_server().run()
+    """Run the MCP-mounted app over HTTP (the ``python -m ann_router.mcp_server`` path)."""
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8019)
 
 
 if __name__ == "__main__":  # pragma: no cover

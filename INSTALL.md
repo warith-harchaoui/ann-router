@@ -73,7 +73,7 @@ The verified dev environment therefore runs **numpy 1.26.4** with faiss-cpu
 ```bash
 pip install click                    # ann-router-click CLI       ([cli])
 pip install "fastapi<1" "uvicorn<1" httpx   # HTTP API             ([api])
-pip install mcp                      # MCP server                  ([mcp])
+pip install "fastapi-mcp<1" "mcp<2,>=1.20"  # MCP server (mounts on FastAPI)  ([mcp])
 ```
 
 Or, using the package extras:

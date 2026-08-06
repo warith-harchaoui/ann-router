@@ -1,0 +1,105 @@
+"""Tests for the MCP door — skipped cleanly when the ``[mcp]`` extra is absent.
+
+``ann_router.mcp_server`` mounts ``fastapi-mcp`` on a copy of the REST app
+(see ``ann_router.api``), so these drive the real MCP wire protocol (JSON-RPC
+over the Streamable HTTP transport ``fastapi-mcp`` mounts at ``/mcp``) through
+FastAPI's ``TestClient`` — not just "the app object exists". The session
+manager needs the app's lifespan running, hence ``with TestClient(app) as``.
+
+Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
+"""
+
+from __future__ import annotations
+
+import pytest
+
+
+@pytest.fixture
+def client():
+    pytest.importorskip("fastapi_mcp")
+    from fastapi.testclient import TestClient
+
+    from ann_router.api import create_app
+    from ann_router.mcp_server import build_server
+
+    app = create_app()
+    build_server(app)
+    with TestClient(app) as c:
+        yield c
+
+
+def _mcp_call(client, method: str, params: dict, session_id: str | None = None) -> tuple:
+    """POST one JSON-RPC message to /mcp; returns (response, mcp-session-id)."""
+    headers = {"accept": "application/json, text/event-stream"}
+    if session_id:
+        headers["mcp-session-id"] = session_id
+    resp = client.post(
+        "/mcp",
+        json={"jsonrpc": "2.0", "id": 1, "method": method, "params": params},
+        headers=headers,
+    )
+    return resp, resp.headers.get("mcp-session-id")
+
+
+def _mcp_session(client) -> str:
+    """Complete the MCP initialize handshake and return the session id."""
+    resp, session_id = _mcp_call(
+        client,
+        "initialize",
+        {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {},
+            "clientInfo": {"name": "test", "version": "0"},
+        },
+    )
+    assert resp.status_code == 200
+    assert session_id
+    return session_id
+
+
+def test_build_server_name_defaults_to_app_title() -> None:
+    pytest.importorskip("fastapi_mcp")
+    from ann_router.api import create_app
+    from ann_router.mcp_server import build_server
+
+    mcp = build_server(create_app())
+    assert mcp.name == "ann-router"
+
+
+def test_mcp_route_is_mounted_on_the_app() -> None:
+    pytest.importorskip("fastapi_mcp")
+    from ann_router.mcp_server import app
+
+    assert any(getattr(r, "path", "") == "/mcp" for r in app.routes)
+    # The plain REST routes still work on the same app — MCP is additive.
+    assert any(getattr(r, "path", "") == "/route" for r in app.routes)
+
+
+def test_exposed_tools_are_exactly_route_capabilities_bench(client) -> None:
+    session_id = _mcp_session(client)
+    resp, _ = _mcp_call(client, "tools/list", {}, session_id)
+    assert resp.status_code == 200
+    names = {t["name"] for t in resp.json()["result"]["tools"]}
+    assert names == {"route", "capabilities", "bench"}
+
+
+def test_route_tool_call_matches_the_library_decision(client) -> None:
+    session_id = _mcp_session(client)
+    resp, _ = _mcp_call(
+        client,
+        "tools/call",
+        {"name": "route", "arguments": {"n_vectors": 500, "dim": 16}},
+        session_id,
+    )
+    assert resp.status_code == 200
+    payload = resp.json()["result"]
+    assert payload["isError"] is False
+    assert '"backend": "exact"' in payload["content"][0]["text"]
+
+
+def test_capabilities_tool_call_lists_exact(client) -> None:
+    session_id = _mcp_session(client)
+    resp, _ = _mcp_call(client, "tools/call", {"name": "capabilities", "arguments": {}}, session_id)
+    body = resp.json()["result"]
+    assert body["isError"] is False
+    assert "exact" in body["content"][0]["text"]
