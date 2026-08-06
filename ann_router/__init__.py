@@ -22,11 +22,11 @@ Quick start
 >>> import numpy as np
 >>> import ann_router as ar
 >>> rng = np.random.default_rng(0)
->>> vecs = rng.standard_normal((3_000, 64)).astype(np.float32)
->>> choice = ar.route(ar.Criteria(n_vectors=3_000, dim=64))
+>>> vecs = rng.standard_normal((500, 64)).astype(np.float32)
+>>> choice = ar.route(ar.Criteria(n_vectors=500, dim=64))
 >>> choice.backend
 'exact'
->>> index, choice = ar.auto_index(vecs, ar.Criteria(n_vectors=3_000, dim=64))
+>>> index, choice = ar.auto_index(vecs, ar.Criteria(n_vectors=500, dim=64))
 >>> ids, dists = index.search(vecs[:2], k=5)
 >>> ids.shape
 (2, 5)

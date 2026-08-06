@@ -24,7 +24,7 @@ import numpy as np
 import os_helper as osh
 
 from .base import ANNIndex
-from .policy import POLICY_VERSION, PROVISIONAL_ROUTING, rank_backends
+from .policy import POLICY_VERSION, rank_backends
 from .registry import BACKENDS, get_backend
 from .spec import BackendChoice, Criteria
 
@@ -91,7 +91,7 @@ def route(c: Criteria, thresholds: dict[str, float] | None = None) -> BackendCho
 
     Examples
     --------
-    >>> route(Criteria(n_vectors=1_000, dim=64)).backend
+    >>> route(Criteria(n_vectors=500, dim=64)).backend
     'exact'
     >>> choice = route(Criteria(n_vectors=500_000, dim=768, metadata_filtering=True))
     >>> choice.backend in {"qdrant", "pgvector", "hnsw", "exact", "turbovec"}
@@ -149,30 +149,6 @@ def route(c: Criteria, thresholds: dict[str, float] | None = None) -> BackendCho
         )
         osh.info(f"ann-router: preferred '{top}' unavailable, using '{backend}'")
 
-    # --- TEMPORARY provisional override — see policy.PROVISIONAL_ROUTING docstring.
-    # exact stays exact (n < EXACT_MAX_N is measured math, not a guess); every other
-    # pick is redirected to turbovec until the calibration sweep lands.
-    if (
-        PROVISIONAL_ROUTING
-        and backend not in ("exact", "turbovec")
-        and get_backend("turbovec").is_available()
-    ):
-        rationale = (
-            "PROVISIONAL routing (bench/ calibration not yet applied — see bench/README.md): "
-            f"every threshold above EXACT_MAX_N is still unmeasured, so turbovec is used "
-            f"instead of the policy's current pick. {rationale}"
-        )
-        for row in considered:
-            row["chosen"] = False
-        turbovec_row = next((row for row in considered if row["backend"] == "turbovec"), None)
-        if turbovec_row is None:
-            turbovec_row = {"backend": "turbovec", "reason": rationale, "available": True}
-            considered.append(turbovec_row)
-        turbovec_row["reason"] = rationale
-        turbovec_row["chosen"] = True
-        turbovec_row["available"] = True
-        backend = "turbovec"
-
     config = _recommended_config(backend, c)
     return BackendChoice(
         backend=backend,
@@ -213,8 +189,8 @@ def auto_index(
     Examples
     --------
     >>> rng = np.random.default_rng(0)
-    >>> vecs = rng.standard_normal((2_000, 32)).astype(np.float32)
-    >>> idx, choice = auto_index(vecs, Criteria(n_vectors=2_000, dim=32))
+    >>> vecs = rng.standard_normal((500, 32)).astype(np.float32)
+    >>> idx, choice = auto_index(vecs, Criteria(n_vectors=500, dim=32))
     >>> choice.backend
     'exact'
     >>> ids, dists = idx.search(vecs[:1], k=5)
@@ -245,7 +221,7 @@ def to_markdown(choice: BackendChoice) -> str:
 
     Examples
     --------
-    >>> md = to_markdown(route(Criteria(n_vectors=1_000, dim=64)))
+    >>> md = to_markdown(route(Criteria(n_vectors=500, dim=64)))
     >>> md.splitlines()[0]
     '# ann-router decision: `exact`'
     """

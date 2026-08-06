@@ -213,17 +213,15 @@ scan's cost is ~linear in n for fixed dim, so a budget looser than the 10 ms
 reference extends the exact/ANN crossover proportionally, and a tighter one
 shrinks it — see `ann_router.policy.effective_exact_max_n`.
 
-`EXACT_MAX_N`/`FAISS_MIN_N` are being calibrated from measured recall/latency
-data rather than guessed — see
+`EXACT_MAX_N`/`FAISS_MIN_N` are calibrated from measured recall/latency data
+rather than guessed — see
 [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)
 for the sweep and
 [bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/results/decision_tree.md)
-for this project's own tree with the currently-measured thresholds filled in,
-per embedding dimension. Until that calibration is reviewed and applied to
-`ann_router/policy.yaml`, the live router provisionally routes every
-non-exact pick to turbovec rather than trust an unmeasured crossover (see
-`ann_router.policy.PROVISIONAL_ROUTING`); the table and diagram above are the
-target policy, not necessarily today's live behaviour.
+for this project's own tree with the measured thresholds filled in, per
+embedding dimension. `ann_router/policy.yaml` ships the conservative
+reduction of those per-dim values into the single scalars the table above
+uses (see `bench/results/calibrated_policy.yaml` for the full evidence).
 
 The router returns not just the name but the **criteria that drove it** and the
 **alternatives it considered** (including any preferred-but-uninstalled engine it

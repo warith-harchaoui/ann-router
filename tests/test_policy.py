@@ -20,7 +20,7 @@ from ann_router.spec import Criteria
     "criteria, expected_top",
     [
         # 1. tiny corpus -> exact (approximation pointless)
-        (Criteria(n_vectors=5_000, dim=128), "exact"),
+        (Criteria(n_vectors=500, dim=128), "exact"),
         (Criteria(n_vectors=EXACT_MAX_N - 1, dim=64), "exact"),
         # 2. frequent updates -> turbovec (O(1) add/remove)
         (Criteria(n_vectors=500_000, dim=768, dynamic=True), "turbovec"),
@@ -72,7 +72,7 @@ def test_thresholds_are_tunable() -> None:
     """Overriding EXACT_MAX_N moves the exact->ANN crossover."""
     # Overriding EXACT_MAX_N must move the exact->ANN crossover.
     c = Criteria(n_vectors=20_000, dim=128)
-    assert rank_backends(c)[0]["backend"] == "hnsw"  # default: above 10k
+    assert rank_backends(c)[0]["backend"] == "hnsw"  # default: above 1k
     bumped = rank_backends(c, thresholds={"EXACT_MAX_N": 50_000})
     assert bumped[0]["backend"] == "exact"  # raised crossover keeps it exact
 

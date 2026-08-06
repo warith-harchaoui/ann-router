@@ -58,14 +58,21 @@ prior published version.)
   other threshold (`FAISS_MIN_N`, `HIGH_RECALL`) is unaffected.
 
 ### Changed
-- **`ann_router.policy.PROVISIONAL_ROUTING`** (new, default `True`): until the
-  calibration above is reviewed and deliberately applied to
-  `ann_router/policy.yaml`, the live router (`ann_router.router.route`)
-  redirects every non-exact pick to `turbovec` instead of trusting an
-  unmeasured threshold. `exact` stays exact below `EXACT_MAX_N` (pure
-  brute-force math, not a guess). The pure decision tree in
-  `ann_router.policy.rank_backends` is untouched — this is a router-layer
-  override, easy to flip off once the policy is calibrated.
+- **Calibration applied to `ann_router/policy.yaml`** (`POLICY_VERSION`
+  `1.0.0` -> `1.1.0`): `bench.calibrate` measured per-dimension thresholds
+  from the 491-cell sweep (`bench/results/calibrated_policy.yaml`) —
+  `EXACT_MAX_N` 384->1000/768->5000/128->never lost in range, `FAISS_MIN_N`
+  128->20000/384->5000/768->1037, `HIGH_RECALL` 0.9 consistently across all
+  three dims. Since the shipped policy uses one scalar per threshold (not
+  per-dim), each was reduced conservatively across the measured dims —
+  `EXACT_MAX_N` takes the minimum non-null value (`10000` -> `1000`),
+  `FAISS_MIN_N` the maximum (`1000000` -> `20000`), `HIGH_RECALL` was
+  unanimous (`0.95` -> `0.9`) — so no threshold is trusted beyond what was
+  actually measured at every calibrated dim. The now-obsolete
+  `ann_router.policy.PROVISIONAL_ROUTING` router-layer override (which had
+  redirected every non-exact pick to `turbovec` while the calibration above
+  was still unreviewed) is removed; `ann_router.router.route` now trusts
+  `rank_backends` directly.
 - **Test suite consolidated**: `tests/test_backends.py`'s five parametrized
   checks per backend (recall, save/load, add, remove, capabilities) merged
   into one `test_backend_lifecycle` per backend plus the standalone
@@ -124,7 +131,7 @@ prior published version.)
   from measured `Criteria` and returns a justified, discussable
   `BackendChoice` (chosen backend + rationale + considered shortlist + config).
 - **Pure policy** (`ann_router.policy`) with versioned thresholds
-  (`POLICY_VERSION = 1.0.0`) encoding the suite's decision tree:
+  (`POLICY_VERSION = 1.1.0`) encoding the suite's decision tree:
   exact → turbovec → FAISS → Qdrant/pgvector → Annoy → HNSW.
 - **Common `ANNIndex` interface** (`build`/`add`/`add_with_ids`/`remove`/
   `search`/`save`/`load`) plus a `Capabilities` descriptor and the

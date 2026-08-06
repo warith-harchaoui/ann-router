@@ -212,18 +212,15 @@ plus large que la référence de 10 ms étend proportionnellement le seuil
 exact/ANN et un budget plus serré le réduit — voir
 `ann_router.policy.effective_exact_max_n`.
 
-`EXACT_MAX_N`/`FAISS_MIN_N` sont en cours de calibrage à partir de données
-mesurées de rappel/latence plutôt que devinés — voir
+`EXACT_MAX_N`/`FAISS_MIN_N` sont calibrés à partir de données mesurées de
+rappel/latence plutôt que devinés — voir
 [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)
 pour le balayage et
 [bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/results/decision_tree.md)
-pour l'arbre de ce projet avec les seuils actuellement mesurés, par dimension
-d'embedding. Tant que ce calibrage n'est pas revu et appliqué à
-`ann_router/policy.yaml`, le routeur en production route provisoirement tout
-choix non-exact vers turbovec plutôt que de faire confiance à un seuil non
-mesuré (voir `ann_router.policy.PROVISIONAL_ROUTING`) ; le tableau et le
-diagramme ci-dessus sont la politique cible, pas nécessairement le
-comportement actuel en production.
+pour l'arbre de ce projet avec les seuils mesurés, par dimension d'embedding.
+`ann_router/policy.yaml` livre la réduction conservatrice de ces valeurs
+par-dimension vers les scalaires uniques utilisés par le tableau ci-dessus
+(voir `bench/results/calibrated_policy.yaml` pour toutes les preuves).
 
 Le routeur renvoie non seulement le nom mais les **critères qui l'ont dicté** et
 les **alternatives considérées** (y compris un moteur préféré mais non installé

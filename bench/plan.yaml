@@ -10,7 +10,11 @@ axes:
   # dim on a 96 GiB machine (see mem_budget_gb); larger cells are skipped, logged.
   n: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000,
       500000, 1000000, 2000000, 5000000, 10000000]
-  dim: [128, 384, 768]           # 384/768 are the common embedding widths
+  # Densified after the first calibration pass: 128/384/768 alone gave a
+  # non-monotonic EXACT_MAX_N/FAISS_MIN_N across dim (see .private/next.md),
+  # too sparse to tell a real dim-dependent trend from measurement noise.
+  # 256/512/1024/1536 fill the gaps at the other common embedding widths.
+  dim: [128, 256, 384, 512, 768, 1024, 1536]
   k: [10]                         # neighbours per query
   target_recall: [0.90, 0.95, 0.98]
   metric: [cosine]

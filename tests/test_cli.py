@@ -70,14 +70,14 @@ def test_build_search_round_trip(capsys, tmp_path) -> None:
     """``ann-router build`` then ``search`` round-trips a persisted index."""
     # Persist a corpus, build via the CLI, then search it — the full data path.
     rng = np.random.default_rng(3)
-    vecs = rng.standard_normal((2_000, 32)).astype(np.float32)
+    vecs = rng.standard_normal((500, 32)).astype(np.float32)
     vpath = str(tmp_path / "vecs.npy")
     np.save(vpath, vecs)
     ipath = str(tmp_path / "idx")
     build_out = json.loads(
         _run(
             capsys,
-            ["build", "--n-vectors", "2000", "--dim", "32", "--vectors", vpath, "--index", ipath],
+            ["build", "--n-vectors", "500", "--dim", "32", "--vectors", vpath, "--index", ipath],
         )
     )
     assert build_out["backend"] == "exact"
@@ -127,11 +127,11 @@ def test_click_twin_drives_every_subcommand(tmp_path) -> None:
     )
 
     rng = np.random.default_rng(4)
-    vecs = rng.standard_normal((1_000, 16)).astype(np.float32)
+    vecs = rng.standard_normal((500, 16)).astype(np.float32)
     vpath, ipath = str(tmp_path / "v.npy"), str(tmp_path / "idx")
     np.save(vpath, vecs)
     build_out = invoke(
-        "build", "--n-vectors", "1000", "--dim", "16", "--vectors", vpath, "--index", ipath
+        "build", "--n-vectors", "500", "--dim", "16", "--vectors", vpath, "--index", ipath
     )
     assert build_out["backend"] == "exact"
 

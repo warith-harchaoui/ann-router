@@ -7,13 +7,17 @@
 # move `version`, add a CHANGELOG entry, and re-check the recall tests.
 #
 # YAML is used (over JSON) precisely so each threshold can carry its rationale.
-version: "1.0.0"
+version: "1.1.0"
 
 thresholds:
   # Below this corpus size a brute-force scan is already instant AND exact
-  # (recall 1.0), so an approximate index would only add build cost. Grounded in
-  # the roitelet crossover study at an interactive 10 ms budget.
-  EXACT_MAX_N: 10000
+  # (recall 1.0), so an approximate index would only add build cost. Calibrated
+  # from bench/results/calibrated_policy.yaml (491 measured cells): the
+  # per-dim crossovers are 384->1000, 768->5000, 128->never lost in the
+  # measured range; this scalar takes the minimum of the non-null values so
+  # a single threshold stays safe across every measured dim (see
+  # .private/next.md session note for the full reduction rationale).
+  EXACT_MAX_N: 1000
 
   # The per-query latency budget EXACT_MAX_N above was calibrated against.
   # A caller's Criteria.latency_budget_ms scales EXACT_MAX_N relative to this
@@ -21,10 +25,15 @@ thresholds:
   # bench.calibrate.INTERACTIVE_BUDGET_MS.
   LATENCY_REFERENCE_MS: 10.0
 
-  # "Very large volume" — where FAISS IVF+PQ quantisation and GPU batch
-  # throughput begin to dominate a graph index.
-  FAISS_MIN_N: 1000000
+  # "Very large volume" — where FAISS IVF+PQ quantisation begins to beat
+  # HNSW's p50 at recall 0.95. Calibrated per-dim crossovers were
+  # 128->20000, 384->5000, 768->1037; this scalar takes the maximum of the
+  # three so FAISS is never routed to before it has actually measured faster
+  # than HNSW at any calibrated dim.
+  FAISS_MIN_N: 20000
 
   # At/above this target the workload is "high precision": steer toward
-  # exact/HNSW and away from aggressive quantisation.
-  HIGH_RECALL: 0.95
+  # exact/HNSW and away from aggressive quantisation. Calibrated: 0.9 is the
+  # lowest target a quantised backend (turbovec) missed, consistently across
+  # dim=128/384/768.
+  HIGH_RECALL: 0.9

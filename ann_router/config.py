@@ -43,7 +43,7 @@ def _load_packaged(name: str) -> dict[str, Any]:
     Examples
     --------
     >>> _load_packaged("policy.yaml")["version"]
-    '1.0.0'
+    '1.1.0'
     """
     # importlib.resources reads the file whether the package is installed as a
     # wheel or in editable mode, so this works in every install layout.
@@ -74,7 +74,7 @@ def policy_thresholds(path: str | None = None) -> dict[str, float]:
     --------
     >>> t = policy_thresholds()
     >>> t["EXACT_MAX_N"]
-    10000
+    1000
     """
     # Start from the code defaults so a partial YAML never drops a key.
     merged: dict[str, float] = dict(THRESHOLDS)

@@ -54,8 +54,8 @@ def test_considered_list_marks_exactly_one_choice() -> None:
 def test_auto_index_builds_queryable_index() -> None:
     """auto_index() routes, builds, and returns a searchable index."""
     rng = np.random.default_rng(0)
-    vecs = rng.standard_normal((3_000, 48)).astype(np.float32)
-    index, choice = auto_index(vecs, Criteria(n_vectors=3_000, dim=48))
+    vecs = rng.standard_normal((500, 48)).astype(np.float32)
+    index, choice = auto_index(vecs, Criteria(n_vectors=500, dim=48))
     assert choice.backend == "exact"  # small corpus
     ids, dists = index.search(vecs[:3], k=5)
     assert ids.shape == (3, 5)

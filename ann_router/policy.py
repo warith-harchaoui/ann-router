@@ -37,14 +37,17 @@ from .spec import Criteria
 # --- Versioned policy thresholds (rule-16-style: named, sourced, test-pinned) ---
 # Bumping any of these is a policy change and should move POLICY_VERSION + a
 # CHANGELOG entry, exactly like a model/threshold bump in the sibling repos.
-POLICY_VERSION = "1.0.0"
+POLICY_VERSION = "1.1.0"
 
 # Below this corpus size a vectorised brute-force scan is already sub-millisecond
 # and, being exact, has recall 1.0 — so an approximate index only adds cost.
-# Grounded in the roitelet crossover study (interactive 10 ms budget, D=768),
-# and this is exactly the reference budget LATENCY_REFERENCE_MS names below —
-# bench.calibrate.exact_max_n() derives EXACT_MAX_N against that same budget.
-EXACT_MAX_N: int = 10_000
+# Calibrated from bench/results/calibrated_policy.yaml (491 measured cells,
+# interactive 10 ms budget — the same reference LATENCY_REFERENCE_MS names
+# below): the per-dim crossovers were 384->1000, 768->5000, 128->never lost
+# in the measured range. This scalar takes the minimum of the non-null
+# per-dim values so it stays safe (never overstates exact's reach) at every
+# measured dim; see .private/next.md for the full reduction rationale.
+EXACT_MAX_N: int = 1_000
 
 # The per-query latency budget EXACT_MAX_N was calibrated against (see
 # bench.calibrate.INTERACTIVE_BUDGET_MS, which must match this). A caller's
@@ -53,13 +56,18 @@ EXACT_MAX_N: int = 10_000
 # in n for fixed dim, and a budget k times looser affords ~k times the n.
 LATENCY_REFERENCE_MS: float = 10.0
 
-# "Very large volume" — the regime where FAISS's IVF+PQ quantisation and GPU
-# batch throughput start to dominate a graph index.
-FAISS_MIN_N: int = 1_000_000
+# "Very large volume" — the regime where FAISS's IVF+PQ quantisation starts to
+# beat HNSW's p50 at recall 0.95. Calibrated per-dim crossovers were
+# 128->20000, 384->5000, 768->1037; this scalar takes the maximum of the
+# three so FAISS is never chosen before it has actually measured faster than
+# HNSW at any calibrated dim.
+FAISS_MIN_N: int = 20_000
 
 # At/above this target we treat the workload as "high precision", steering away
-# from aggressive quantisation toward exact/HNSW.
-HIGH_RECALL: float = 0.95
+# from aggressive quantisation toward exact/HNSW. Calibrated: 0.9 is the lowest
+# target a quantised backend (turbovec) missed, consistently across dim=128/
+# 384/768.
+HIGH_RECALL: float = 0.9
 
 # Bundled so the whole set can be overridden atomically by a caller / policy.yaml.
 THRESHOLDS: dict[str, float] = {
@@ -68,19 +76,6 @@ THRESHOLDS: dict[str, float] = {
     "FAISS_MIN_N": FAISS_MIN_N,
     "HIGH_RECALL": HIGH_RECALL,
 }
-
-# --- TEMPORARY: provisional routing while bench/ calibration is in flight -------
-# EXACT_MAX_N is trustworthy (pure brute-force math), but every threshold above it
-# (FAISS_MIN_N, HIGH_RECALL, ...) is still *guessed*, not measured —
-# see bench/README.md and .private/next.md. Until the calibration sweep lands and
-# ann_router/policy.yaml is bumped from bench/results/calibrated_policy.yaml,
-# ann_router.router.route() overrides every non-exact pick to turbovec (a safe,
-# always-correct default) rather than trusting a guessed crossover. This constant
-# does NOT touch rank_backends() itself — the decision tree above stays the
-# documented, tested target policy; only the live router applies the override.
-# Flip this to False (and delete the override block in router.route()) once
-# calibration is applied.
-PROVISIONAL_ROUTING: bool = True
 
 
 def raw_memory_gb(c: Criteria) -> float:
@@ -311,7 +306,7 @@ def rank_backends(c: Criteria, thresholds: dict[str, float] | None = None) -> li
 
     Examples
     --------
-    >>> rank_backends(Criteria(n_vectors=5_000, dim=128))[0]["backend"]
+    >>> rank_backends(Criteria(n_vectors=500, dim=128))[0]["backend"]
     'exact'
     >>> rank_backends(Criteria(n_vectors=500_000, dim=768, dynamic=True))[0]["backend"]
     'turbovec'
