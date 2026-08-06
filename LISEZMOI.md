@@ -11,7 +11,7 @@
 
 `ann-router` fait partie de la suite **AI Helpers**. C'est un *routeur* :
 vous décrivez votre problème de recherche de plus proches voisins approchés
-(ANN) en termes *mesurés*, et il sélectionne, **justifie** et peut **instancier**
+(ANN) en termes *mesurés* et il sélectionne, **justifie** et peut **instancier**
 le bon moteur, au lieu de vous marier à une seule bibliothèque.
 
 Rechercher les vecteurs les plus proches d'un vecteur de requête dans une base de nombreux vecteurs est un problème très courant en intelligence artificielle. Naïvement le problème a une complexité linéaire en le nombre de vecteurs dans la base. Souvent ce n'est pas acceptable donc on fait une recherche approchée pour avec une complexité beaucoup plus faible en le nombre de vecteurs dans la vase et raisonnable pour nos applications à millions voire milliards de vecteurs.
@@ -31,18 +31,18 @@ Les moteurs entre lesquels il arbitre :
 > **naïf, exact (force brute) · turbovec · HNSW (hnswlib) · FAISS (IVF/PQ) ·
 > Annoy · Qdrant · pgvector**
 
-(ScaNN a été évalué puis abandonné : aucun wheel Apple Silicon n'existe, et le
+(ScaNN a été évalué puis abandonné : aucun wheel Apple Silicon n'existe et le
 projet l'a définitivement abandonné comme backend supporté — voir
 [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md).)
 
 Importer le paquet est peu coûteux et sans dépendance : aucune dépendance
 optionnelle de moteur n'est chargée à l'import, donc `import ann_router`
-fonctionne avec numpy seul, et un backend dont la dépendance est absente se
+fonctionne avec numpy seul et un backend dont la dépendance est absente se
 signale simplement indisponible pendant que le routeur le contourne. Il s'agit donc de _lazy import_.
 
 ## Pourquoi router plutôt que choisir FAISS d'office (ou un autre) ?
 
-Parce que le bon moteur est une *fonction du problème*, et le problème change :
+Parce que le bon moteur est une *fonction du problème* et le problème change :
 un corpus de 5 000 vecteurs veut un balayage exact (instantané, rappel 1.0) ;
 un corpus avec insertions/suppressions constantes veut turbovec (mutation
 O(1)) ; un besoin de filtres SQL `WHERE` veut pgvector ; un corpus figé et
@@ -86,7 +86,7 @@ pip install 'os-helper'
 pip install .
 ```
 
-Ajoutez les moteurs au besoin (extras par backend), ou tout d'un coup :
+Ajoutez les moteurs au besoin (extras par backend) ou tout d'un coup :
 
 ```bash
 pip install 'ann-router[hnsw]'      # un moteur
@@ -142,7 +142,7 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
 2. **CLI** — `ann-router` (argparse, toujours disponible) et le jumeau
    `ann-router-click` (extra `[cli]`). Sous-commandes : `route`, `build`,
    `search`, `bench`, `capabilities`.
-3. **API HTTP** — `uvicorn ann_router.api:app` (extra `[api]`, ou l'image
+3. **API HTTP** — `uvicorn ann_router.api:app` (extra `[api]` ou l'image
    Docker ci-dessus) : `POST /route`, `GET /capabilities`, `GET /bench`.
 4. **Serveur MCP** — `python -m ann_router.mcp_server` (extra `[mcp]`) : expose
    `route`, `capabilities`, `bench` comme outils d'agent.

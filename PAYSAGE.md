@@ -11,7 +11,7 @@ de critères mesurés** — sans être pénalisé pour exceller à un autre trav
 
 `ann-router` ne concurrence pas FAISS, HNSW, Qdrant et les autres — il les
 **orchestre**. Ils résolvent *l'indexation et le service* ; ann-router résout
-*lequel utiliser, et pourquoi*. Son analogue le plus proche n'est pas une autre
+*lequel utiliser et pourquoi*. Son analogue le plus proche n'est pas une autre
 bibliothèque vectorielle mais son propre frère `best-engine-ai-helper`, qui route
 entre des LLM.
 
@@ -38,14 +38,14 @@ sélection — il n'y a rien à décider. C'est précisément ce que traite ann-
 Le roi de l'échelle : IVF + PQ + GPU gèrent des milliards de vecteurs. Mais c'est
 une *bibliothèque*, pas une décision — son rappel s'effondre sur des corpus
 petits ou quasi-orthogonaux (l'étude `roitelet` a mesuré FAISS-HNSW à ~0,47 de
-rappel à N=5k), il n'a pas de filtrage par métadonnées, et choisir IVF vs Flat vs
+rappel à N=5k), il n'a pas de filtrage par métadonnées et choisir IVF vs Flat vs
 PQ et leurs paramètres est exactement le travail qu'ann-router automatise.
 ann-router route **vers** FAISS pour le régime très-gros-volume + GPU/batch.
 
 ### HNSW (hnswlib)
 Meilleur rappel/latence en mémoire pour un corpus **stable**. Les suppressions
 sont par pierres tombales (le graphe se dégrade), donc inadapté aux données
-mouvantes — ann-router les envoie plutôt vers turbovec, et garde HNSW comme
+mouvantes — ann-router les envoie plutôt vers turbovec et garde HNSW comme
 défaut haute-précision en mémoire.
 
 ### Annoy
