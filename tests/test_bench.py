@@ -203,7 +203,10 @@ def test_fit_predict_crossover_finds_a_plausible_n() -> None:
             "backend": "slow",
             "dim": 128,
             "k": 10,
+            "target_recall": 0.95,
             "metric": "cosine",
+            "nq": 500,
+            "seed": 0,
             "n": n,
             "latency_ms_p50": 5.0,
         }
@@ -212,7 +215,10 @@ def test_fit_predict_crossover_finds_a_plausible_n() -> None:
             "backend": "fast",
             "dim": 128,
             "k": 10,
+            "target_recall": 0.95,
             "metric": "cosine",
+            "nq": 500,
+            "seed": 0,
             "n": n,
             "latency_ms_p50": 0.001 * n,
         }
@@ -259,7 +265,10 @@ def test_fit_predict_crossover_needs_two_points_per_backend() -> None:
             "backend": "fast",
             "dim": 128,
             "k": 10,
+            "target_recall": 0.95,
             "metric": "cosine",
+            "nq": 500,
+            "seed": 0,
             "n": 1000,
             "latency_ms_p50": 1.0,
         }

@@ -568,13 +568,14 @@ def _fit_predict_crossover(
     dim, k : int
         Dimensionality and neighbours-per-query to filter measured points by.
     target : float
-        Unused by the current point filter (see ``pts`` below) — accepted for
-        a call-site signature symmetric with :func:`cmd_bisect`.
+        Recall@k target to filter measured points by — the fit compares each
+        backend's p50(n) at this *same* operating point, since a backend's
+        latency to reach a given recall shifts with the target.
     metric : str
         Distance metric to filter measured points by.
     nq, seed : int
-        Unused by the current point filter (see ``pts`` below) — accepted for
-        the same reason as ``target``.
+        Query count and base seed to filter measured points by, so both
+        curves are fit from the same measurement configuration.
 
     Returns
     -------
@@ -603,7 +604,10 @@ def _fit_predict_crossover(
                 and v["backend"] == backend
                 and v["dim"] == dim
                 and v["k"] == k
+                and v["target_recall"] == target
                 and v["metric"] == metric
+                and v["nq"] == nq
+                and v["seed"] == seed
                 and v.get("latency_ms_p50")
             ):
                 xs.append(math.log(v["n"]))

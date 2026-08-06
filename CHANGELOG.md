@@ -101,6 +101,17 @@ All notable changes to `ann-router` are documented here. The format follows
   `run_bench.sh` now pins the interpreter explicitly so this cannot recur
   silently — `bench.harness dry-run` also now catches this class of bug in
   seconds instead of a multi-hour sweep.
+- **`bench.harness._fit_predict_crossover` ignored `target`/`nq`/`seed`**:
+  the point filter that gathers each backend's measured `(n, p50)` pairs
+  only matched on `backend`/`dim`/`k`/`metric`, so its log-log crossover fit
+  could silently mix latency points measured at different recall targets or
+  query configurations into one curve. Now filters on `target_recall`/`nq`/
+  `seed` too, so the fit only ever compares apples to apples — one operating
+  point. `cmd_bisect`'s use of the prediction was already safe either way
+  (it only narrows the bisection bracket when the prediction falls strictly
+  inside `[lo, hi]`, else falls back to the full range), so this changes the
+  quality of the bracket seed, not the correctness of the final bisected
+  crossover.
 
 ## [0.1.0] — 2026-08-04
 
