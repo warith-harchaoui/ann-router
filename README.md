@@ -1,6 +1,6 @@
 # ann-router
 
-<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/master/assets/logo.png" alt="ann-router logo" width="180">
+<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/master/assets/logo.png" alt="ann-router logo" >
 
 [🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/master/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/master/README.md)
 
