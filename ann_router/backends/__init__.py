@@ -17,7 +17,6 @@ from .faiss_backend import FaissIndex
 from .hnsw import HNSWIndex
 from .pgvector_backend import PgVectorIndex
 from .qdrant_backend import QdrantIndex
-from .scann_backend import ScannIndex
 from .turbovec_backend import TurboVecIndex
 
 __all__ = [
@@ -26,7 +25,6 @@ __all__ = [
     "HNSWIndex",
     "FaissIndex",
     "AnnoyIndex",
-    "ScannIndex",
     "QdrantIndex",
     "PgVectorIndex",
 ]

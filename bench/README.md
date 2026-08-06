@@ -47,21 +47,31 @@ python -m bench.harness bisect --a hnsw  --b faiss --dim 768 --target 0.95   # -
 # Derive the justified thresholds once enough cells exist.
 python -m bench.calibrate --dims 128 384 768
 cat bench/results/calibrated_policy.yaml
+cat bench/results/decision_tree.md   # the same thresholds as a coloured Mermaid tree
 ```
+
+Or drive the whole thing (including bringing pgvector up via Docker) with the
+wrapper script at the repo root: `bash run_bench.sh all`.
 
 Tuning knobs: `--dims`, `--targets`, `--k`, `--nq`, `--seed`, `--backends`, and
 `--metric` on `coarse`; the RAM ceiling is `ANN_BENCH_MEM_GB` (default 60).
 
 ## Coverage on this machine (Apple Silicon)
 
-Directly measurable: **exact, turbovec, hnsw, faiss, annoy**. Gaps are explicit,
-never silently filled:
-- **scann** — no Apple-Silicon wheel (impossible here); heuristic retained.
-- **qdrant / pgvector** — need a running server; measured only when reachable.
+The current `results/measurements.yaml` has **491 measured cells** covering
+**exact, turbovec, hnsw, faiss, annoy, qdrant, pgvector** (qdrant embedded
+locally, pgvector via the Docker container `run_bench.sh pg-up` starts) across
+n up to 1,000,000 and dim in {128, 384, 768}. ScaNN is not a registered
+backend — no Apple-Silicon wheel; dropped from the project entirely, see
+CHANGELOG.md — so it never appears as a gap to fill.
+
+Re-running `run_bench.sh all` (or the `harness.py` commands above) only
+measures cells not already present, so it is safe and cheap to push the grid
+further (larger n, more seeds) at any time.
 
 ## Applying results
 
 `calibrate.py` never edits the shipped policy. Review
-`results/calibrated_policy.yaml`, then update `ann_router/policy.yaml` +
-`POLICY_VERSION` deliberately (a threshold bump is a policy change with a
-CHANGELOG entry).
+`results/calibrated_policy.yaml` and `results/decision_tree.md`, then update
+`ann_router/policy.yaml` + `POLICY_VERSION` deliberately (a threshold bump is
+a policy change with a CHANGELOG entry).

@@ -11,9 +11,10 @@ Author: Warith HARCHAOUI, https://linkedin.com/in/warith-harchaoui
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
-from ann_router.registry import BACKENDS, available_backends
-from ann_router.router import auto_index, route, to_markdown
+from ann_router.registry import BACKENDS, available_backends, get_backend
+from ann_router.router import _recommended_config, auto_index, route, to_markdown
 from ann_router.spec import Criteria
 
 
@@ -21,23 +22,23 @@ def test_route_returns_only_available_backend() -> None:
     # Whatever the criteria, the chosen backend must actually be installed here.
     for c in [
         Criteria(n_vectors=1_000, dim=32),
-        Criteria(n_vectors=2_000_000, dim=768, target_recall=0.99),  # policy wants scann
+        Criteria(n_vectors=2_000_000, dim=768, target_recall=0.99),  # high-recall, large-n regime
         Criteria(n_vectors=500_000, dim=768, dynamic=True),
     ]:
         choice = route(c)
         assert choice.backend in available_backends()
 
 
-def test_scann_absent_falls_back_with_explanation() -> None:
-    # scann has no macOS/arm64 wheel; when the policy prefers it, the router must
-    # fall back AND say why in the rationale.
-    c = Criteria(n_vectors=2_000_000, dim=768, target_recall=0.99)
+def test_unavailable_top_pick_falls_back_with_explanation(monkeypatch) -> None:
+    # Force the policy's top pick (hnsw, the static-corpus default) unavailable
+    # and confirm the router falls back to the next eligible backend AND says
+    # why in the rationale — the "discussable fallback" the house style requires.
+    monkeypatch.setattr(BACKENDS["hnsw"], "is_available", classmethod(lambda cls: False))
+    c = Criteria(n_vectors=2_000_000, dim=768)
     choice = route(c)
-    top_considered = choice.considered[0]["backend"]
-    if not BACKENDS["scann"].is_available():
-        assert top_considered == "scann"
-        assert choice.backend != "scann"
-        assert "not installed" in choice.rationale
+    assert choice.considered[0]["backend"] == "hnsw"
+    assert choice.backend != "hnsw"
+    assert "not installed" in choice.rationale
 
 
 def test_considered_list_marks_exactly_one_choice() -> None:
@@ -71,3 +72,25 @@ def test_markdown_report_is_wellformed() -> None:
     assert md.startswith("# ann-router decision:")
     assert "Rationale" in md
     assert "policy version" in md
+
+
+def test_get_backend_rejects_unknown_name() -> None:
+    with pytest.raises(KeyError):
+        get_backend("does-not-exist")
+
+
+def test_recommended_config_scales_with_target_recall() -> None:
+    # Higher target_recall should push each backend's config toward more work
+    # (bigger graph/forest/PQ search), not just carry the metric through.
+    lo = Criteria(n_vectors=500_000, dim=768, target_recall=0.90)
+    hi = Criteria(n_vectors=500_000, dim=768, target_recall=0.99)
+    assert _recommended_config("hnsw", lo)["M"] < _recommended_config("hnsw", hi)["M"]
+    assert _recommended_config("annoy", lo)["n_trees"] < _recommended_config("annoy", hi)["n_trees"]
+    assert _recommended_config("faiss", lo)["nprobe"] == 16  # static default, still present
+
+
+def test_recommended_config_carries_dsn_for_db_backends() -> None:
+    c = Criteria(n_vectors=500_000, dim=768, extra={"pg_dsn": "postgres://x"})
+    assert _recommended_config("pgvector", c)["dsn"] == "postgres://x"
+    assert _recommended_config("qdrant", c)["dsn"] == "postgres://x"
+    assert "dsn" not in _recommended_config("hnsw", c)

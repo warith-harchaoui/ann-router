@@ -1,0 +1,12 @@
+.git
+.github
+.gitlab-ci.yml
+.private
+.pytest_cache
+.ruff_cache
+.coverage
+__pycache__
+*.pyc
+*.egg-info
+bench/results
+tests

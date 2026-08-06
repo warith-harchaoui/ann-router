@@ -8,14 +8,15 @@ to [CODING.md](CODING.md); please skim it before opening a PR.
 ```bash
 conda create -n ann-router python=3.11 -y
 conda activate ann-router
-pip install -e ~/os-helper
 pip install -e '.[dev]'
 # Apple Silicon only: use the working annoy binary
 conda install -c conda-forge python-annoy -y
 pip install "numpy<2"
 ```
 
-See [INSTALL.md](INSTALL.md) for the platform caveats (annoy, ScaNN, pgvector).
+Or just `conda env create -f environment.yaml && conda activate ann-router`.
+
+See [INSTALL.md](INSTALL.md) for the platform caveats (annoy, pgvector).
 
 ## Before you push
 

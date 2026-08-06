@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ann-router"
 version = "0.1.0"
-description = "Route to the right approximate-nearest-neighbour backend from measured problem criteria (exact/turbovec/HNSW/FAISS/Annoy/ScaNN/Qdrant/pgvector), with a justified, discussable rationale."
+description = "Route to the right approximate-nearest-neighbour backend from measured problem criteria (exact/turbovec/HNSW/FAISS/Annoy/Qdrant/pgvector), with a justified, discussable rationale."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 license = {text = "BSD-3-Clause"}
@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = [
     "ann", "approximate-nearest-neighbor", "vector-search", "router",
-    "faiss", "hnsw", "annoy", "scann", "qdrant", "pgvector", "turbovec", "embeddings",
+    "faiss", "hnsw", "annoy", "qdrant", "pgvector", "turbovec", "embeddings",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -44,7 +44,6 @@ dependencies = [
 hnsw = ["hnswlib>=0.7,<1"]
 faiss = ["faiss-cpu>=1.7"]
 annoy = ["annoy>=1.17,<2"]
-scann = ["scann>=1.2"]                     # Linux/x86 only — see INSTALL.md
 turbovec = ["turbovec>=0.5"]
 qdrant = ["qdrant-client>=1.7"]
 pgvector = ["pgvector>=0.2", "psycopg[binary]>=3.1"]
@@ -52,14 +51,14 @@ pgvector = ["pgvector>=0.2", "psycopg[binary]>=3.1"]
 cli = ["click>=8.1,<9"]                     # optional click twin (argparse is always on)
 api = ["fastapi>=0.111,<1", "uvicorn>=0.30,<1"]
 mcp = ["mcp>=1.0"]
-# Everything that installs cleanly on macOS/Apple Silicon (scann excluded).
+# Everything that installs cleanly on macOS/Apple Silicon and Linux.
 all = [
     "hnswlib>=0.7,<1", "faiss-cpu>=1.7", "annoy>=1.17,<2", "turbovec>=0.5",
     "qdrant-client>=1.7", "pgvector>=0.2", "psycopg[binary]>=3.1",
     "click>=8.1,<9", "fastapi>=0.111,<1", "uvicorn>=0.30,<1",
 ]
 # CI/dev: the test runner plus every pip-installable backend so the recall suite
-# actually exercises them (scann is skipped by importorskip where absent).
+# actually exercises them.
 dev = [
     "pytest>=8",
     "hnswlib>=0.7,<1", "faiss-cpu>=1.7", "annoy>=1.17,<2", "turbovec>=0.5",

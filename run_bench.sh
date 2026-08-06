@@ -4,7 +4,7 @@
 #
 # Covers every backend installable/runnable on this Mac:
 #   exact · turbovec · hnsw · faiss · annoy · qdrant (embedded) · pgvector (Docker)
-#   (scann is intentionally excluded — no Apple-Silicon build exists.)
+#   (ScaNN was dropped from the project entirely — no Apple-Silicon build exists.)
 #
 # Usage:
 #   bash run_bench.sh dry         # ~10s smoke test, every backend (run this FIRST)

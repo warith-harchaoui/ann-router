@@ -28,8 +28,8 @@ knobs:
   annoy:    {knob: search_k,  ladder: [100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600, 51200]}
   turbovec: {knob: bit_width, ladder: [2, 3, 4]}  # turbovec only accepts 2/3/4
 
-# Backends measurable on this machine are auto-detected. Known gaps:
-#   scann    - no Apple-Silicon wheel (impossible here); heuristic retained.
-#   qdrant   - needs a running server; measured only when reachable.
-#   pgvector - needs a Postgres+pgvector; measured only when reachable.
-coverage_notes: "exact, turbovec, hnsw, faiss, annoy are directly measurable."
+# Backends measurable on this machine are auto-detected. Known gap:
+#   qdrant/pgvector - need a running server; measured only when reachable
+#                     (both were reachable during the recorded sweep below).
+# ScaNN is not a registered backend (no Apple-Silicon wheel; dropped entirely).
+coverage_notes: "exact, turbovec, hnsw, faiss, annoy, qdrant, pgvector all measured."

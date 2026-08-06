@@ -31,7 +31,9 @@ def test_route_json(capsys) -> None:
 
 
 def test_route_markdown(capsys) -> None:
-    out = _run(capsys, ["route", "--n-vectors", "500000", "--dim", "768", "--dynamic", "--markdown"])
+    out = _run(
+        capsys, ["route", "--n-vectors", "500000", "--dim", "768", "--dynamic", "--markdown"]
+    )
     assert out.startswith("# ann-router decision:")
 
 
@@ -54,25 +56,54 @@ def test_build_search_round_trip(capsys, tmp_path) -> None:
     np.save(vpath, vecs)
     ipath = str(tmp_path / "idx")
     build_out = json.loads(
-        _run(capsys, ["build", "--n-vectors", "2000", "--dim", "32", "--vectors", vpath, "--index", ipath])
+        _run(
+            capsys,
+            ["build", "--n-vectors", "2000", "--dim", "32", "--vectors", vpath, "--index", ipath],
+        )
     )
     assert build_out["backend"] == "exact"
 
     qpath = str(tmp_path / "q.npy")
     np.save(qpath, vecs[:2])
-    search_out = json.loads(_run(capsys, ["search", "--index", ipath, "--queries", qpath, "-k", "5"]))
+    search_out = json.loads(
+        _run(capsys, ["search", "--index", ipath, "--queries", qpath, "-k", "5"])
+    )
     assert len(search_out["ids"]) == 2
     assert search_out["ids"][0][0] == 0  # a point's nearest neighbour is itself
 
 
-def test_click_twin_matches_argparse() -> None:
-    # The click CLI is optional; when present it must expose the same commands.
+def test_click_twin_drives_every_subcommand(tmp_path) -> None:
+    # The click CLI is optional; when present it must expose the same commands
+    # as argparse (route/build/search/bench/capabilities), not just route.
     pytest.importorskip("click")
     from click.testing import CliRunner
 
     from ann_router import cli_click
 
     runner = CliRunner()
-    result = runner.invoke(cli_click.cli, ["route", "--n-vectors", "500", "--dim", "16"])
-    assert result.exit_code == 0
-    assert json.loads(result.output)["backend"] == "exact"
+
+    def invoke(*args) -> dict:
+        result = runner.invoke(cli_click.cli, list(args))
+        assert result.exit_code == 0, result.output
+        return json.loads(result.output)
+
+    assert invoke("route", "--n-vectors", "500", "--dim", "16")["backend"] == "exact"
+    assert "exact" in invoke("capabilities")["available"]
+    assert (
+        invoke("bench", "--n", "1200", "--dim", "32", "-k", "5")["results"]["exact"]["recall"]
+        == 1.0
+    )
+
+    rng = np.random.default_rng(4)
+    vecs = rng.standard_normal((1_000, 16)).astype(np.float32)
+    vpath, ipath = str(tmp_path / "v.npy"), str(tmp_path / "idx")
+    np.save(vpath, vecs)
+    build_out = invoke(
+        "build", "--n-vectors", "1000", "--dim", "16", "--vectors", vpath, "--index", ipath
+    )
+    assert build_out["backend"] == "exact"
+
+    qpath = str(tmp_path / "q.npy")
+    np.save(qpath, vecs[:2])
+    search_out = invoke("search", "--index", ipath, "--queries", qpath, "-k", "5")
+    assert search_out["ids"][0][0] == 0  # a point's nearest neighbour is itself

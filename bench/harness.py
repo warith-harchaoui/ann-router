@@ -94,7 +94,7 @@ _SWEEP = {
         "build": {"n_trees": 50},
     },
     "turbovec": {"kind": "build", "ladder": _BITS_LADDER, "param": "bit_width"},
-    # scann / qdrant / pgvector: measured only when importable & (for the servers)
+    # qdrant / pgvector: measured only when importable & (for the servers)
     # reachable; handled generically as a single default operating point below.
 }
 
@@ -337,7 +337,7 @@ def _run_cell(
             if best is not None:
                 break
 
-    else:  # generic single default operating point (qdrant/pgvector/scann)
+    else:  # generic single default operating point (qdrant/pgvector)
         # Their query knobs aren't exposed through the ANNIndex surface, so we
         # measure one default operating point. `met_target` then honestly reflects
         # whether that default hit the target (record() only sets `best` if so).
@@ -524,7 +524,7 @@ def cmd_dryrun(args) -> None:
 
     print(
         f"\n[dry-run] {len(rows)} cells, {len(warns)} skipped, {len(fails)} FAILED "
-        f"across {len(set(b for b, *_ in rows))} backend(s)"
+        f"across {len({b for b, *_ in rows})} backend(s)"
     )
     if fails:
         broken = sorted({b for b, *_ in fails})

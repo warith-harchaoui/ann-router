@@ -1,19 +1,18 @@
 # ann-router
 
+<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/master/assets/logo.png" alt="ann-router logo" width="180">
 
-[🇫🇷](LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](README.md)
+[🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/master/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/master/README.md)
 
 ![License](https://img.shields.io/badge/license-BSD--3--Clause-blue)
 ![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
 ![Local-first](https://img.shields.io/badge/local--first-yes-brightgreen)
+[![tests](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml/badge.svg)](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml)
 
 `ann-router` belongs to the **AI Helpers** suite. It is a *router*: you describe
 your approximate-nearest-neighbour (ANN) vector-search problem in *measured*
 terms, and it selects, **justifies**, and can **instantiate** the right engine,
 instead of marrying you to a single library.
-
-<img src="assets/logo.png" alt="ann-router logo">
-
 
 Finding the vectors closest to a query vector inside a large database of vectors
 is a very common problem in artificial intelligence. Naively, it has linear
@@ -33,7 +32,11 @@ discussable rationale.**
 The engines it routes among:
 
 > **exact (brute force) · turbovec · HNSW (hnswlib) · FAISS (IVF/PQ) · Annoy ·
-> ScaNN · Qdrant · pgvector**
+> Qdrant · pgvector**
+
+(ScaNN was evaluated and dropped: no Apple-Silicon wheel exists, and the
+project has abandoned it as a supported backend — see
+[CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md).)
 
 Importing the package is cheap and dependency-free: no engine's optional
 dependency is loaded at import time, so `import ann_router` works with only numpy
@@ -47,14 +50,37 @@ a 5k-vector corpus wants an exact scan (instant, recall 1.0); a corpus with
 constant inserts/deletes wants turbovec (O(1) mutation); one needing SQL
 `WHERE`-filters wants pgvector; a frozen, memory-tight corpus wants Annoy. Hard
 -coding one library gets one of these right and the rest wrong. See
-[LANDSCAPE.md](LANDSCAPE.md).
+[LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/master/LANDSCAPE.md).
 
 ## Install
 
-Core (library + always-on argparse CLI):
+### Local (conda)
+
+A minimal `environment.yaml` pins Python + pip and delegates every actual
+dependency to `requirements.txt`:
 
 ```bash
+git clone https://github.com/warith-harchaoui/ann-router.git
+cd ann-router
+conda env create -f environment.yaml
+conda activate ann-router
+pip install -e '.[all]'        # or [hnsw]/[faiss]/... for one engine at a time
+```
 
+### Server (Docker)
+
+A single image builds every pip-installable backend plus the HTTP API door:
+
+```bash
+docker build -t ann-router .
+docker run --rm -p 8018:8018 ann-router
+curl -X POST localhost:8018/route -H 'content-type: application/json' \
+    -d '{"n_vectors": 500000, "dim": 768, "dynamic": true}'
+```
+
+### Plain pip
+
+```bash
 git clone https://github.com/warith-harchaoui/ann-router.git
 cd ann-router
 pip install 'os-helper'
@@ -69,7 +95,8 @@ pip install 'ann-router[all]'       # every pip-installable engine + cli + api
 ```
 
 Full, platform-specific instructions — including the **Apple Silicon annoy**
-caveat and **ScaNN**/**pgvector** notes — are in [INSTALL.md](INSTALL.md).
+caveat and **pgvector** notes — are in
+[INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/master/INSTALL.md).
 
 ## Quick start (library)
 
@@ -116,8 +143,8 @@ with the `pip install` line that fixes it.
 2. **CLI** — `ann-router` (argparse, always available) and the `ann-router-click`
    twin (`[cli]` extra). Subcommands: `route`, `build`, `search`, `bench`,
    `capabilities`.
-3. **HTTP API** — `uvicorn ann_router.api:app` (`[api]` extra): `POST /route`,
-   `GET /capabilities`, `GET /bench`.
+3. **HTTP API** — `uvicorn ann_router.api:app` (`[api]` extra, or the Docker
+   image above): `POST /route`, `GET /capabilities`, `GET /bench`.
 4. **MCP server** — `python -m ann_router.mcp_server` (`[mcp]` extra): exposes
    `route`, `capabilities`, `bench` as agent tools.
 5. **Skill** — `skills/ann-router/SKILL.md`, so an agent knows when to reach for
@@ -133,15 +160,61 @@ ann-router capabilities
 
 The decision tree (tunable via `policy.yaml` / `ANN_ROUTER_POLICY`):
 
+```mermaid
+flowchart TD
+    Q[["n_vectors, dim, target_recall,<br/>dynamic, persistence, hardware..."]]
+    Q --> D1{n < EXACT_MAX_N?}
+    D1 -->|yes| EXACT([exact])
+    D1 -->|no| D2{frequent updates?}
+    D2 -->|yes| TURBOVEC([turbovec])
+    D2 -->|no| D3{n >= FAISS_MIN_N<br/>and GPU/batch?}
+    D3 -->|yes| FAISS([faiss])
+    D3 -->|no| D4{persistence or<br/>metadata filtering?}
+    D4 -->|yes, DB in place| PGVECTOR([pgvector])
+    D4 -->|yes, no DB| QDRANT([qdrant])
+    D4 -->|no| D5{tight memory<br/>budget?}
+    D5 -->|yes| ANNOY([annoy])
+    D5 -->|no| HNSW([hnsw · default])
+
+    classDef exact fill:#808080,color:#fff,stroke:#808080
+    classDef turbovec fill:#AF52DE,color:#fff,stroke:#AF52DE
+    classDef faiss fill:#FF9500,color:#fff,stroke:#FF9500
+    classDef pgvector fill:#28CD41,color:#fff,stroke:#28CD41
+    classDef qdrant fill:#79DBDC,color:#003333,stroke:#79DBDC
+    classDef annoy fill:#FFCC00,color:#3d2e00,stroke:#FFCC00
+    classDef hnsw fill:#007AFF,color:#fff,stroke:#007AFF
+    classDef decision fill:#F8F8F8,color:#000000,stroke:#F8F8F8
+
+    class EXACT exact
+    class TURBOVEC turbovec
+    class FAISS faiss
+    class PGVECTOR pgvector
+    class QDRANT qdrant
+    class ANNOY annoy
+    class HNSW hnsw
+    class D1,D2,D3,D4,D5,Q decision
+```
+
 | # | If the criteria say… | Route to | Because |
 | - | -------------------- | -------- | ------- |
-| 1 | `n < 10 000` | **exact** | a brute-force scan is already instant and exact (recall 1.0) |
+| 1 | `n < EXACT_MAX_N` | **exact** | a brute-force scan is already instant and exact (recall 1.0) |
 | 2 | frequent updates | **turbovec** | O(1) add/remove, no rebuild; TurboQuant 2-4 bit (~16×) |
-| 3 | very large + GPU/batch | **FAISS** | IVF+PQ scales; GPU batch throughput |
+| 3 | `n >= FAISS_MIN_N` + GPU/batch | **FAISS** | IVF+PQ scales; GPU batch throughput |
 | 4 | persistence + metadata filters | **Qdrant / pgvector** | on-disk HNSW + payload/SQL `WHERE` filtering |
-| 5 | max recall at scale | **ScaNN** | anisotropic (score-aware) quantisation |
-| 6 | read-only + tight memory | **Annoy** | frozen, memory-mapped, very lean |
-| 7 | stable in-memory (default) | **HNSW** | best recall/latency when the index rarely changes |
+| 5 | read-only + tight memory | **Annoy** | frozen, memory-mapped, very lean |
+| 6 | stable in-memory (default) | **HNSW** | best recall/latency when the index rarely changes |
+
+`EXACT_MAX_N`/`FAISS_MIN_N` are being calibrated from measured recall/latency
+data rather than guessed — see
+[bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)
+for the sweep and
+[bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/results/decision_tree.md)
+for this project's own tree with the currently-measured thresholds filled in,
+per embedding dimension. Until that calibration is reviewed and applied to
+`ann_router/policy.yaml`, the live router provisionally routes every
+non-exact pick to turbovec rather than trust an unmeasured crossover (see
+`ann_router.policy.PROVISIONAL_ROUTING`); the table and diagram above are the
+target policy, not necessarily today's live behaviour.
 
 The router returns not just the name but the **criteria that drove it** and the
 **alternatives it considered** (including any preferred-but-uninstalled engine it
@@ -156,10 +229,11 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## More
 
-- [EXAMPLES.md](EXAMPLES.md) — a runnable cookbook.
-- [LANDSCAPE.md](LANDSCAPE.md) — how ann-router compares to just picking one engine.
-- [CODING.md](CODING.md) — the coding standard this repo holds itself to.
-- [CONTRIBUTING.md](CONTRIBUTING.md) · [CHANGELOG.md](CHANGELOG.md) · [TRIGGERS.md](TRIGGERS.md)
+- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/master/EXAMPLES.md) — a runnable cookbook.
+- [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/master/LANDSCAPE.md) — how ann-router compares to just picking one engine.
+- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/master/CODING.md) — the coding standard this repo holds itself to.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md) — the measured calibration harness.
+- [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/master/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/master/TRIGGERS.md)
 
 ## Author
 
@@ -167,4 +241,4 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## License
 
-BSD-3-Clause — see [LICENSE](LICENSE).
+BSD-3-Clause — see [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/master/LICENSE).

@@ -15,13 +15,13 @@ print([c["backend"] for c in choice.considered])   # => ['turbovec', 'hnsw']
 ```
 
 The router only ever returns an **installed** backend. If the policy's first
-pick is not installed, it falls back and says so:
+pick is not installed, it falls back and says so — e.g. on a machine where the
+`turbovec` extra isn't installed, a dynamic corpus falls back to `hnsw`:
 
 ```python
-choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, target_recall=0.99))
-# policy prefers 'scann' (no macOS wheel) -> falls back:
-print(choice.backend)      # => hnsw
-print(choice.rationale)    # => "Preferred backend 'scann' is not installed here, so ..."
+choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True))
+print(choice.backend)      # => hnsw   (if turbovec is uninstalled here)
+print(choice.rationale)    # => "Preferred backend 'turbovec' is not installed here, so ..."
 ```
 
 ## 2. auto_index: route + build + search in one call

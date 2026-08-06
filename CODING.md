@@ -62,8 +62,7 @@ Neutral EN/FR forms; avoid hard-coding personal names in public templates.
 
 ## 12. Provide cross-platform install instructions
 Cover macOS / Ubuntu / Windows; never silently omit a platform. Call out the
-**Apple Silicon annoy** caveat and the **Linux-only ScaNN** reality explicitly
-(see `INSTALL.md`).
+**Apple Silicon annoy** caveat explicitly (see `INSTALL.md`).
 
 ## 13. Keep AI-assistant attribution policy explicit
 Do **not** list any AI assistant as author or co-author; no `Co-Authored-By`

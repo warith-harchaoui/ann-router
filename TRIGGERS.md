@@ -6,7 +6,7 @@ plus what it does and does not do.
 
 ## What it does
 Given a *measured* description of a vector-search problem, it selects the right
-ANN backend (exact / turbovec / HNSW / FAISS / Annoy / ScaNN / Qdrant /
+ANN backend (exact / turbovec / HNSW / FAISS / Annoy / Qdrant /
 pgvector), explains why, and can build the index — all behind one interface.
 
 ## What it does NOT do

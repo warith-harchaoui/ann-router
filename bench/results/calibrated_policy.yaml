@@ -1,0 +1,616 @@
+source: /Users/warithharchaoui/ann-router/bench/results/measurements.yaml
+n_cells: 491
+measured_backends:
+- annoy
+- exact
+- faiss
+- hnsw
+- pgvector
+- qdrant
+- turbovec
+unmeasured_backends: []
+thresholds:
+  EXACT_MAX_N:
+    128:
+      value: null
+      method: exact p50<= 10.0ms and no faster ANN, dim=128
+      evidence: []
+    384:
+      value: 1000
+      method: exact p50<= 10.0ms and no faster ANN, dim=384
+      evidence:
+      - backend: exact
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 1.0
+        latency_ms_p50: 0.0375420022464823
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: annoy
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9866
+        latency_ms_p50: 0.2781669973046519
+        op_knob: 1600
+        index_bytes: 2167200
+        raw_bytes: 1536000
+      - backend: annoy
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.9866
+        latency_ms_p50: 0.281458498648135
+        op_knob: 1600
+        index_bytes: 2167200
+        raw_bytes: 1536000
+      - backend: annoy
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9448
+        latency_ms_p50: 0.22383299801731482
+        op_knob: 800
+        index_bytes: 2167200
+        raw_bytes: 1536000
+      - backend: faiss
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9958
+        latency_ms_p50: 6.908916500833584
+        op_knob: 24
+        index_bytes: 1590784
+        raw_bytes: 1536000
+      - backend: faiss
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.9958
+        latency_ms_p50: 1.1466249998193234
+        op_knob: 24
+        index_bytes: 1590784
+        raw_bytes: 1536000
+      - backend: faiss
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9342
+        latency_ms_p50: 0.3976875013904646
+        op_knob: 16
+        index_bytes: 1590784
+        raw_bytes: 1536000
+      - backend: hnsw
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.962
+        latency_ms_p50: 0.5082709994894685
+        op_knob: 48
+        index_bytes: 1688244
+        raw_bytes: 1536000
+      - backend: hnsw
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.9946
+        latency_ms_p50: 0.6594375008717179
+        op_knob: 96
+        index_bytes: 1688244
+        raw_bytes: 1536000
+      - backend: hnsw
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9238
+        latency_ms_p50: 0.19954200070060324
+        op_knob: 32
+        index_bytes: 1688244
+        raw_bytes: 1536000
+      - backend: pgvector
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 1.0
+        latency_ms_p50: 0.6593750003958121
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: pgvector
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 1.0
+        latency_ms_p50: 0.6983749990467913
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: pgvector
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 1.0
+        latency_ms_p50: 0.6498130023828708
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: qdrant
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 1.0
+        latency_ms_p50: 2.7307079999445705
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: qdrant
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 1.0
+        latency_ms_p50: 1.6275210000458173
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: qdrant
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 1.0
+        latency_ms_p50: 0.9074169993255055
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 1536000
+      - backend: turbovec
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.904
+        latency_ms_p50: 0.03854199894703925
+        op_knob: 4
+        index_bytes: 207090
+        raw_bytes: 1536000
+      - backend: turbovec
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.904
+        latency_ms_p50: 0.03779200051212683
+        op_knob: 4
+        index_bytes: 207090
+        raw_bytes: 1536000
+      - backend: turbovec
+        n: 1000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9126
+        latency_ms_p50: 0.0518749984621536
+        op_knob: 4
+        index_bytes: 204014
+        raw_bytes: 1536000
+    768:
+      value: 5000
+      method: exact p50<= 10.0ms and no faster ANN, dim=768
+      evidence:
+      - backend: exact
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 1.0
+        latency_ms_p50: 0.1442084976588376
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: annoy
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9852
+        latency_ms_p50: 3.152166500512976
+        op_knob: 12800
+        index_bytes: 17887200
+        raw_bytes: 15360000
+      - backend: annoy
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.9852
+        latency_ms_p50: 3.148457999486709
+        op_knob: 12800
+        index_bytes: 17887200
+        raw_bytes: 15360000
+      - backend: annoy
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9852
+        latency_ms_p50: 3.158208004606422
+        op_knob: 12800
+        index_bytes: 17887200
+        raw_bytes: 15360000
+      - backend: faiss
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 1.0
+        latency_ms_p50: 0.45722899812972173
+        op_knob: 128
+        index_bytes: 15834424
+        raw_bytes: 15360000
+      - backend: faiss
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 1.0
+        latency_ms_p50: 0.4074164971825667
+        op_knob: 128
+        index_bytes: 15834424
+        raw_bytes: 15360000
+      - backend: faiss
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9288
+        latency_ms_p50: 0.31400000079884194
+        op_knob: 96
+        index_bytes: 15834424
+        raw_bytes: 15360000
+      - backend: hnsw
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9792
+        latency_ms_p50: 2.761062001809478
+        op_knob: 384
+        index_bytes: 16103148
+        raw_bytes: 15360000
+      - backend: hnsw
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.993
+        latency_ms_p50: 3.011271001014393
+        op_knob: 512
+        index_bytes: 16103148
+        raw_bytes: 15360000
+      - backend: hnsw
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.9068
+        latency_ms_p50: 1.9506874996295664
+        op_knob: 192
+        index_bytes: 16103148
+        raw_bytes: 15360000
+      - backend: pgvector
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.6326
+        latency_ms_p50: 1.0710204987844918
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: pgvector
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.6318
+        latency_ms_p50: 1.0168335029447917
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: pgvector
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.6324
+        latency_ms_p50: 1.1165420000907034
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: qdrant
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 1.0
+        latency_ms_p50: 4.969166497176047
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: qdrant
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 1.0
+        latency_ms_p50: 4.475104000448482
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: qdrant
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 1.0
+        latency_ms_p50: 4.585104503348703
+        op_knob: null
+        index_bytes: null
+        raw_bytes: 15360000
+      - backend: turbovec
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.8676
+        latency_ms_p50: 0.14725000073667616
+        op_knob: 4
+        index_bytes: 1986162
+        raw_bytes: 15360000
+      - backend: turbovec
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.98
+        achieved_recall: 0.8676
+        latency_ms_p50: 0.1472704971092753
+        op_knob: 4
+        index_bytes: 1986162
+        raw_bytes: 15360000
+      - backend: turbovec
+        n: 5000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8676
+        latency_ms_p50: 0.15220849672914483
+        op_knob: 4
+        index_bytes: 1986162
+        raw_bytes: 15360000
+  FAISS_MIN_N:
+    128:
+      value: 20000
+      method: first n where faiss p50<hnsw p50 at recall 0.95, dim=128
+      evidence:
+      - backend: faiss
+        n: 20000
+        dim: 128
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9622
+        latency_ms_p50: 0.06935450073797256
+        op_knob: 8
+        index_bytes: 10826424
+        raw_bytes: 10240000
+      - backend: hnsw
+        n: 20000
+        dim: 128
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9582
+        latency_ms_p50: 0.06989599933149293
+        op_knob: 32
+        index_bytes: 13213732
+        raw_bytes: 10240000
+    384:
+      value: 5000
+      method: first n where faiss p50<hnsw p50 at recall 0.95, dim=384
+      evidence:
+      - backend: faiss
+        n: 5000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9628
+        latency_ms_p50: 0.13408349877863657
+        op_knob: 64
+        index_bytes: 7957816
+        raw_bytes: 7680000
+      - backend: hnsw
+        n: 5000
+        dim: 384
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9704
+        latency_ms_p50: 0.8161460009432631
+        op_knob: 192
+        index_bytes: 8443148
+        raw_bytes: 7680000
+    768:
+      value: 1037
+      method: first n where faiss p50<hnsw p50 at recall 0.95, dim=768
+      evidence:
+      - backend: faiss
+        n: 1037
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.978
+        latency_ms_p50: 0.12606249583768658
+        op_knob: 24
+        index_bytes: 3282520
+        raw_bytes: 3185664
+      - backend: hnsw
+        n: 1037
+        dim: 768
+        k: 10
+        target_recall: 0.95
+        achieved_recall: 0.9792
+        latency_ms_p50: 0.6154580005386379
+        op_knob: 96
+        index_bytes: 3339304
+        raw_bytes: 3185664
+  HIGH_RECALL:
+    128:
+      value: 0.9
+      method: lowest target a quantised backend missed, dim=128
+      evidence:
+      - backend: turbovec
+        n: 100000
+        dim: 128
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.875
+        latency_ms_p50: 0.4047084985359106
+        op_knob: 4
+        index_bytes: 7601042
+        raw_bytes: 51200000
+      - backend: turbovec
+        n: 10000
+        dim: 128
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8936
+        latency_ms_p50: 0.045374996261671185
+        op_knob: 4
+        index_bytes: 761042
+        raw_bytes: 5120000
+      - backend: turbovec
+        n: 200000
+        dim: 128
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8684
+        latency_ms_p50: 0.8497705021000002
+        op_knob: 4
+        index_bytes: 15201042
+        raw_bytes: 102400000
+      - backend: turbovec
+        n: 20000
+        dim: 128
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8882
+        latency_ms_p50: 0.07858400203986093
+        op_knob: 4
+        index_bytes: 1521042
+        raw_bytes: 10240000
+    384:
+      value: 0.9
+      method: lowest target a quantised backend missed, dim=384
+      evidence:
+      - backend: turbovec
+        n: 100000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8534
+        latency_ms_p50: 0.8848750003380701
+        op_knob: 4
+        index_bytes: 20403090
+        raw_bytes: 153600000
+      - backend: turbovec
+        n: 10000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8788
+        latency_ms_p50: 0.10591699538053945
+        op_knob: 4
+        index_bytes: 2043090
+        raw_bytes: 15360000
+      - backend: turbovec
+        n: 20000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8724
+        latency_ms_p50: 0.1850414992077276
+        op_knob: 4
+        index_bytes: 4083090
+        raw_bytes: 30720000
+      - backend: turbovec
+        n: 50000
+        dim: 384
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8658
+        latency_ms_p50: 0.4156454997428227
+        op_knob: 4
+        index_bytes: 10203090
+        raw_bytes: 76800000
+    768:
+      value: 0.9
+      method: lowest target a quantised backend missed, dim=768
+      evidence:
+      - backend: turbovec
+        n: 10000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8612
+        latency_ms_p50: 0.2220210008090362
+        op_knob: 4
+        index_bytes: 3966162
+        raw_bytes: 30720000
+      - backend: turbovec
+        n: 1000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8886
+        latency_ms_p50: 0.09000000136438757
+        op_knob: 4
+        index_bytes: 402162
+        raw_bytes: 3072000
+      - backend: turbovec
+        n: 20000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.853
+        latency_ms_p50: 0.37795849857502617
+        op_knob: 4
+        index_bytes: 7926162
+        raw_bytes: 61440000
+      - backend: turbovec
+        n: 2000
+        dim: 768
+        k: 10
+        target_recall: 0.9
+        achieved_recall: 0.8844
+        latency_ms_p50: 0.10660450061550364
+        op_knob: 4
+        index_bytes: 798162
+        raw_bytes: 6144000
+memory_compression_raw_over_index:
+  annoy: 0.71
+  faiss: 0.97
+  hnsw: 0.91
+  turbovec: 7.51

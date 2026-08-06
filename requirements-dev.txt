@@ -1,6 +1,5 @@
 # Development / CI dependencies: the core, the test runner, and every backend
-# that installs cleanly with pip on macOS/Apple Silicon + Linux. scann is omitted
-# (no macOS/arm64 wheel — install it manually on Linux/x86; see INSTALL.md).
+# that installs cleanly with pip on macOS/Apple Silicon + Linux.
 # On Apple Silicon install annoy via conda-forge (`conda install -c conda-forge
 # python-annoy`) instead of pip — the pip source build is miscompiled there.
 -r requirements.txt

@@ -19,11 +19,6 @@ thresholds:
   # throughput begin to dominate a graph index.
   FAISS_MIN_N: 1000000
 
-  # ScaNN's anisotropic quantisation only earns its build cost at large scale
-  # AND when the recall target is high enough to need its accuracy edge.
-  SCANN_MIN_N: 1000000
-  SCANN_MIN_RECALL: 0.98
-
   # At/above this target the workload is "high precision": steer toward
-  # exact/HNSW/ScaNN and away from aggressive quantisation.
+  # exact/HNSW and away from aggressive quantisation.
   HIGH_RECALL: 0.95

@@ -22,7 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-# The eight backend identifiers the router can select from. Keeping them as a
+# The seven backend identifiers the router can select from. Keeping them as a
 # closed literal (rather than free strings) makes typos a type error and lets
 # the policy table stay exhaustive.
 BackendName = Literal[
@@ -31,14 +31,13 @@ BackendName = Literal[
     "hnsw",
     "faiss",
     "annoy",
-    "scann",
     "qdrant",
     "pgvector",
 ]
 
 # Hardware profiles that change the decision. ``apple_silicon`` is called out
 # separately from ``cpu`` because turbovec (Rust + NEON) and Metal-backed
-# engines behave differently there; ``gpu`` unlocks FAISS-GPU / ScaNN batch.
+# engines behave differently there; ``gpu`` unlocks FAISS-GPU batch.
 HardwareName = Literal["cpu", "gpu", "apple_silicon"]
 
 # The distance metric the corpus is embedded for. Cosine is the default for
@@ -64,7 +63,7 @@ class Criteria:
         Embedding dimensionality (e.g. 384, 768, 1536, 2048).
     target_recall : float, optional
         Desired recall@k against the exact ground truth, in ``(0, 1]``.
-        Defaults to ``0.95``. High values push toward exact/HNSW/ScaNN and away
+        Defaults to ``0.95``. High values push toward exact/HNSW and away
         from aggressively quantised indexes.
     latency_budget_ms : float, optional
         Per-query latency budget in milliseconds. Defaults to ``10.0`` (an

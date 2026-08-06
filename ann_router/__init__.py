@@ -8,7 +8,7 @@ metadata-filtering need, hardware, persistence — and it selects, *justifies*, 
 can *instantiate* the appropriate engine among:
 
     exact (brute force) · turbovec · HNSW (hnswlib) · FAISS (IVF/PQ) ·
-    Annoy · ScaNN · Qdrant · pgvector
+    Annoy · Qdrant · pgvector
 
 instead of marrying a single library.
 

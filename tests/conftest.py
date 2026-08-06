@@ -41,7 +41,6 @@ RECALL_THRESHOLDS: dict[str, float] = {
     "annoy": 0.90,
     "qdrant": 0.90,
     "pgvector": 0.90,
-    "scann": 0.90,
     "turbovec": 0.55,
 }
 
@@ -90,4 +89,6 @@ def recall_at_k(pred_ids: np.ndarray, truth_ids: np.ndarray, k: int) -> float:
     float
         Mean over queries of ``|pred ∩ truth| / k``.
     """
-    return float(np.mean([len(set(a) & set(b)) / k for a, b in zip(pred_ids, truth_ids, strict=False)]))
+    return float(
+        np.mean([len(set(a) & set(b)) / k for a, b in zip(pred_ids, truth_ids, strict=False)])
+    )

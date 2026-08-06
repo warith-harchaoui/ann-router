@@ -1,14 +1,14 @@
 """Backend registry — the single lookup table from name to adapter class.
 
 Every backend adapter is a subclass of :class:`ann_router.base.ANNIndex`; this
-module is the one place that maps the eight backend names to those classes and
+module is the one place that maps the seven backend names to those classes and
 answers the two questions the router asks about each: *what can it do*
 (capabilities, readable without the dependency) and *can it run here* (is the
 optional dependency importable). Importing this module — and therefore
 ``ann_router`` — must stay dependency-free, so the adapter modules it imports
 all defer their heavy imports.
 
-Consumes: the eight ``ann_router.backends.*`` adapter modules.
+Consumes: the seven ``ann_router.backends.*`` adapter modules.
 Produces: :data:`BACKENDS`, :func:`get_backend`, :func:`available_backends`,
 :func:`all_capabilities`.
 
@@ -23,7 +23,6 @@ from .backends.faiss_backend import FaissIndex
 from .backends.hnsw import HNSWIndex
 from .backends.pgvector_backend import PgVectorIndex
 from .backends.qdrant_backend import QdrantIndex
-from .backends.scann_backend import ScannIndex
 from .backends.turbovec_backend import TurboVecIndex
 from .base import ANNIndex, Capabilities
 
@@ -35,7 +34,6 @@ BACKENDS: dict[str, type[ANNIndex]] = {
     "hnsw": HNSWIndex,
     "faiss": FaissIndex,
     "annoy": AnnoyIndex,
-    "scann": ScannIndex,
     "qdrant": QdrantIndex,
     "pgvector": PgVectorIndex,
 }

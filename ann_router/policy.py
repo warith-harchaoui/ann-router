@@ -14,9 +14,11 @@ one already shipped, in two-branch form, inside the ``roitelet`` prototype):
 2. else frequent updates                        -> **turbovec** (O(1) add/remove)
 3. else very large volume + GPU/batch           -> **faiss** (IVF+PQ, scales)
 4. else persistence + metadata filters          -> **qdrant / pgvector**
-5. else max recall at very large scale          -> **scann** (anisotropic quant.)
-6. else read-only + tight memory                -> **annoy** (frozen, mmap, lean)
-7. else stable in-memory corpus (the default)   -> **hnsw** (best recall/latency)
+5. else read-only + tight memory                -> **annoy** (frozen, mmap, lean)
+6. else stable in-memory corpus (the default)   -> **hnsw** (best recall/latency)
+
+ScaNN was dropped: no Apple-Silicon wheel exists, and the project has
+definitively abandoned it as a supported backend (see CHANGELOG.md).
 
 Consumes: ``ann_router.spec``.
 Produces: :func:`rank_backends`, plus the ``THRESHOLDS`` constants.
@@ -45,27 +47,20 @@ EXACT_MAX_N: int = 10_000
 # batch throughput start to dominate a graph index.
 FAISS_MIN_N: int = 1_000_000
 
-# ScaNN's anisotropic quantisation is worth its build cost only at large scale
-# AND when the recall target is high enough to need its accuracy edge.
-SCANN_MIN_N: int = 1_000_000
-SCANN_MIN_RECALL: float = 0.98
-
 # At/above this target we treat the workload as "high precision", steering away
-# from aggressive quantisation toward exact/HNSW/ScaNN.
+# from aggressive quantisation toward exact/HNSW.
 HIGH_RECALL: float = 0.95
 
 # Bundled so the whole set can be overridden atomically by a caller / policy.yaml.
 THRESHOLDS: dict[str, float] = {
     "EXACT_MAX_N": EXACT_MAX_N,
     "FAISS_MIN_N": FAISS_MIN_N,
-    "SCANN_MIN_N": SCANN_MIN_N,
-    "SCANN_MIN_RECALL": SCANN_MIN_RECALL,
     "HIGH_RECALL": HIGH_RECALL,
 }
 
 # --- TEMPORARY: provisional routing while bench/ calibration is in flight -------
 # EXACT_MAX_N is trustworthy (pure brute-force math), but every threshold above it
-# (FAISS_MIN_N, SCANN_MIN_N, HIGH_RECALL, ...) is still *guessed*, not measured —
+# (FAISS_MIN_N, HIGH_RECALL, ...) is still *guessed*, not measured —
 # see bench/README.md and .private/next.md. Until the calibration sweep lands and
 # ann_router/policy.yaml is bumped from bench/results/calibrated_policy.yaml,
 # ann_router.router.route() overrides every non-exact pick to turbovec (a safe,
@@ -196,25 +191,8 @@ _RULES: list[Rule] = [
         ),
     ),
     Rule(
-        "scann",
-        lambda c, t: (
-            c.n_vectors >= t["EXACT_MAX_N"]
-            and not c.dynamic
-            and c.n_vectors >= t["SCANN_MIN_N"]
-            and c.target_recall >= t["SCANN_MIN_RECALL"]
-        ),
-        lambda c, t: (
-            f"maximum recall at scale (n={c.n_vectors:,}, target_recall={c.target_recall}): "
-            "ScaNN's anisotropic (score-aware) quantisation beats plain PQ at the same latency."
-        ),
-    ),
-    Rule(
         "annoy",
-        lambda c, t: (
-            c.n_vectors >= t["EXACT_MAX_N"]
-            and not c.dynamic
-            and _tight_memory(c)
-        ),
+        lambda c, t: c.n_vectors >= t["EXACT_MAX_N"] and not c.dynamic and _tight_memory(c),
         lambda c, t: (
             f"read-only corpus under a tight memory budget "
             f"(~{raw_memory_gb(c):.1f} GB raw > {c.memory_budget_gb} GB budget): Annoy freezes "

@@ -6,6 +6,15 @@ benchmark findings. This note records the evidence and the measured recall on
 this machine, so a future change to a threshold is a reviewed, evidence-backed
 act (CODING.md rules 14-15).
 
+**Superseded by `bench/`.** This note captures the original single-machine,
+single-corpus recall snapshot that justified the *shape* of the decision tree
+(exact → turbovec → FAISS → Qdrant/pgvector → Annoy → HNSW). The actual
+*threshold values* (`EXACT_MAX_N`, `FAISS_MIN_N`, `HIGH_RECALL`) are now
+calibrated from the much larger `bench/` sweep (491 measured cells across n,
+dim, and target_recall) — see `bench/README.md` and
+`bench/results/calibrated_policy.yaml`. Kept here as the historical
+rationale for the tree's structure, not its numbers.
+
 ## Sources
 
 - **roitelet** (`core/personal.py`, `core/pixel_rag.py`): a production two-step
@@ -35,8 +44,11 @@ queries), scored against the exact brute-force ground truth
 | annoy | 1.000 | 0.90 |
 | qdrant | 1.000 | 0.90 |
 | turbovec | 0.700 | 0.55 |
-| scann | — (no macOS wheel) | 0.90 |
 | pgvector | — (needs live server) | 0.90 |
+
+ScaNN was evaluated and dropped entirely (no Apple-Silicon wheel, and the
+project has abandoned it as a supported backend) — see `CHANGELOG.md`. It no
+longer appears in `RECALL_THRESHOLDS` or the registry.
 
 turbovec's floor is deliberately lower: its 2-4 bit TurboQuant is lossy and
 data-dependent (0.70 on this clustered set, ~0.85 on sphere-distributed data),

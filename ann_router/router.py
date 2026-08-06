@@ -66,8 +66,6 @@ def _recommended_config(backend: str, c: Criteria) -> dict:
     elif backend == "turbovec":
         # 4-bit is the recall/size sweet spot measured in the roitelet study.
         cfg.update(bit_width=4)
-    elif backend == "scann":
-        cfg.update(num_leaves_to_search=100, reordering=100)
     elif backend in ("qdrant", "pgvector") and c.extra.get("pg_dsn"):
         # Carry a DSN through if the caller supplied one for the DB path.
         cfg["dsn"] = c.extra["pg_dsn"]
@@ -154,9 +152,11 @@ def route(c: Criteria, thresholds: dict[str, float] | None = None) -> BackendCho
     # --- TEMPORARY provisional override — see policy.PROVISIONAL_ROUTING docstring.
     # exact stays exact (n < EXACT_MAX_N is measured math, not a guess); every other
     # pick is redirected to turbovec until the calibration sweep lands.
-    if PROVISIONAL_ROUTING and backend not in ("exact", "turbovec") and get_backend(
-        "turbovec"
-    ).is_available():
+    if (
+        PROVISIONAL_ROUTING
+        and backend not in ("exact", "turbovec")
+        and get_backend("turbovec").is_available()
+    ):
         rationale = (
             "PROVISIONAL routing (bench/ calibration not yet applied — see bench/README.md): "
             f"every threshold above EXACT_MAX_N is still unmeasured, so turbovec is used "

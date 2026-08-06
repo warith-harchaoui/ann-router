@@ -31,15 +31,17 @@ from ann_router.spec import Criteria
         (Criteria(n_vectors=200_000, dim=768, metadata_filtering=True), "qdrant"),
         (Criteria(n_vectors=200_000, dim=768, persistence=True), "qdrant"),
         (
-            Criteria(n_vectors=200_000, dim=768, metadata_filtering=True,
-                     extra={"pg_dsn": "postgres://x"}),
+            Criteria(
+                n_vectors=200_000,
+                dim=768,
+                metadata_filtering=True,
+                extra={"pg_dsn": "postgres://x"},
+            ),
             "pgvector",
         ),
-        # 5. max recall at scale -> scann
-        (Criteria(n_vectors=2_000_000, dim=768, target_recall=0.99), "scann"),
-        # 6. read-only + tight memory -> annoy
+        # 5. read-only + tight memory -> annoy
         (Criteria(n_vectors=5_000_000, dim=768, memory_budget_gb=1.0), "annoy"),
-        # 7. stable in-memory default -> hnsw
+        # 6. stable in-memory default -> hnsw
         (Criteria(n_vectors=100_000, dim=768), "hnsw"),
     ],
 )

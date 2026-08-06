@@ -1,0 +1,24 @@
+# Ultra-light CI: the `package` stage only runs after `test` succeeds — GitLab
+# stops the pipeline at the first failing stage by default, and the explicit
+# `needs` below additionally makes that a DAG dependency rather than a bare
+# stage ordering, so `package` is skipped (never fails) if `test` fails.
+
+stages:
+  - test
+  - package
+
+test:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - pip install -e . pytest
+    - pytest -q
+
+package:
+  stage: package
+  image: python:3.11-slim
+  needs: ["test"]
+  script:
+    - pip install .
+    - ann-router capabilities
+    - ann-router route --n-vectors 1000 --dim 64

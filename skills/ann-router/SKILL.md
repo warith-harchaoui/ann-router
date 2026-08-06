@@ -3,7 +3,7 @@ name: ann-router
 description: >-
   Select the right approximate-nearest-neighbour (ANN) vector-search backend
   from measured problem criteria — exact / turbovec / HNSW / FAISS / Annoy /
-  ScaNN / Qdrant / pgvector — and get a justified, discussable rationale plus a
+  Qdrant / pgvector — and get a justified, discussable rationale plus a
   ready-to-use index. Use when someone must CHOOSE a vector index / ANN library
   (not serve one), asks "FAISS or HNSW or Annoy?", has a corpus with frequent
   updates, needs metadata-filtered vector search, or wants to benchmark recall.
@@ -15,7 +15,7 @@ when_to_use:
   - The user asks to benchmark recall@k of vector backends against exact truth.
 triggers:
   - "which ANN / vector index library for N vectors"
-  - "FAISS vs HNSW vs Annoy vs ScaNN vs Qdrant vs pgvector"
+  - "FAISS vs HNSW vs Annoy vs Qdrant vs pgvector"
   - "my corpus has constant inserts/deletes — what index"
   - "metadata-filtered vector search"
   - "brute force or ANN index?"
@@ -63,20 +63,22 @@ Route + build + search in one step with `ar.auto_index(vectors, criteria)`.
 
 | criteria | → backend |
 | --- | --- |
-| `n < 10k` | exact (brute force) |
+| `n < EXACT_MAX_N` | exact (brute force) |
 | frequent updates | turbovec |
 | very large + GPU/batch | FAISS (IVF/PQ) |
 | persistence + metadata filters | Qdrant / pgvector |
-| max recall at scale | ScaNN |
 | read-only + tight memory | Annoy |
 | stable in-memory (default) | HNSW |
+
+Thresholds (`EXACT_MAX_N`, `FAISS_MIN_N`, ...) are being calibrated from
+measured data in `bench/` rather than guessed — see `bench/README.md`.
 
 ## Progressive disclosure — go deeper only if needed
 
 - **Full criteria & API** → repo `README.md`, `EXAMPLES.md`.
 - **Why not just pick FAISS** → `LANDSCAPE.md` / `PAYSAGE.md`.
-- **Install / platform caveats** (Apple-Silicon annoy, Linux-only ScaNN,
-  pgvector server) → `INSTALL.md`.
+- **Install / platform caveats** (Apple-Silicon annoy, pgvector server)
+  → `INSTALL.md`.
 - **Tune the policy** → `ann_router/policy.yaml` or `ANN_ROUTER_POLICY`.
 - **Benchmark recall** → `ann-router bench --n 5000 --dim 128 -k 10`.
 - **Capabilities matrix** → `ann-router capabilities`.
