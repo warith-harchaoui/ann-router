@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ann-router"
-version = "0.1.0"
+version = "0.1.1"
 description = "Route to the right approximate-nearest-neighbour backend from measured problem criteria (exact/turbovec/HNSW/FAISS/Annoy/Qdrant/pgvector), with a justified, discussable rationale."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
@@ -78,6 +78,9 @@ dev = [
 ann-router = "ann_router.cli_argparse:main"
 # click twin — install with the [cli] extra.
 ann-router-click = "ann_router.cli_click:cli"
+# HTTP API + MCP server (needs [mcp]) — fastapi-mcp mounts /mcp on the same
+# FastAPI app api.py serves, so one entry point covers both doors.
+ann-router-mcp = "ann_router.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/warith-harchaoui/ann-router"

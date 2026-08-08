@@ -4,6 +4,21 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-08-08
+
+- **Applied the bench calibration to `policy.py`**: thresholds bumped from
+  the provisional values to the measured crossovers in `bench/results/`;
+  provisional routing retired now that real numbers back every threshold.
+- **Fixed `_fit_predict_crossover` ignoring `target`/`nq`/`seed`** when
+  gathering points for the dichotomic bisection search.
+- **Suite-consistency fixes for full `ai-helpers` membership**: added the
+  missing `ann-router-mcp` console-script entry (`ann_router.mcp_server:main`)
+  — every other surface (argparse CLI, click CLI, FastAPI API, FastAPI-MCP)
+  already existed in code but had no installed entry point for the MCP/API
+  door, unlike every other suite member's `<name>-mcp` script. Fixed a
+  `__version__`/`pyproject.toml` drift (`0.1.0` vs the just-bumped `0.1.1`)
+  caught by this repo's own `test_version_is_consistent` guard.
+
 ## [0.1.0] - 2026-08-06
 
 Initial release. First cut of the ANN vector-search router for the *AI
