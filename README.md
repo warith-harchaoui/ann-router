@@ -45,6 +45,14 @@ dependency is loaded at import time, so `import ann_router` works with only nump
 installed, and a backend whose dependency is absent simply reports itself
 unavailable while the router routes around it — this is lazy importing.
 
+## Documentation
+
+[💻 Documentation](https://harchaoui.org/warith/ai-helpers/docs/ann-router-doc/)
+
+[🗺️ Landscape](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md)
+
+[📋 Examples](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md)
+
 ## Why route instead of just picking FAISS (or any one engine)?
 
 Because the right engine is a *function of the problem*, and the problem changes:
@@ -54,7 +62,7 @@ constant inserts/deletes wants turbovec (O(1) mutation); one needing SQL
 -coding one library gets one of these right and the rest wrong. See
 [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md).
 
-## Install
+## Installation
 
 ### Local (conda)
 

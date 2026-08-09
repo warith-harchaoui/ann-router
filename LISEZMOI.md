@@ -40,6 +40,14 @@ optionnelle de moteur n'est chargée à l'import, donc `import ann_router`
 fonctionne avec numpy seul et un backend dont la dépendance est absente se
 signale simplement indisponible pendant que le routeur le contourne. Il s'agit donc de _lazy import_.
 
+## Documentation
+
+[💻 Documentation](https://harchaoui.org/warith/ai-helpers/docs/ann-router-doc/)
+
+[🗺️ Paysage](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md)
+
+[📋 Exemples](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md)
+
 ## Pourquoi router plutôt que choisir FAISS d'office (ou un autre) ?
 
 Parce que le bon moteur est une *fonction du problème* et le problème change :
