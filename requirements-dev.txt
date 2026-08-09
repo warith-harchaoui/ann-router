@@ -1,27 +1,12 @@
-# Development / CI dependencies: the core, the test runner, and every backend
-# that installs cleanly with pip on macOS/Apple Silicon + Linux.
+# Development / CI dependencies for ann-router.
+#
+# Derived from pyproject.toml's [dev] extra (pytest + every ANN backend that
+# installs cleanly with pip on macOS/Apple Silicon + Linux, plus the other
+# four "doors": cli/api/mcp). Kept only for contributors who prefer
+# `pip install -r requirements-dev.txt` -- edit the [dev] extra in
+# pyproject.toml, not this file, to change what installs.
+#
 # On Apple Silicon install annoy via conda-forge (`conda install -c conda-forge
-# python-annoy`) instead of pip — the pip source build is miscompiled there.
--r requirements.txt
-
-pytest>=8
-ruff>=0.5
-
-# ANN engines (optional extras, pinned here so the recall suite exercises them)
-hnswlib>=0.7,<1
-faiss-cpu>=1.7
-annoy>=1.17,<2
-turbovec>=0.5
-qdrant-client>=1.7
-pgvector>=0.2
-psycopg[binary]>=3.1
-
-# The other four "doors"
-click>=8.1,<9
-fastapi>=0.111,<1
-uvicorn>=0.30,<1
-httpx>=0.27
-# fastapi-mcp mounts MCP onto a FastAPI app; mcp<2 is pinned because
-# fastapi-mcp 0.4.x breaks against the mcp 2.0 Server() signature change.
-fastapi-mcp>=0.4,<1
-mcp<2,>=1.20
+# python-annoy`) instead of pip -- the pip source build is miscompiled there.
+-e .[dev]
+ruff==0.15.21
