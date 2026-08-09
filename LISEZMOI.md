@@ -1,8 +1,8 @@
 # ann-router
 
-<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/master/assets/logo.png" alt="logo ann-router" width="180">
+<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/logo.png" alt="logo ann-router" width="180">
 
-[🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/master/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/master/README.md)
+[🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/main/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/main/README.md)
 
 ![Licence](https://img.shields.io/badge/licence-BSD--3--Clause-blue)
 ![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
@@ -33,7 +33,7 @@ Les moteurs entre lesquels il arbitre :
 
 (ScaNN a été évalué puis abandonné : aucun wheel Apple Silicon n'existe et le
 projet l'a définitivement abandonné comme backend supporté — voir
-[CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md).)
+[CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md).)
 
 Importer le paquet est peu coûteux et sans dépendance : aucune dépendance
 optionnelle de moteur n'est chargée à l'import, donc `import ann_router`
@@ -48,7 +48,7 @@ un corpus avec insertions/suppressions constantes veut turbovec (mutation
 O(1)) ; un besoin de filtres SQL `WHERE` veut pgvector ; un corpus figé et
 contraint en mémoire veut Annoy. Coder en dur une seule bibliothèque en réussit
 un cas et rate les autres. Voir
-[PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/master/PAYSAGE.md).
+[PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md).
 
 ## Installation
 
@@ -95,7 +95,7 @@ pip install 'ann-router[all]'       # tous les moteurs installables + cli + api
 
 Les instructions complètes et spécifiques à la plateforme — dont la mise en
 garde **annoy sur Apple Silicon** et les notes **pgvector** — sont dans
-[INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/master/INSTALL.md).
+[INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/main/INSTALL.md).
 
 ## Démarrage rapide (bibliothèque)
 
@@ -214,9 +214,9 @@ exact/ANN et un budget plus serré le réduit — voir
 
 `EXACT_MAX_N`/`FAISS_MIN_N` sont calibrés à partir de données mesurées de
 rappel/latence plutôt que devinés — voir
-[bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)
+[bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md)
 pour le balayage et
-[bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/results/decision_tree.md)
+[bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/results/decision_tree.md)
 pour l'arbre de ce projet avec les seuils mesurés, par dimension d'embedding.
 `ann_router/policy.yaml` livre la réduction conservatrice de ces valeurs
 par-dimension vers les scalaires uniques utilisés par le tableau ci-dessus
@@ -235,11 +235,11 @@ auto-détectable), `persistence`, `batch_queries`, `metric`
 
 ## Pour aller plus loin
 
-- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/master/EXAMPLES.md) — un livre de recettes exécutable.
-- [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/master/PAYSAGE.md) — comment ann-router se compare au choix d'un seul moteur.
-- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/master/CODING.md) — le standard de code que ce dépôt s'impose.
-- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md) — le harnais de calibrage mesuré.
-- [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/master/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/master/TRIGGERS.md)
+- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md) — un livre de recettes exécutable.
+- [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md) — comment ann-router se compare au choix d'un seul moteur.
+- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md) — le standard de code que ce dépôt s'impose.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — le harnais de calibrage mesuré.
+- [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/main/TRIGGERS.md)
 
 ## Auteur
 
@@ -247,4 +247,4 @@ auto-détectable), `persistence`, `batch_queries`, `metric`
 
 ## Licence
 
-BSD-3-Clause — voir [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/master/LICENSE).
+BSD-3-Clause — voir [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/main/LICENSE).

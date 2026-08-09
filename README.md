@@ -1,7 +1,7 @@
 # ann-router
 
 
-[🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/master/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/master/README.md)
+[🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/main/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/main/README.md)
 
 ![License](https://img.shields.io/badge/license-BSD--3--Clause-blue)
 ![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
@@ -13,7 +13,7 @@ your approximate-nearest-neighbour (ANN) vector-search problem in *measured*
 terms, and it selects, **justifies**, and can **instantiate** the right engine,
 instead of marrying you to a single library.
 
-<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/master/assets/logo.png" alt="ann-router logo" >
+<img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/logo.png" alt="ann-router logo" >
 
 
 Finding the vectors closest to a query vector inside a large database of vectors
@@ -38,7 +38,7 @@ The engines it routes among:
 
 (ScaNN was evaluated and dropped: no Apple-Silicon wheel exists, and the
 project has abandoned it as a supported backend — see
-[CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md).)
+[CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md).)
 
 Importing the package is cheap and dependency-free: no engine's optional
 dependency is loaded at import time, so `import ann_router` works with only numpy
@@ -52,7 +52,7 @@ a 5k-vector corpus wants an exact scan (instant, recall 1.0); a corpus with
 constant inserts/deletes wants turbovec (O(1) mutation); one needing SQL
 `WHERE`-filters wants pgvector; a frozen, memory-tight corpus wants Annoy. Hard
 -coding one library gets one of these right and the rest wrong. See
-[LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/master/LANDSCAPE.md).
+[LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md).
 
 ## Install
 
@@ -98,7 +98,7 @@ pip install 'ann-router[all]'       # every pip-installable engine + cli + api
 
 Full, platform-specific instructions — including the **Apple Silicon annoy**
 caveat and **pgvector** notes — are in
-[INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/master/INSTALL.md).
+[INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/main/INSTALL.md).
 
 ## Quick start (library)
 
@@ -215,9 +215,9 @@ shrinks it — see `ann_router.policy.effective_exact_max_n`.
 
 `EXACT_MAX_N`/`FAISS_MIN_N` are calibrated from measured recall/latency data
 rather than guessed — see
-[bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md)
+[bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md)
 for the sweep and
-[bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/results/decision_tree.md)
+[bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/results/decision_tree.md)
 for this project's own tree with the measured thresholds filled in, per
 embedding dimension. `ann_router/policy.yaml` ships the conservative
 reduction of those per-dim values into the single scalars the table above
@@ -236,11 +236,11 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## More
 
-- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/master/EXAMPLES.md) — a runnable cookbook.
-- [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/master/LANDSCAPE.md) — how ann-router compares to just picking one engine.
-- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/master/CODING.md) — the coding standard this repo holds itself to.
-- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/master/bench/README.md) — the measured calibration harness.
-- [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/master/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/master/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/master/TRIGGERS.md)
+- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md) — a runnable cookbook.
+- [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md) — how ann-router compares to just picking one engine.
+- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md) — the coding standard this repo holds itself to.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — the measured calibration harness.
+- [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/main/TRIGGERS.md)
 
 ## Author
 
@@ -248,4 +248,4 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## License
 
-BSD-3-Clause — see [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/master/LICENSE).
+BSD-3-Clause — see [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/main/LICENSE).
