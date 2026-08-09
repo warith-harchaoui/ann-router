@@ -4,6 +4,16 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-08-09
+
+### Changed
+
+- **CI had no lint job at all** (only `test` and `package`). Added a `lint`
+  job running `ruff check .` + `ruff format --check .`, matching the rest
+  of the suite; the tree was already clean.
+- **`assets/logo.png` recolored to the suite reference palette**
+  (OT color-transfer, applied in an earlier session but never committed).
+
 ## [0.1.1] - 2026-08-08
 
 - **Applied the bench calibration to `policy.py`**: thresholds bumped from

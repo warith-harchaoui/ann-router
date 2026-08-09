@@ -1,17 +1,32 @@
 name: tests
 
-# Ultra-light CI: one job runs the suite on the always-available core install
-# (no compiled ANN engines needed — backend-specific tests skip cleanly when
-# their optional dependency is absent, by design; see tests/test_backends.py).
-# The `package` job below only runs when `test` succeeds: GitHub Actions skips
-# (never fails) a job whose `needs:` dependency failed, so a red X can only
-# ever come from the test job itself.
+# Ultra-light CI: lint runs ruff, test runs the suite on the always-available
+# core install (no compiled ANN engines needed — backend-specific tests skip
+# cleanly when their optional dependency is absent, by design; see
+# tests/test_backends.py). The `package` job below only runs when `test`
+# succeeds: GitHub Actions skips (never fails) a job whose `needs:` dependency
+# failed, so a red X there can only ever come from the test job itself.
 
 on:
   push:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        # Pinned: an unpinned install let ruff 0.16 make Markdown code-fence
+        # formatting the default, silently breaking format-check on doc examples.
+        # Bump this deliberately, not by surprise.
+        run: pip install "ruff==0.15.21"
+      - run: ruff check .
+      - run: ruff format --check .
+
   test:
     runs-on: ubuntu-latest
     steps:
