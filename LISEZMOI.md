@@ -46,7 +46,7 @@ signale simplement indisponible pendant que le routeur le contourne. Il s'agit d
 
 [🗺️ Paysage](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md)
 
-[📋 Exemples](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md)
+[📋 Exemples](https://github.com/warith-harchaoui/ann-router/blob/main/EXEMPLES.md)
 
 ## Pourquoi router plutôt que choisir FAISS d'office (ou un autre) ?
 
