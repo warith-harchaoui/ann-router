@@ -7,12 +7,12 @@ plus what it does and does not do.
 ## What it does
 Given a *measured* description of a vector-search problem, it selects the right
 ANN backend (exact / turbovec / HNSW / FAISS / Annoy / Qdrant /
-pgvector), explains why, and can build the index — all behind one interface.
+pgvector), explains why, and can build the index, all behind one interface.
 
 ## What it does NOT do
 - It does not embed text/images (bring your own vectors).
 - It does not serve a vector database or manage infrastructure.
-- It does not replace FAISS/Qdrant/etc — it *orchestrates* them.
+- It does not replace FAISS/Qdrant/etc: it *orchestrates* them.
 
 ## Commands and how to invoke them
 
@@ -29,7 +29,7 @@ pgvector), explains why, and can build the index — all behind one interface.
 **English**
 - "Which ANN library / vector index should I use for N vectors?"
 - "Should I use FAISS or HNSW or Annoy here?"
-- "My corpus has constant inserts/deletes — what vector index handles that?"
+- "My corpus has constant inserts/deletes: what vector index handles that?"
 - "I need metadata-filtered vector search."
 - "Pick the right nearest-neighbour engine for this recall/latency/memory budget."
 - "Is brute force enough or do I need an ANN index?"
@@ -38,7 +38,7 @@ pgvector), explains why, and can build the index — all behind one interface.
 **Français**
 - « Quelle bibliothèque ANN / quel index vectoriel utiliser pour N vecteurs ? »
 - « FAISS ou HNSW ou Annoy ici ? »
-- « Mon corpus a des ajouts/suppressions constants — quel index gère ça ? »
+- « Mon corpus a des ajouts/suppressions constants, quel index gère ça ? »
 - « J'ai besoin d'une recherche vectorielle filtrée par métadonnées. »
 - « Choisis le bon moteur de plus proches voisins pour ce budget rappel/latence/mémoire. »
 - « La force brute suffit-elle ou faut-il un index ANN ? »

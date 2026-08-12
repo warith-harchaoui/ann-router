@@ -29,7 +29,7 @@ pytest -q                        # full suite; uninstallable backends skip clean
 ## Adding a new backend
 
 1. Create `ann_router/backends/<name>_backend.py` subclassing `ANNIndex`.
-   - **Lazy-import** the engine inside a `_require()` helper — importing
+   - **Lazy-import** the engine inside a `_require()` helper: importing
      `ann_router` must never require the engine.
    - Implement `capabilities()` and `is_available()` as classmethods (readable
      without the dependency).

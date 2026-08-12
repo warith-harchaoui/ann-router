@@ -20,7 +20,7 @@ Finding the vectors closest to a query vector inside a large database of vectors
 is a very common problem in artificial intelligence. Naively, it has linear
 complexity in the number of vectors in the database. That is often unacceptable,
 so we run an *approximate* search with far lower complexity in the number of
-vectors — reasonable for our applications at millions, even billions, of vectors.
+vectors, which is reasonable for applications at millions, even billions, of vectors.
 
 **It is an indispensable component for RAG.**
 
@@ -37,13 +37,13 @@ The engines it routes among:
 > Qdrant · pgvector**
 
 (ScaNN was evaluated and dropped: no Apple-Silicon wheel exists, and the
-project has abandoned it as a supported backend — see
+project has abandoned it as a supported backend; see
 [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md).)
 
 Importing the package is cheap and dependency-free: no engine's optional
 dependency is loaded at import time, so `import ann_router` works with only numpy
 installed, and a backend whose dependency is absent simply reports itself
-unavailable while the router routes around it — this is lazy importing.
+unavailable while the router routes around it: this is lazy importing.
 
 ## Documentation
 
@@ -104,8 +104,8 @@ pip install 'ann-router[hnsw]'      # one engine
 pip install 'ann-router[all]'       # every pip-installable engine + cli + api
 ```
 
-Full, platform-specific instructions — including the **Apple Silicon annoy**
-caveat and **pgvector** notes — are in
+Full, platform-specific instructions, including the **Apple Silicon annoy**
+caveat and **pgvector** notes, are in
 [INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/main/INSTALL.md).
 
 ## Quick start (library)
@@ -122,7 +122,7 @@ criteria = ar.Criteria(
     hardware=ar.detect_hardware(),
 )
 
-# 2. Ask which backend — and why.
+# 2. Ask which backend, and why.
 choice = ar.route(criteria)
 print(choice.backend)         # 'turbovec'
 print(choice.rationale)       # "corpus receives frequent updates: turbovec offers O(1) ..."
@@ -149,17 +149,17 @@ with the `pip install` line that fixes it.
 
 ## The five doors (one core, five surfaces)
 
-1. **Library** — everything above (`ann_router`).
-2. **CLI** — `ann-router` (argparse, always available) and the `ann-router-click`
+1. **Library**: everything above (`ann_router`).
+2. **CLI**: `ann-router` (argparse, always available) and the `ann-router-click`
    twin (`[cli]` extra). Subcommands: `route`, `build`, `search`, `bench`,
    `capabilities`.
-3. **HTTP API** — `uvicorn ann_router.api:app` (`[api]` extra, or the Docker
+3. **HTTP API**: `uvicorn ann_router.api:app` (`[api]` extra, or the Docker
    image above): `POST /route`, `GET /capabilities`, `GET /bench`.
-4. **MCP server** — `python -m ann_router.mcp_server` (`[mcp]` extra): the same
+4. **MCP server**: `python -m ann_router.mcp_server` (`[mcp]` extra), the same
    `route`/`capabilities`/`bench` operations as the HTTP API, auto-exposed as
    MCP tools via [`fastapi-mcp`](https://github.com/tadata-org/fastapi_mcp) at
    `http://127.0.0.1:8019/mcp` (Streamable HTTP, not stdio).
-5. **Skill** — `skills/ann-router/SKILL.md`, so an agent knows when to reach for
+5. **Skill**: `skills/ann-router/SKILL.md`, so an agent knows when to reach for
    the router.
 
 ```bash
@@ -219,10 +219,10 @@ flowchart TD
 Row 1's `EXACT_MAX_N` scales with `Criteria.latency_budget_ms`: a brute-force
 scan's cost is ~linear in n for fixed dim, so a budget looser than the 10 ms
 reference extends the exact/ANN crossover proportionally, and a tighter one
-shrinks it — see `ann_router.policy.effective_exact_max_n`.
+shrinks it; see `ann_router.policy.effective_exact_max_n`.
 
 `EXACT_MAX_N`/`FAISS_MIN_N` are calibrated from measured recall/latency data
-rather than guessed — see
+rather than guessed; see
 [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md)
 for the sweep and
 [bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/results/decision_tree.md)
@@ -244,10 +244,10 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## More
 
-- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md) — a runnable cookbook.
-- [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md) — how ann-router compares to just picking one engine.
-- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md) — the coding standard this repo holds itself to.
-- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — the measured calibration harness.
+- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md): a runnable cookbook.
+- [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md): how ann-router compares to just picking one engine.
+- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md): the coding standard this repo holds itself to.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md): the measured calibration harness.
 - [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/main/TRIGGERS.md)
 
 ## Author
@@ -256,4 +256,4 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## License
 
-BSD-3-Clause — see [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/main/LICENSE).
+BSD-3-Clause; see [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/main/LICENSE).

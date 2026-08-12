@@ -1,4 +1,4 @@
-# ann-router — Examples
+# ann-router Examples
 
 A self-contained cookbook. Every snippet runs against the installed package
 (`pip install -e '.[all]'`); outputs are shown as `# =>` comments.
@@ -15,7 +15,7 @@ print([c["backend"] for c in choice.considered])   # => ['turbovec', 'hnsw']
 ```
 
 The router only ever returns an **installed** backend. If the policy's first
-pick is not installed, it falls back and says so — e.g. on a machine where the
+pick is not installed, it falls back and says so: on a machine where the
 `turbovec` extra isn't installed, a dynamic corpus falls back to `hnsw`:
 
 ```python
@@ -117,7 +117,7 @@ idx = AnnoyIndex(dim=8).build(np.random.rand(100, 8).astype("float32"))
 try:
     idx.remove(np.array([1]))
 except NotSupported as e:
-    print(e)   # => "annoy: remove() unsupported — rebuild the index without those ids"
+    print(e)   # => "annoy: remove() unsupported (frozen index)"
 ```
 
 ## 8. Tune the policy without touching code

@@ -14,7 +14,7 @@ vous décrivez votre problème de recherche de plus proches voisins approchés
 (ANN) en termes *mesurés* et il sélectionne, **justifie** et peut **instancier**
 le bon moteur, au lieu de vous marier à une seule bibliothèque.
 
-Rechercher les vecteurs les plus proches d'un vecteur de requête dans une base de nombreux vecteurs est un problème très courant en intelligence artificielle. Naïvement le problème a une complexité linéaire en le nombre de vecteurs dans la base. Souvent ce n'est pas acceptable donc on fait une recherche approchée pour avec une complexité beaucoup plus faible en le nombre de vecteurs dans la vase et raisonnable pour nos applications à millions voire milliards de vecteurs.
+Trouver les vecteurs les plus proches d'un vecteur de requête, dans une base qui en contient beaucoup, est un problème très courant en intelligence artificielle. Naïvement, la complexité croît linéairement avec le nombre de vecteurs de la base. C'est souvent inacceptable, on effectue donc une recherche approchée, de complexité bien plus faible : c'est ce qui rend l'approche viable pour nos applications à des millions, voire des milliards de vecteurs.
 
 **C'est un composant indispensable pour les RAG.**
 
@@ -32,7 +32,7 @@ Les moteurs entre lesquels il arbitre :
 > Annoy · Qdrant · pgvector**
 
 (ScaNN a été évalué puis abandonné : aucun wheel Apple Silicon n'existe et le
-projet l'a définitivement abandonné comme backend supporté — voir
+projet l'a définitivement abandonné comme backend supporté ; voir
 [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md).)
 
 Importer le paquet est peu coûteux et sans dépendance : aucune dépendance
@@ -101,8 +101,8 @@ pip install 'ann-router[hnsw]'      # un moteur
 pip install 'ann-router[all]'       # tous les moteurs installables + cli + api
 ```
 
-Les instructions complètes et spécifiques à la plateforme — dont la mise en
-garde **annoy sur Apple Silicon** et les notes **pgvector** — sont dans
+Les instructions complètes et spécifiques à la plateforme, dont la mise en
+garde **annoy sur Apple Silicon** et les notes **pgvector**, sont dans
 [INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/main/INSTALL.md).
 
 ## Démarrage rapide (bibliothèque)
@@ -119,10 +119,11 @@ criteres = ar.Criteria(
     hardware=ar.detect_hardware(),
 )
 
-# 2. Demander quel backend — et pourquoi.
+# 2. Demander quel backend et pourquoi.
 choix = ar.route(criteres)
 print(choix.backend)          # 'turbovec'
-print(choix.rationale)        # « le corpus reçoit des mises à jour fréquentes : ... »
+print(choix.rationale)        # "corpus receives frequent updates: turbovec offers O(1) ..."
+                               # (le raisonnement est toujours renvoyé en anglais)
 
 # 3. Ou router + construire en un appel, puis chercher.
 vecteurs = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float32")
@@ -146,18 +147,18 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
 
 ## Les cinq portes (un cœur, cinq surfaces)
 
-1. **Bibliothèque** — tout ce qui précède (`ann_router`).
-2. **CLI** — `ann-router` (argparse, toujours disponible) et le jumeau
+1. **Bibliothèque** : tout ce qui précède (`ann_router`).
+2. **CLI** : `ann-router` (argparse, toujours disponible) et le jumeau
    `ann-router-click` (extra `[cli]`). Sous-commandes : `route`, `build`,
    `search`, `bench`, `capabilities`.
-3. **API HTTP** — `uvicorn ann_router.api:app` (extra `[api]` ou l'image
+3. **API HTTP** : `uvicorn ann_router.api:app` (extra `[api]` ou l'image
    Docker ci-dessus) : `POST /route`, `GET /capabilities`, `GET /bench`.
-4. **Serveur MCP** — `python -m ann_router.mcp_server` (extra `[mcp]`) : les
+4. **Serveur MCP** : `python -m ann_router.mcp_server` (extra `[mcp]`), les
    mêmes opérations `route`/`capabilities`/`bench` que l'API HTTP, exposées
    automatiquement comme outils MCP via
    [`fastapi-mcp`](https://github.com/tadata-org/fastapi_mcp) sur
    `http://127.0.0.1:8019/mcp` (Streamable HTTP, pas stdio).
-5. **Skill** — `skills/ann-router/SKILL.md`, pour qu'un agent sache quand
+5. **Skill** : `skills/ann-router/SKILL.md`, pour qu'un agent sache quand
    dégainer le routeur.
 
 ```bash
@@ -217,11 +218,11 @@ flowchart TD
 La ligne 1 : `EXACT_MAX_N` s'ajuste selon `Criteria.latency_budget_ms`. Un
 balayage force brute a un coût quasi linéaire en n à dim fixe donc un budget
 plus large que la référence de 10 ms étend proportionnellement le seuil
-exact/ANN et un budget plus serré le réduit — voir
+exact/ANN et un budget plus serré le réduit ; voir
 `ann_router.policy.effective_exact_max_n`.
 
 `EXACT_MAX_N`/`FAISS_MIN_N` sont calibrés à partir de données mesurées de
-rappel/latence plutôt que devinés — voir
+rappel/latence plutôt que devinés ; voir
 [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md)
 pour le balayage et
 [bench/results/decision_tree.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/results/decision_tree.md)
@@ -243,10 +244,10 @@ auto-détectable), `persistence`, `batch_queries`, `metric`
 
 ## Pour aller plus loin
 
-- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md) — un livre de recettes exécutable.
-- [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md) — comment ann-router se compare au choix d'un seul moteur.
-- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md) — le standard de code que ce dépôt s'impose.
-- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — le harnais de calibrage mesuré.
+- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md) : un livre de recettes exécutable.
+- [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md) : comment ann-router se compare au choix d'un seul moteur.
+- [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md) : le standard de code que ce dépôt s'impose.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) : le harnais de calibrage mesuré.
 - [CONTRIBUTING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CONTRIBUTING.md) · [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md) · [TRIGGERS.md](https://github.com/warith-harchaoui/ann-router/blob/main/TRIGGERS.md)
 
 ## Auteur
@@ -255,4 +256,4 @@ auto-détectable), `persistence`, `batch_queries`, `metric`
 
 ## Licence
 
-BSD-3-Clause — voir [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/main/LICENSE).
+BSD-3-Clause ; voir [LICENSE](https://github.com/warith-harchaoui/ann-router/blob/main/LICENSE).

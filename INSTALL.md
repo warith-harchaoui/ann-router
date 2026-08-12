@@ -2,23 +2,23 @@
 
 `ann-router` uses **conda (miniconda) + pip** as its base tooling (the suite
 standard is conda + poetry; poetry is not required for this pure-setuptools
-package). The core is deliberately tiny — `numpy` + `os-helper` + `pyyaml` — so
+package). The core is deliberately tiny (`numpy` + `os-helper` + `pyyaml`), so
 the library and the always-on argparse CLI install in seconds. Every ANN engine
 is an optional extra you add only if you route to it.
 
-There are three supported paths — pick one:
+There are three supported paths; pick one:
 
-- **§1-6 below (conda + pip, step by step)** — for development or when you
+- **§1-6 below (conda + pip, step by step)**: for development or when you
   want to see/control every step.
-- **`environment.yaml`** — the same conda + pip install, one command:
+- **`environment.yaml`**: the same conda + pip install, one command:
   `conda env create -f environment.yaml && conda activate ann-router`. It
   pins Python + pip and delegates every actual dependency to
   `requirements.txt`, so it never drifts out of sync with pip's own view of
   the project.
-- **`Dockerfile`** — a server image with every pip-installable backend + the
+- **`Dockerfile`**: a server image with every pip-installable backend + the
   HTTP API door baked in: `docker build -t ann-router . && docker run --rm
   -p 8018:8018 ann-router`. Does not need conda, Python, or any of the steps
-  below on the host — only Docker.
+  below on the host: only Docker.
 
 The exact commands below were run and verified on this machine
 (**Apple M2 Max, arm64, macOS**) on 2026-08-04.
@@ -48,7 +48,7 @@ Most engines install cleanly with pip:
 pip install hnswlib faiss-cpu qdrant-client "pgvector" "psycopg[binary]" turbovec
 ```
 
-**Apple Silicon caveat — annoy.** The PyPI `annoy` wheel is built from source
+**Apple Silicon caveat: annoy.** The PyPI `annoy` wheel is built from source
 and is **miscompiled on macOS/arm64** (it returns a single neighbour regardless
 of `k`; the same defect made `roitelet`'s benchmark report annoy recall 0.0).
 Install the working binary from conda-forge instead:
@@ -87,11 +87,11 @@ pip install -e '.[dev]'             # the above + pytest for the test suite
 
 | Backend  | Status on this Mac | Why / how to get it |
 | -------- | ------------------ | ------------------- |
-| **pgvector** | installs; needs a server | The Python side (`pgvector` + `psycopg`) installs, but the backend needs a **live PostgreSQL** with the `vector` extension. Point `ANN_ROUTER_PG_DSN` at one to enable it, otherwise its tests skip cleanly. No Docker needed — see the disk-frugal conda-forge recipe below (or `docker` via `run_bench.sh pg-up`). |
+| **pgvector** | installs; needs a server | The Python side (`pgvector` + `psycopg`) installs, but the backend needs a **live PostgreSQL** with the `vector` extension. Point `ANN_ROUTER_PG_DSN` at one to enable it, otherwise its tests skip cleanly. No Docker needed: see the disk-frugal conda-forge recipe below (or `docker` via `run_bench.sh pg-up`). |
 
 This does not break anything: importing `ann_router` never requires an engine,
 and the router routes around uninstalled/unreachable backends with an
-explained fallback. (ScaNN is not a registered backend at all — no
+explained fallback. (ScaNN is not a registered backend at all: no
 Apple-Silicon wheel; the project has dropped it entirely, see CHANGELOG.md.)
 
 ### 5a. Enabling pgvector without Docker (conda-forge, disk-frugal)
@@ -105,7 +105,7 @@ much lighter than pulling a Docker image and works on Apple Silicon:
 conda install -n ann-router -c conda-forge postgresql pgvector -y
 
 # 2. initdb a throwaway data dir (kept inside the repo, gitignored) and start it.
-#    Use trust auth on loopback only — this is a local test server, not production.
+#    Use trust auth on loopback only: this is a local test server, not production.
 export PGDATA="$PWD/.pgdata"            # .pgdata/ and .pgdata.log are in .gitignore
 export PGPORT=5432                      # fall back to 5433 if 5432 is taken
 initdb -D "$PGDATA" -U "$USER" --auth=trust -E UTF8
@@ -127,7 +127,7 @@ rm -rf "$PGDATA" "$PWD/.pgdata.log"
 
 With the DSN exported, more of the pgvector lifecycle test runs (the same
 `test_backend_lifecycle` case every other backend gets); it still skips its
-save/load round trip *by design* — pgvector persists via its DSN + table, not
+save/load round trip *by design*: pgvector persists via its DSN + table, not
 `save()`/`load()`, the same design as qdrant.
 
 ## 6. Verify
@@ -139,6 +139,9 @@ pytest -q                                 # full suite (skips uninstallable)
 ```
 
 Expected on this Mac: `['exact', 'turbovec', 'hnsw', 'faiss', 'annoy', 'qdrant',
-'pgvector']` available; `pytest` reports around **95 passed, 2 skipped**
+'pgvector']` available; `pytest` reports around **133 passed, 2 skipped**
 without a Postgres server (the pgvector-needs-a-server path), fewer skips
-once `ANN_ROUTER_PG_DSN` points at a live pgvector server (see § 5a).
+once `ANN_ROUTER_PG_DSN` points at a live pgvector server (see § 5a). With the
+plain pip `annoy` wheel still installed (the Apple Silicon caveat in §3), expect
+one additional failure, `test_backend_lifecycle[annoy]`, until the conda-forge
+binary replaces it.
