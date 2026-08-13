@@ -22,8 +22,11 @@ from ann_router.spec import Criteria
         # 1. tiny corpus -> exact (approximation pointless)
         (Criteria(n_vectors=500, dim=128), "exact"),
         (Criteria(n_vectors=EXACT_MAX_N - 1, dim=64), "exact"),
-        # 2. frequent updates -> turbovec (O(1) add/remove)
-        (Criteria(n_vectors=500_000, dim=768, dynamic=True), "turbovec"),
+        # 2. frequent updates, recall relaxed below HIGH_RECALL -> turbovec (O(1) add/remove)
+        (Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.85), "turbovec"),
+        # 2b. frequent updates at the house default target_recall=0.95 (>= HIGH_RECALL):
+        # turbovec's calibrated benchmarks undershoot that recall, so hnsw wins instead.
+        (Criteria(n_vectors=500_000, dim=768, dynamic=True), "hnsw"),
         # 3. very large + GPU/batch -> faiss
         (Criteria(n_vectors=2_000_000, dim=768, hardware="gpu"), "faiss"),
         (Criteria(n_vectors=2_000_000, dim=768, batch_queries=True), "faiss"),
@@ -63,8 +66,29 @@ def test_gpu_needed_for_faiss_branch() -> None:
 def test_dynamic_beats_persistence() -> None:
     """A dynamic corpus routes to turbovec even when it also wants filtering."""
     # Priority order: a dynamic corpus routes to turbovec even if it also wants
-    # persistence/filtering (churn is the dominant constraint).
-    c = Criteria(n_vectors=300_000, dim=256, dynamic=True, metadata_filtering=True)
+    # persistence/filtering (churn is the dominant constraint). Recall relaxed
+    # below HIGH_RECALL so turbovec is policy-eligible at all (see
+    # test_dynamic_high_recall_prefers_hnsw_over_turbovec for the other case).
+    c = Criteria(
+        n_vectors=300_000, dim=256, dynamic=True, metadata_filtering=True, target_recall=0.85
+    )
+    assert rank_backends(c)[0]["backend"] == "turbovec"
+
+
+def test_dynamic_high_recall_prefers_hnsw_over_turbovec() -> None:
+    """A dynamic corpus with target_recall >= HIGH_RECALL skips turbovec entirely."""
+    # turbovec's own calibration (bench/results/calibrated_policy.yaml) shows it
+    # consistently undershoots recall 0.9 at every measured dim/n — HIGH_RECALL
+    # exists precisely to keep the router from recommending it past that point.
+    c = Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.9)
+    shortlist = rank_backends(c)
+    assert shortlist[0]["backend"] == "hnsw"
+    assert "turbovec" not in {row["backend"] for row in shortlist}
+
+
+def test_dynamic_low_recall_still_prefers_turbovec() -> None:
+    """A dynamic corpus with target_recall just below HIGH_RECALL still gets turbovec."""
+    c = Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.89)
     assert rank_backends(c)[0]["backend"] == "turbovec"
 
 

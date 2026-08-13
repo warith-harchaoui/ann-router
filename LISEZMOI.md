@@ -115,7 +115,7 @@ import ann_router as ar
 criteres = ar.Criteria(
     n_vectors=2_000_000, dim=768,
     dynamic=True,              # ajouts/suppressions fréquents
-    target_recall=0.95,
+    target_recall=0.85,        # sous HIGH_RECALL=0.9, le plafond calibré de turbovec
     hardware=ar.detect_hardware(),
 )
 
@@ -130,6 +130,13 @@ vecteurs = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float3
 index, choix = ar.auto_index(vecteurs, ar.Criteria(n_vectors=5_000, dim=768))
 ids, distances = index.search(vecteurs[:3], k=10)
 ```
+
+Au `target_recall=0.95` par défaut, ce même corpus `dynamic=True` route vers
+**hnsw** à la place : la propre calibration de turbovec
+([bench/results/calibrated_policy.yaml](bench/results/calibrated_policy.yaml))
+n'atteint systématiquement pas un rappel de 0.9, donc le routeur préfère le
+meilleur rappel de HNSW à la mutation O(1) de turbovec dès que la cible dépasse
+`HIGH_RECALL=0.9`.
 
 Chaque backend parle la même interface `ANNIndex` :
 
@@ -177,7 +184,9 @@ flowchart TD
     Q --> D1{n < EXACT_MAX_N ?}
     D1 -->|oui| EXACT([exact])
     D1 -->|non| D2{mises à jour<br/>fréquentes ?}
-    D2 -->|oui| TURBOVEC([turbovec])
+    D2 -->|oui| D2R{target_recall <<br/>HIGH_RECALL ?}
+    D2R -->|oui| TURBOVEC([turbovec])
+    D2R -->|non| HNSW
     D2 -->|non| D3{n >= FAISS_MIN_N<br/>et GPU/batch ?}
     D3 -->|oui| FAISS([faiss])
     D3 -->|non| D4{persistance ou<br/>filtres de métadonnées ?}
@@ -203,13 +212,13 @@ flowchart TD
     class QDRANT qdrant
     class ANNOY annoy
     class HNSW hnsw
-    class D1,D2,D3,D4,D5,Q decision
+    class D1,D2,D2R,D3,D4,D5,Q decision
 ```
 
 | # | Si les critères disent… | Router vers | Parce que |
 | - | ----------------------- | ----------- | --------- |
 | 1 | `n < EXACT_MAX_N` | **exact** | un balayage force brute est déjà instantané et exact (rappel 1.0) |
-| 2 | mises à jour fréquentes | **turbovec** | ajout/suppression O(1), sans reconstruction ; TurboQuant 2-4 bits (~16×) |
+| 2 | mises à jour fréquentes + `target_recall < HIGH_RECALL` | **turbovec** | ajout/suppression O(1), sans reconstruction ; TurboQuant 2-4 bits (~16×) |
 | 3 | `n >= FAISS_MIN_N` + GPU/batch | **FAISS** | IVF+PQ passe à l'échelle ; débit GPU par lots |
 | 4 | persistance + filtres de métadonnées | **Qdrant / pgvector** | HNSW sur disque + filtrage payload/SQL `WHERE` |
 | 5 | lecture seule + mémoire serrée | **Annoy** | figé, mappé en mémoire, très léger |

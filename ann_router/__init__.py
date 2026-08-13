@@ -44,7 +44,7 @@ from .registry import all_capabilities, available_backends, get_backend
 from .router import auto_index, route, to_markdown
 from .spec import BackendChoice, Criteria
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "Warith Harchaoui, Ph.D."
 __email__ = "warith.harchaoui@deraison.ai"
 

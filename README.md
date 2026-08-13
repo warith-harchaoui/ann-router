@@ -118,7 +118,7 @@ import ann_router as ar
 criteria = ar.Criteria(
     n_vectors=2_000_000, dim=768,
     dynamic=True,              # frequent adds/removes
-    target_recall=0.95,
+    target_recall=0.85,        # below HIGH_RECALL=0.9, turbovec's calibrated ceiling
     hardware=ar.detect_hardware(),
 )
 
@@ -132,6 +132,12 @@ vectors = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float32
 index, choice = ar.auto_index(vectors, ar.Criteria(n_vectors=5_000, dim=768))
 ids, distances = index.search(vectors[:3], k=10)
 ```
+
+At the house default `target_recall=0.95`, this same `dynamic=True` corpus routes
+to **hnsw** instead: turbovec's own calibration
+([bench/results/calibrated_policy.yaml](bench/results/calibrated_policy.yaml))
+consistently undershoots recall 0.9, so the router prefers HNSW's better recall
+over turbovec's O(1) mutation once the target climbs past `HIGH_RECALL=0.9`.
 
 Every backend speaks the same `ANNIndex` interface:
 
@@ -178,7 +184,9 @@ flowchart TD
     Q --> D1{n < EXACT_MAX_N?}
     D1 -->|yes| EXACT([exact])
     D1 -->|no| D2{frequent updates?}
-    D2 -->|yes| TURBOVEC([turbovec])
+    D2 -->|yes| D2R{target_recall <<br/>HIGH_RECALL?}
+    D2R -->|yes| TURBOVEC([turbovec])
+    D2R -->|no| HNSW
     D2 -->|no| D3{n >= FAISS_MIN_N<br/>and GPU/batch?}
     D3 -->|yes| FAISS([faiss])
     D3 -->|no| D4{persistence or<br/>metadata filtering?}
@@ -204,13 +212,13 @@ flowchart TD
     class QDRANT qdrant
     class ANNOY annoy
     class HNSW hnsw
-    class D1,D2,D3,D4,D5,Q decision
+    class D1,D2,D2R,D3,D4,D5,Q decision
 ```
 
 | # | If the criteria say… | Route to | Because |
 | - | -------------------- | -------- | ------- |
 | 1 | `n < EXACT_MAX_N` | **exact** | a brute-force scan is already instant and exact (recall 1.0) |
-| 2 | frequent updates | **turbovec** | O(1) add/remove, no rebuild; TurboQuant 2-4 bit (~16×) |
+| 2 | frequent updates + `target_recall < HIGH_RECALL` | **turbovec** | O(1) add/remove, no rebuild; TurboQuant 2-4 bit (~16×) |
 | 3 | `n >= FAISS_MIN_N` + GPU/batch | **FAISS** | IVF+PQ scales; GPU batch throughput |
 | 4 | persistence + metadata filters | **Qdrant / pgvector** | on-disk HNSW + payload/SQL `WHERE` filtering |
 | 5 | read-only + tight memory | **Annoy** | frozen, memory-mapped, very lean |

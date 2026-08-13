@@ -8,18 +8,28 @@ A self-contained cookbook. Every snippet runs against the installed package
 ```python
 import ann_router as ar
 
-choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
+# target_recall relaxed below HIGH_RECALL=0.9, turbovec's calibrated ceiling
+# (bench/results/calibrated_policy.yaml) -- otherwise the policy skips it.
+choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True, target_recall=0.85))
 print(choice.backend)      # => turbovec
 print(choice.rationale)    # => "corpus receives frequent updates: turbovec offers O(1) ..."
 print([c["backend"] for c in choice.considered])   # => ['turbovec', 'hnsw']
+
+# At the house default target_recall=0.95 (>= HIGH_RECALL), the same dynamic
+# corpus routes to hnsw instead -- turbovec is not even in the shortlist,
+# not because it's uninstalled, but because it can't meet that recall.
+choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
+print(choice.backend)      # => hnsw
+print([c["backend"] for c in choice.considered])   # => ['hnsw']
 ```
 
 The router only ever returns an **installed** backend. If the policy's first
 pick is not installed, it falls back and says so: on a machine where the
-`turbovec` extra isn't installed, a dynamic corpus falls back to `hnsw`:
+`turbovec` extra isn't installed, a dynamic, recall-relaxed corpus falls back
+to `hnsw`:
 
 ```python
-choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True))
+choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.85))
 print(choice.backend)      # => hnsw   (if turbovec is uninstalled here)
 print(choice.rationale)    # => "Preferred backend 'turbovec' is not installed here, so ..."
 ```

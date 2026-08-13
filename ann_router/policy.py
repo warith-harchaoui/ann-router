@@ -12,7 +12,7 @@ one already shipped, in two-branch form, inside the ``roitelet`` prototype):
 
 1. ``n < EXACT_MAX_N`` (scaled by ``latency_budget_ms``, see
    :func:`effective_exact_max_n`)                -> **exact** (approximation is pointless)
-2. else frequent updates                        -> **turbovec** (O(1) add/remove)
+2. else frequent updates + target_recall < HIGH_RECALL -> **turbovec** (O(1) add/remove)
 3. else very large volume + GPU/batch           -> **faiss** (IVF+PQ, scales)
 4. else persistence + metadata filters          -> **qdrant / pgvector**
 5. else read-only + tight memory                -> **annoy** (frozen, mmap, lean)
@@ -37,7 +37,7 @@ from .spec import Criteria
 # --- Versioned policy thresholds (rule-16-style: named, sourced, test-pinned) ---
 # Bumping any of these is a policy change and should move POLICY_VERSION + a
 # CHANGELOG entry, exactly like a model/threshold bump in the sibling repos.
-POLICY_VERSION = "1.1.0"
+POLICY_VERSION = "1.2.0"
 
 # Below this corpus size a vectorised brute-force scan is already sub-millisecond
 # and, being exact, has recall 1.0 — so an approximate index only adds cost.
@@ -206,11 +206,17 @@ _RULES: list[Rule] = [
     ),
     Rule(
         "turbovec",
-        lambda c, t: c.n_vectors >= effective_exact_max_n(c, t) and c.dynamic,
+        lambda c, t: (
+            c.n_vectors >= effective_exact_max_n(c, t)
+            and c.dynamic
+            and c.target_recall < t["HIGH_RECALL"]
+        ),
         lambda c, t: (
             "corpus receives frequent updates: turbovec offers O(1) add_with_ids/remove(id) "
             "with no index rebuild, plus TurboQuant 2-4 bit (~16x) compression — graph "
-            "indexes degrade under deletes, so they are avoided here."
+            "indexes degrade under deletes, so they are avoided here. "
+            f"target_recall={c.target_recall:g} is below HIGH_RECALL="
+            f"{t['HIGH_RECALL']:g}, within turbovec's calibrated range."
         ),
     ),
     Rule(
@@ -267,16 +273,26 @@ _RULES: list[Rule] = [
     ),
     Rule(
         "hnsw",
-        # The catch-all in-memory default for any non-trivial static corpus, and
-        # the fallback for a dynamic corpus when turbovec is unavailable.
+        # The catch-all in-memory default for any non-trivial static corpus, the
+        # preferred choice for a dynamic corpus whose target_recall exceeds
+        # turbovec's calibrated ceiling, and the runtime fallback for a dynamic
+        # corpus when turbovec is policy-eligible but not actually installed.
         lambda c, t: c.n_vectors >= effective_exact_max_n(c, t),
         lambda c, t: (
             "stable in-memory corpus, high precision wanted: hnswlib gives the best "
             "recall/latency of the in-memory engines when the index rarely changes "
             "(note: it deletes only via tombstones, hence 'stable')."
             if not c.dynamic
-            else "dynamic corpus but turbovec unavailable: HNSW is the working fallback, "
-            "though its tombstone deletes degrade the graph over time."
+            else (
+                f"dynamic corpus, but target_recall={c.target_recall:g} is at/above "
+                f"HIGH_RECALL={t['HIGH_RECALL']:g} — turbovec's calibrated benchmarks "
+                "consistently undershoot that recall (see policy.py's HIGH_RECALL "
+                "docstring), so HNSW's better recall is used despite the tombstone-"
+                "delete downside on a churning corpus."
+                if c.target_recall >= t["HIGH_RECALL"]
+                else "dynamic corpus but turbovec unavailable: HNSW is the working "
+                "fallback, though its tombstone deletes degrade the graph over time."
+            )
         ),
     ),
 ]
@@ -308,7 +324,13 @@ def rank_backends(c: Criteria, thresholds: dict[str, float] | None = None) -> li
     --------
     >>> rank_backends(Criteria(n_vectors=500, dim=128))[0]["backend"]
     'exact'
+    >>> # dynamic corpus at the house default target_recall=0.95: turbovec's
+    >>> # calibrated benchmarks undershoot that recall, so HNSW wins instead.
     >>> rank_backends(Criteria(n_vectors=500_000, dim=768, dynamic=True))[0]["backend"]
+    'hnsw'
+    >>> # same dynamic corpus, recall relaxed below HIGH_RECALL: turbovec wins.
+    >>> rank_backends(Criteria(n_vectors=500_000, dim=768, dynamic=True,
+    ...                        target_recall=0.85))[0]["backend"]
     'turbovec'
     >>> rank_backends(Criteria(n_vectors=200_000, dim=768,
     ...                        metadata_filtering=True))[0]["backend"]

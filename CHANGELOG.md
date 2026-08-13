@@ -4,6 +4,27 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-08-13
+
+### Fixed
+
+- **`rank_backends()` never actually consulted `HIGH_RECALL`**, despite the
+  threshold being calibrated specifically for this (`bench/results/
+  calibrated_policy.yaml`: turbovec's measured recall consistently undershoots
+  0.9 at every calibrated dim/n) and `Criteria.target_recall`'s own docstring
+  promising "high values push toward exact/HNSW and away from aggressively
+  quantised indexes." The `turbovec` rule fired for any `dynamic=True` corpus
+  regardless of `target_recall`, so a caller asking for the house default
+  (`target_recall=0.95`) on a dynamic corpus was silently routed to a backend
+  proven not to meet that recall. The `turbovec` rule now also requires
+  `target_recall < HIGH_RECALL`; the `hnsw` fallback rule's rationale now
+  distinguishes this case (recall too high for turbovec) from the pre-existing
+  one (turbovec policy-eligible but not installed at runtime). `POLICY_VERSION`
+  bumped `1.1.0` -> `1.2.0` (a decision-tree logic change, not just a threshold
+  value). README/LISEZMOI/EXAMPLES/EXEMPLES updated: the Quick Start demo used
+  `target_recall=0.95` with `dynamic=True` and claimed `'turbovec'`, which is
+  no longer true and never should have been claimed as the default behavior.
+
 ## [0.1.3] - 2026-08-13
 
 ### Fixed

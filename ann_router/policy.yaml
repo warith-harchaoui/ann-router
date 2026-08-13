@@ -7,7 +7,7 @@
 # move `version`, add a CHANGELOG entry, and re-check the recall tests.
 #
 # YAML is used (over JSON) precisely so each threshold can carry its rationale.
-version: "1.1.0"
+version: "1.2.0"
 
 thresholds:
   # Below this corpus size a brute-force scan is already instant AND exact

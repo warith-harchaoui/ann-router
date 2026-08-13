@@ -8,19 +8,28 @@ Un livre de recettes autonome. Chaque extrait s'exécute contre le paquet instal
 ```python
 import ann_router as ar
 
-choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
+# target_recall abaissé sous HIGH_RECALL=0.9, le plafond calibré de turbovec
+# (bench/results/calibrated_policy.yaml) -- sinon la politique l'écarte.
+choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True, target_recall=0.85))
 print(choice.backend)      # => turbovec
 print(choice.rationale)    # => "corpus receives frequent updates: turbovec offers O(1) ..."
 print([c["backend"] for c in choice.considered])   # => ['turbovec', 'hnsw']
+
+# Au target_recall=0.95 par défaut (>= HIGH_RECALL), ce même corpus dynamique
+# route vers hnsw à la place -- turbovec n'est même plus dans la liste, pas
+# parce qu'il n'est pas installé, mais parce qu'il ne peut pas atteindre ce rappel.
+choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
+print(choice.backend)      # => hnsw
+print([c["backend"] for c in choice.considered])   # => ['hnsw']
 ```
 
 Le routeur ne renvoie jamais qu'un moteur **installé**. Si le premier choix de la
 politique n'est pas installé, il se rabat sur un autre et le signale : sur une
-machine où l'extra `turbovec` n'est pas installé, un corpus dynamique se rabat par
-exemple sur `hnsw` :
+machine où l'extra `turbovec` n'est pas installé, un corpus dynamique et à rappel
+détendu se rabat par exemple sur `hnsw` :
 
 ```python
-choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True))
+choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.85))
 print(choice.backend)      # => hnsw   (si turbovec n'est pas installé ici)
 print(choice.rationale)    # => "Preferred backend 'turbovec' is not installed here, so ..."
 ```

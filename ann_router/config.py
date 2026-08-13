@@ -43,7 +43,7 @@ def _load_packaged(name: str) -> dict[str, Any]:
     Examples
     --------
     >>> _load_packaged("policy.yaml")["version"]
-    '1.1.0'
+    '1.2.0'
     """
     # importlib.resources reads the file whether the package is installed as a
     # wheel or in editable mode, so this works in every install layout.
