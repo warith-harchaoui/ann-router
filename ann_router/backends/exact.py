@@ -299,28 +299,6 @@ class ExactIndex(ANNIndex):
         idx = part[row, finish]
         return idx, scores[row, idx]
 
-    def _pad(self, arr: np.ndarray, k: int, fill: float = -1) -> np.ndarray:
-        """Right-pad each row to width ``k`` when the corpus has fewer points.
-
-        Parameters
-        ----------
-        arr : numpy.ndarray
-            Shape ``(q, m)`` with ``m <= k``.
-        k : int
-            Target row width.
-        fill : float, optional
-            Padding value. Defaults to ``-1``.
-
-        Returns
-        -------
-        numpy.ndarray
-            Shape ``(q, k)``.
-        """
-        if arr.shape[1] == k:
-            return arr
-        pad = np.full((arr.shape[0], k - arr.shape[1]), fill, dtype=arr.dtype)
-        return np.hstack([arr, pad])
-
     @property
     def size(self) -> int:
         """Number of vectors currently stored.

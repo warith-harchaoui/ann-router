@@ -4,6 +4,34 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-08-13
+
+### Fixed
+
+- **`HNSWIndex`/`AnnoyIndex`/`TurboVecIndex.search()` did not pad short
+  results to `(q, k)`**: `ANNIndex.search()`'s documented contract is a
+  rectangular `(q, k)` result with `-1`-padded ids when the corpus has fewer
+  than `k` points (already honoured by `ExactIndex`, `FaissIndex`,
+  `QdrantIndex` and `PgVectorIndex`), but hnswlib, Annoy and turbovec all
+  return only as many columns as the corpus actually has, so those three
+  adapters silently returned a narrower array instead. Added a shared
+  `ANNIndex._pad()` helper (used by `ExactIndex` too, replacing its private
+  duplicate) and applied it to the three affected backends. Covered by a new
+  regression assertion in `tests/test_backend_lifecycle` (build a 3-vector
+  corpus, search for k=10, assert the padded shape and fill value).
+
+### Changed (bundled, previously unreleased on `main`)
+
+- Converted `LANDSCAPE.md`/`PAYSAGE.md` to the suite's mechanical
+  CSV -> standpoint-figure pipeline.
+- Full documentation rewrite pass for `WRITING.md`/`ECRITURE.md` compliance
+  and freshness; added `EXEMPLES.md` (French sibling of `EXAMPLES.md`) and a
+  README "Documentation" section (`Install` renamed to `Installation`).
+- `requirements-dev.txt` is now derived from `pyproject.toml`'s `[dev]`
+  extra rather than hand-maintained.
+- Updated `blob`/`raw` GitHub links from `master` to `main` (the default
+  branch was renamed).
+
 ## [0.1.2] - 2026-08-09
 
 ### Changed

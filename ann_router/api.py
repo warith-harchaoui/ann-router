@@ -37,6 +37,7 @@ except ImportError as exc:  # pragma: no cover - exercised only without the extr
         "the HTTP API needs the [api] extra. Run: pip install 'ann-router[api]'"
     ) from exc
 
+from . import __version__
 from . import _core_cli as core
 from .spec import Criteria
 
@@ -80,7 +81,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="ann-router",
         description="Route to the right ANN vector-search backend from measured criteria.",
-        version="0.1.0",
+        version=__version__,
     )
 
     @app.get("/capabilities", operation_id="capabilities")

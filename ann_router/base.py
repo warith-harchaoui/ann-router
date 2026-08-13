@@ -346,6 +346,42 @@ class ANNIndex(abc.ABC):
             raise ValueError(f"expected dim={self.dim}, got {arr.shape[1]}")
         return arr
 
+    @staticmethod
+    def _pad(arr: np.ndarray, k: int, fill: float = -1) -> np.ndarray:
+        """Right-pad each row of a ``(q, m)`` result to width ``k``.
+
+        Every :meth:`search` implementation promises a rectangular ``(q, k)``
+        result (see that method's docstring), but a corpus smaller than ``k``
+        makes several native libraries (hnswlib, Annoy, turbovec) return fewer
+        than ``k`` columns. Backends whose engine does not already pad its own
+        output (FAISS, Qdrant, and pgvector all do) call this on the way out so
+        the contract holds regardless of corpus size.
+
+        Parameters
+        ----------
+        arr : numpy.ndarray
+            Shape ``(q, m)`` with ``m <= k``.
+        k : int
+            Target row width.
+        fill : float, optional
+            Padding value — ``-1`` for ids, ``inf`` for distances. Defaults to
+            ``-1``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Shape ``(q, k)``.
+
+        Examples
+        --------
+        >>> ANNIndex._pad(np.array([[0, 1]]), k=4)
+        array([[ 0,  1, -1, -1]])
+        """
+        if arr.ndim != 2 or arr.shape[1] >= k:
+            return arr
+        pad = np.full((arr.shape[0], k - arr.shape[1]), fill, dtype=arr.dtype)
+        return np.hstack([arr, pad])
+
     def __repr__(self) -> str:
         """Return a concise, backend-tagged representation.
 

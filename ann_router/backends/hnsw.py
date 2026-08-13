@@ -207,7 +207,12 @@ class HNSWIndex(ANNIndex):
         arr = self._as_f32(queries)
         count = self._index.get_current_count()  # type: ignore[union-attr]
         labels, distances = self._index.knn_query(arr, k=min(k, count))  # type: ignore[union-attr]
-        return labels.astype(np.int64), distances.astype(np.float32)
+        # A corpus smaller than k gives hnswlib fewer than k columns; pad back to
+        # the (q, k) contract every backend promises (see ANNIndex.search).
+        return (
+            self._pad(labels.astype(np.int64), k),
+            self._pad(distances.astype(np.float32), k, fill=np.inf),
+        )
 
     def save(self, path: str) -> None:
         """Persist the graph via hnswlib's native serialiser.

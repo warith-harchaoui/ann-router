@@ -198,7 +198,11 @@ class AnnoyIndex(ANNIndex):
             )
             out_ids.append(self._ids[pos])
             out_dists.append(dist)
-        return np.array(out_ids, dtype=np.int64), np.array(out_dists, dtype=np.float32)
+        ids = np.array(out_ids, dtype=np.int64)
+        dists = np.array(out_dists, dtype=np.float32)
+        # A corpus smaller than k gives Annoy fewer than k columns; pad back to
+        # the (q, k) contract every backend promises (see ANNIndex.search).
+        return self._pad(ids, k), self._pad(dists, k, fill=np.inf)
 
     def save(self, path: str) -> None:
         """Persist the forest and the id table.

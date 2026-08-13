@@ -205,7 +205,11 @@ class TurboVecIndex(ANNIndex):
         # turbovec returns (distances, ids); the package contract is (ids, dist),
         # so we swap the two halves of the tuple here.
         distances, ids = self._index.search(arr, k)  # type: ignore[union-attr]
-        return np.asarray(ids, dtype=np.int64), np.asarray(distances, dtype=np.float32)
+        ids = np.asarray(ids, dtype=np.int64)
+        distances = np.asarray(distances, dtype=np.float32)
+        # A corpus smaller than k gives turbovec fewer than k columns; pad back
+        # to the (q, k) contract every backend promises (see ANNIndex.search).
+        return self._pad(ids, k), self._pad(distances, k, fill=np.inf)
 
     def save(self, path: str) -> None:
         """Persist via turbovec's native ``write``.

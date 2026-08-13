@@ -94,6 +94,16 @@ def test_backend_lifecycle(name: str, dataset: dict, tmp_path) -> None:
         with pytest.raises(NotSupported):
             small.add_with_ids(extra, extra_ids)
 
+    # A corpus smaller than k must still return a rectangular (q, k) result —
+    # ANNIndex.search's documented contract, regardless of how many neighbours
+    # the underlying engine actually has to offer (regression: hnsw/annoy/
+    # turbovec used to return only as many columns as the corpus had points).
+    tiny = cls(dim=dim).build(dataset["corpus"][:3])
+    tiny_ids, tiny_dists = tiny.search(dataset["queries"][:2], k=10)
+    assert tiny_ids.shape == (2, 10)
+    assert tiny_dists.shape == (2, 10)
+    assert (tiny_ids[:, 3:] == -1).all()
+
     if cap.supports_remove:
         # Remove a specific id and confirm it no longer appears for a query that
         # otherwise returns it (its own vector is the strongest match).
