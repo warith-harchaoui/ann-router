@@ -30,7 +30,8 @@ from __future__ import annotations
 from typing import Any
 
 try:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Request
+    from fastapi.responses import JSONResponse
     from pydantic import BaseModel
 except ImportError as exc:  # pragma: no cover - exercised only without the extra
     raise ImportError(
@@ -83,6 +84,17 @@ def create_app() -> FastAPI:
         description="Route to the right ANN vector-search backend from measured criteria.",
         version=__version__,
     )
+
+    @app.exception_handler(ValueError)
+    async def _value_error_handler(request: Request, exc: ValueError) -> JSONResponse:
+        """Map a library ``ValueError`` (e.g. ``Criteria.validate()``) to HTTP 400.
+
+        Malformed criteria (out-of-range ``n_vectors``, an unrecognised
+        ``hardware``/``metric`` string, ...) is an ordinary client-input
+        outcome, not a server bug — left unhandled it falls through to
+        FastAPI's generic 500, indistinguishable from an actual bug.
+        """
+        return JSONResponse(status_code=400, content={"detail": str(exc)})
 
     @app.get("/capabilities", operation_id="capabilities")
     def capabilities() -> dict:

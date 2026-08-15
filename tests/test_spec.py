@@ -33,12 +33,24 @@ def test_defaults_match_house_policy() -> None:
         {"n_vectors": 10, "dim": 8, "target_recall": 1.5},  # recall > 1
         {"n_vectors": 10, "dim": 8, "latency_budget_ms": 0},  # non-positive budget
         {"n_vectors": 10, "dim": 8, "memory_budget_gb": -2.0},  # negative memory
+        {"n_vectors": 10, "dim": 8, "hardware": "quantum"},  # not a real HardwareName
+        {"n_vectors": 10, "dim": 8, "metric": "euclidean"},  # not a real MetricName
     ],
 )
 def test_validate_rejects_bad_ranges(kwargs: dict) -> None:
     """validate() raises on out-of-range n_vectors/dim/target_recall/budgets."""
     with pytest.raises(ValueError):
         Criteria(**kwargs).validate()
+
+
+def test_validate_rejects_unknown_metric_before_it_can_silently_become_l2() -> None:
+    # Every backend's search path treats ANY string outside {"cosine", "ip"}
+    # as L2 (see e.g. backends/exact.py's `if metric in (...) ... else`), so
+    # a typo'd metric ("euclidean" instead of "l2") used to silently compute
+    # wrong-semantics distances rather than being rejected up front at the
+    # one validation choke point every surface (CLI/API/MCP) funnels through.
+    with pytest.raises(ValueError, match="metric"):
+        Criteria(n_vectors=10, dim=8, metric="euclidean").validate()
 
 
 def test_round_trip_through_dict() -> None:

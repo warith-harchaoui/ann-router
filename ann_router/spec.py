@@ -158,6 +158,23 @@ class Criteria:
             raise ValueError(f"latency_budget_ms must be > 0, got {self.latency_budget_ms}")
         if self.memory_budget_gb is not None and self.memory_budget_gb <= 0:
             raise ValueError(f"memory_budget_gb must be > 0 or None, got {self.memory_budget_gb}")
+        # `hardware`/`metric` are typed as Literal for static checking, but
+        # Literal is not enforced at runtime and the CLI/API/MCP surfaces all
+        # accept them as plain strings (CriteriaModel.metric: str in api.py) --
+        # without this check, a typo (e.g. metric="euclidean") does not raise
+        # here, and downstream every backend's `if metric in ("cosine", "ip")
+        # ... else` treats ANY unrecognised string as L2 silently: a caller's
+        # typo would produce wrong search results with no indication anything
+        # was ignored, instead of a clear rejection at the one validation
+        # choke point every surface already funnels through.
+        valid_hardware = set(HardwareName.__args__)
+        if self.hardware not in valid_hardware:
+            raise ValueError(
+                f"hardware must be one of {sorted(valid_hardware)}, got {self.hardware!r}"
+            )
+        valid_metric = set(MetricName.__args__)
+        if self.metric not in valid_metric:
+            raise ValueError(f"metric must be one of {sorted(valid_metric)}, got {self.metric!r}")
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable view of the criteria.

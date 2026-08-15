@@ -50,3 +50,17 @@ def test_route_endpoint_dynamic(client) -> None:
     # turbovec is installed in the dev env; on a bare machine the fallback (hnsw)
     # is still a valid, available answer.
     assert resp.json()["backend"] in {"turbovec", "hnsw", "exact"}
+
+
+def test_route_endpoint_rejects_malformed_criteria_with_400_not_500(client) -> None:
+    # Criteria.validate()'s ValueError (bad range, or an unrecognised
+    # hardware/metric string -- CriteriaModel types both as plain `str`, so
+    # nothing rejects a typo before it reaches the dataclass) used to fall
+    # through to FastAPI's generic 500, indistinguishable from a real bug.
+    resp = client.post("/route", json={"n_vectors": -1, "dim": 16})
+    assert resp.status_code == 400
+    assert "n_vectors" in resp.json()["detail"]
+
+    resp = client.post("/route", json={"n_vectors": 500, "dim": 16, "metric": "euclidean"})
+    assert resp.status_code == 400
+    assert "metric" in resp.json()["detail"]
