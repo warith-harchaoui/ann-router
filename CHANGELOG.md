@@ -6,6 +6,8 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-08-15
+
 ### Fixed
 
 - **`Criteria.validate()` did not check `hardware`/`metric` against their
