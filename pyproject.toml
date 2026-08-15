@@ -77,7 +77,7 @@ dev = [
 # argparse CLI — no runtime dependency beyond the stdlib + core package.
 ann-router = "ann_router.cli_argparse:main"
 # click twin — install with the [cli] extra.
-ann-router-click = "ann_router.cli_click:cli"
+ann-router-click = "ann_router.cli_click:main"
 # HTTP API + MCP server (needs [mcp]) — fastapi-mcp mounts /mcp on the same
 # FastAPI app api.py serves, so one entry point covers both doors.
 ann-router-mcp = "ann_router.mcp_server:main"

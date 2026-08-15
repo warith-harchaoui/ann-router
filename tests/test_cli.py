@@ -53,6 +53,18 @@ def test_route_markdown(capsys) -> None:
     assert out.startswith("# ann-router decision:")
 
 
+def test_route_clean_error_on_invalid_criteria_not_a_traceback(capsys) -> None:
+    # Criteria.validate()'s ValueError (n_vectors < 0 here, unconstrained by
+    # argparse unlike --metric/--hardware which use `choices=`) used to
+    # propagate as a raw Python traceback instead of a clean CLI error.
+    exit_code = cli_argparse.main(["route", "--n-vectors", "-1", "--dim", "16"])
+    assert exit_code == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("Error: ")
+    assert "n_vectors" in captured.err
+
+
 def test_capabilities_lists_exact(capsys) -> None:
     """``ann-router capabilities`` lists exact among the available backends."""
     out = _run(capsys, ["capabilities"])
@@ -91,7 +103,7 @@ def test_build_search_round_trip(capsys, tmp_path) -> None:
     assert search_out["ids"][0][0] == 0  # a point's nearest neighbour is itself
 
 
-def test_click_twin_drives_every_subcommand(tmp_path) -> None:
+def test_click_twin_drives_every_subcommand(tmp_path, capsys) -> None:
     """The click CLI exposes route/capabilities/bench/build/search, matching argparse."""
     # The click CLI is optional; when present it must expose the same commands
     # as argparse (route/build/search/bench/capabilities), not just route.
@@ -121,6 +133,25 @@ def test_click_twin_drives_every_subcommand(tmp_path) -> None:
 
     assert invoke("route", "--n-vectors", "500", "--dim", "16")["backend"] == "exact"
     assert "exact" in invoke("capabilities")["available"]
+
+    # main() (the ann-router-click console-script entry point, wrapping cli())
+    # must print one clean "Error: ..." line + exit 1 on a library ValueError,
+    # not a raw traceback -- CliRunner.invoke(cli, ...) above bypasses main()'s
+    # own wrapper entirely, so it is tested separately, driving main() the way
+    # the real console script does (argv + sys.exit).
+    import sys
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(
+        sys, "argv", ["ann-router-click", "route", "--n-vectors", "-1", "--dim", "16"]
+    )
+    try:
+        with pytest.raises(SystemExit) as exc_info:
+            cli_click.main()
+        assert exc_info.value.code == 1
+    finally:
+        monkeypatch.undo()
+    assert capsys.readouterr().err.startswith("Error: ")
     assert (
         invoke("bench", "--n", "1200", "--dim", "32", "-k", "5")["results"]["exact"]["recall"]
         == 1.0

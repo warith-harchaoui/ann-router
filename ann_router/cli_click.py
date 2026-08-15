@@ -8,7 +8,8 @@ missing. Every command delegates to the shared :mod:`ann_router._core_cli`, so
 the two CLIs can never drift apart.
 
 Consumes: ``click`` (optional), ``ann_router._core_cli``, ``os_helper``.
-Produces: :func:`cli` (the ``ann-router-click`` console-script entry point).
+Produces: :func:`main` (the ``ann-router-click`` console-script entry point,
+wrapping :func:`cli`).
 
 Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 """
@@ -17,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 
 try:
     import click
@@ -199,5 +201,24 @@ def capabilities_cmd() -> None:
     _emit(core.do_capabilities())
 
 
+def main() -> None:
+    """Console entry point (``ann-router-click``).
+
+    click's own dispatch only special-cases ``ClickException``/``Abort`` (and
+    a broken pipe); a plain library exception (e.g. ``Criteria.validate()``'s
+    ``ValueError``) would otherwise propagate as a raw Python traceback
+    instead of a clean CLI error. This wraps the whole invocation and
+    translates that last case into a one-line stderr message + exit 1 --
+    click's own control flow (usage errors, ``--help``, an explicit
+    ``sys.exit`` in a subcommand) already raises ``SystemExit``, a
+    ``BaseException`` this does not catch, so it passes through untouched.
+    """
+    try:
+        cli()
+    except Exception as err:  # noqa: BLE001 - last resort: see docstring
+        click.echo(f"Error: {err}", err=True)
+        sys.exit(1)
+
+
 if __name__ == "__main__":  # pragma: no cover
-    cli()
+    main()
