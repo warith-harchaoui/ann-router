@@ -4,6 +4,33 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **`Criteria.validate()` did not check `hardware`/`metric` against their
+  allowed values.** Both are typed `Literal` for static checking only —
+  `Literal` is not enforced at runtime, and every surface (CLI/API/MCP)
+  ultimately accepts them as plain strings (`CriteriaModel.hardware`/
+  `.metric: str` in `api.py`). Without this check, a typo (e.g.
+  `metric="euclidean"`) did not raise: every backend's search path treats
+  any string outside `{"cosine", "ip"}` as L2 silently (see e.g.
+  `backends/exact.py`), so a caller's typo would compute wrong-semantics
+  distances with no indication anything was ignored, instead of a clear
+  rejection at the one validation choke point every surface funnels
+  through. `validate()` now raises `ValueError` for both.
+- **The HTTP API collapsed `Criteria.validate()`'s `ValueError` into a
+  generic 500.** `POST /route` with malformed criteria (an out-of-range
+  field, or now an unrecognised `hardware`/`metric`) now returns 400 with
+  the library's own message instead of an opaque 500.
+- **Both CLI twins printed a raw Python traceback on a library exception**
+  (e.g. `Criteria.validate()`'s `ValueError` — reachable via `--n-vectors`,
+  which, unlike `--hardware`/`--metric`, is not constrained by argparse's
+  own `choices=`) instead of a clean one-line message. Both `ann-router`
+  and `ann-router-click` now print `Error: ...` to stderr and exit 1;
+  `ann-router-click`'s console-script entry point now points at a new
+  `cli_click.main()` wrapper (was the bare `cli` group).
+
 ## [0.1.4] - 2026-08-13
 
 ### Fixed
