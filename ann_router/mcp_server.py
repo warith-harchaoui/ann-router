@@ -1,4 +1,4 @@
-"""MCP server — the agent-tool door (optional ``[mcp]`` extra), via fastapi-mcp.
+"""MCP server: the agent-tool door (optional ``[mcp]`` extra), via fastapi-mcp.
 
 The fifth surface (paired with the ``skills/ann-router`` skill) lets an AI
 agent call the router as Model-Context-Protocol tools. Rather than hand
@@ -12,7 +12,7 @@ or extend a route in ``api.py`` and this door follows without a second edit.
 
 This is an architectural change from the pre-fastapi-mcp version: MCP is now
 served over **Streamable HTTP** (mounted at ``/mcp`` on a running app), not
-stdio — a stdio subprocess client (spawn-and-talk-over-stdin/stdout) is not
+stdio: a stdio subprocess client (spawn-and-talk-over-stdin/stdout) is not
 what ``fastapi-mcp`` offers; an HTTP-based MCP client pointed at the running
 server's ``/mcp`` endpoint is. The upside: the exact same three tools are also
 just REST endpoints an agent (or a human with curl) can hit directly.

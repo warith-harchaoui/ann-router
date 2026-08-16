@@ -1,4 +1,4 @@
-"""Qdrant backend — persistent HNSW with first-class metadata filtering.
+"""Qdrant backend: persistent HNSW with first-class metadata filtering.
 
 Qdrant is the router's answer to *persistence + metadata filters*: it stores an
 HNSW index plus a JSON payload per point and filters by that payload at query

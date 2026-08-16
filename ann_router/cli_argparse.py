@@ -1,4 +1,4 @@
-"""argparse command-line interface — the always-available CLI door.
+"""argparse command-line interface: the always-available CLI door.
 
 This is the second of ann-router's five surfaces (after the library) and, like
 os-helper's ``cli_argparse``, it needs no third-party dependency: argparse ships

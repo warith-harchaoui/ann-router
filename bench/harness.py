@@ -15,11 +15,11 @@ Every measured cell is appended to ``results/measurements.yaml`` and reused, so 
 10M-scale sweep can be done in **pieces over days**: re-running only advances the
 cells not yet present. To keep it affordable we go **coarse-then-dichotomic**:
 
-* ``coarse``  — a logarithmic ``n`` grid, just to bracket where crossovers live;
-* ``bisect``  — binary search on ``n`` for one backend-pair crossover, seeded by
+* ``coarse``: a logarithmic ``n`` grid, just to bracket where crossovers live;
+* ``bisect``: binary search on ``n`` for one backend-pair crossover, seeded by
   a log-log **interpolation** of the coarse latency curves so we start near the
   answer;
-* ``status``  — how much of the plan is done.
+* ``status``: how much of the plan is done.
 
 Nothing here mutates the shipped policy; :mod:`bench.calibrate` reads the YAML
 and derives the justified thresholds.

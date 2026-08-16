@@ -1,4 +1,4 @@
-"""The router — measure criteria, select an available backend, justify it.
+"""The router: measure criteria, select an available backend, justify it.
 
 This is the ``recommend.py`` analogue: it takes a :class:`~ann_router.spec.Criteria`,
 consults the pure policy (``policy.rank_backends``), applies *availability* (a
@@ -7,7 +7,7 @@ explained), attaches recommended build parameters, and returns a fully
 discussable :class:`~ann_router.spec.BackendChoice`. A convenience
 :func:`auto_index` closes the loop: route -> instantiate -> build.
 
-The contract mirrors the sibling router's promise — the answer is never just a
+The contract mirrors the sibling router's promise: the answer is never just a
 name, it is a name *plus the criteria that drove it plus the alternatives that
 were considered*, so a human can audit or override it.
 

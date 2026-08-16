@@ -1,9 +1,9 @@
-"""HNSW backend (hnswlib) — best recall/latency for a stable, in-memory corpus.
+"""HNSW backend (hnswlib): best recall/latency for a stable, in-memory corpus.
 
 Hierarchical Navigable Small World graphs give the best recall-per-millisecond
 of the in-memory engines *when the corpus rarely changes*: the graph is built
-once and traversed cheaply. The catch — and the reason the router only picks it
-for **static** corpora — is deletion: hnswlib deletes via tombstones
+once and traversed cheaply. The catch, and the reason the router only picks it
+for **static** corpora, is deletion: hnswlib deletes via tombstones
 (``mark_deleted``), which degrade the graph over time and are never truly
 reclaimed without a rebuild. So this adapter advertises ``supports_remove`` as
 tombstone-only and the policy keeps dynamic workloads on turbovec instead.

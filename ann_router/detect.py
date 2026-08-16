@@ -1,10 +1,10 @@
-"""Hardware probing — fill in the ``hardware`` criterion automatically.
+"""Hardware probing: fill in the ``hardware`` criterion automatically.
 
 The router's decision changes with the accelerator: a GPU unlocks FAISS batch
 search, Apple Silicon makes turbovec's Rust/NEON path especially attractive, and
 a plain CPU box narrows the field. Rather than make the caller hand-classify
 their machine, this module probes it the same way the ``best-engine-ai-helper``
-sibling's ``detect.py`` does — cheap subprocess/library calls with graceful
+sibling's ``detect.py`` does: cheap subprocess/library calls with graceful
 fallbacks, never raising, always returning one of the three ``HardwareName``
 values.
 

@@ -1,10 +1,10 @@
-"""turbovec backend — the dynamic-corpus specialist.
+"""turbovec backend: the dynamic-corpus specialist.
 
 turbovec (Rust + PyO3, ships wheels on PyPI incl. Apple Silicon) is the engine
 the router reaches for when the corpus **changes constantly**: it supports O(1)
 ``add_with_ids`` and ``remove(id)`` with no index rebuild, and its TurboQuant
 2-4 bit quantisation gives ~16x compression while keeping recall above
-FAISS-PQ. That combination — mutable *and* compact *and* fast on Apple Silicon —
+FAISS-PQ. That combination (mutable *and* compact *and* fast on Apple Silicon)
 is what earns it the "frequent updates" branch of the policy, ahead of the
 graph indexes whose deletes rot the structure.
 

@@ -1,4 +1,4 @@
-"""pgvector backend — vector search inside an existing PostgreSQL.
+"""pgvector backend: vector search inside an existing PostgreSQL.
 
 pgvector's niche is *persistence + metadata filters when a Postgres is already
 in place*: you keep vectors next to your relational data and filter with plain
@@ -6,7 +6,7 @@ SQL ``WHERE`` clauses, backed by an HNSW index on the vector column. The router
 picks it (over Qdrant) when the criteria say "a database is already there",
 because reusing it beats standing up a second datastore. Unlike every other
 backend this one needs a live server, so it is unavailable unless a DSN is
-supplied — absence is a clean skip, never a crash.
+supplied: absence is a clean skip, never a crash.
 
 Consumes: ``pgvector`` + ``psycopg`` (optional, ``pip install 'ann-router[pgvector]'``)
 and a reachable PostgreSQL with the ``vector`` extension.

@@ -1,11 +1,11 @@
-"""ann-router — pick the right ANN vector-search backend from measured criteria.
+"""ann-router: pick the right ANN vector-search backend from measured criteria.
 
-``ann-router`` is a brique in Warith Harchaoui's *AI Helpers* suite. Like
-its sibling ``best-engine-ai-helper`` (which picks the best local LLM for a
-machine), it is a **router**: you describe the vector-search problem — corpus
+``ann-router`` is a building block in Warith Harchaoui's *AI Helpers* suite.
+Like its sibling ``best-engine-ai-helper`` (which picks the best local LLM for
+a machine), it is a **router**: you describe the vector-search problem (corpus
 size, dimensionality, recall target, latency/memory budgets, update pattern,
-metadata-filtering need, hardware, persistence — and it selects, *justifies*, and
-can *instantiate* the appropriate engine among:
+metadata-filtering need, hardware, persistence), and it selects, *justifies*,
+and can *instantiate* the appropriate engine among:
 
     exact (brute force) · turbovec · HNSW (hnswlib) · FAISS (IVF/PQ) ·
     Annoy · Qdrant · pgvector

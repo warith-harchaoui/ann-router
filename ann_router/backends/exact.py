@@ -1,10 +1,10 @@
-"""Exact brute-force backend — the always-available reference implementation.
+"""Exact brute-force backend: the always-available reference implementation.
 
 Pure numpy: no optional dependency, so ``ExactIndex`` is the one backend that
 is *always* usable and doubles as the ground truth the router's recall tests
 score every approximate engine against. For a corpus under a few tens of
 thousands of vectors a vectorised full scan is already sub-millisecond and,
-being exact, has recall 1.0 by construction — which is exactly why the policy
+being exact, has recall 1.0 by construction, which is exactly why the policy
 routes small problems here instead of paying an index-build cost for nothing.
 
 Consumes: ``ann_router.base`` (the ANNIndex contract), numpy.

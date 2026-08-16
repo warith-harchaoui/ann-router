@@ -1,10 +1,10 @@
-"""The selection policy — pure, tunable decision math (no side effects).
+"""The selection policy: pure, tunable decision math (no side effects).
 
 This is the ``score.py`` analogue from ``best-engine-ai-helper``: it holds the
 named, versioned thresholds and the branch predicates that turn a
 :class:`~ann_router.spec.Criteria` into an *ordered, justified* shortlist of
-backends. It imports nothing heavy and touches no engine, so it is fully unit
--testable on its own — the router layer (``router.py``) is what consults
+backends. It imports nothing heavy and touches no engine, so it is fully
+unit-testable on its own; the router layer (``router.py``) is what consults
 availability and instantiates the winner.
 
 The decision tree reproduced here is the suite's own documented policy (and the

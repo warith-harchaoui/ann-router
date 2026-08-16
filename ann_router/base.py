@@ -1,15 +1,15 @@
 """The common ANN index interface every backend implements.
 
 The router's whole value proposition is that eight very different vector-search
-engines — from a pure-numpy brute-force scan to Qdrant — can be driven through
+engines (from a pure-numpy brute-force scan to Qdrant) can be driven through
 *one* small surface. This module defines that surface:
 
-* :class:`Capabilities` — a static descriptor of what a backend can do
+* :class:`Capabilities`: a static descriptor of what a backend can do
   (remove? filter? persist? needs a GPU?), so the router can reason about a
   backend without importing its (possibly absent) dependency.
-* :class:`ANNIndex` — the abstract base class with ``build`` / ``add`` /
+* :class:`ANNIndex`: the abstract base class with ``build`` / ``add`` /
   ``add_with_ids`` / ``remove`` / ``search`` / ``save`` / ``load``.
-* :class:`NotSupported` and :class:`BackendUnavailable` — the two honest
+* :class:`NotSupported` and :class:`BackendUnavailable`: the two honest
   failure modes: an operation a backend genuinely cannot do (Annoy removes),
   versus a backend whose optional dependency is not installed.
 

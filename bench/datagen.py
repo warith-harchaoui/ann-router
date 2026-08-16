@@ -1,8 +1,8 @@
 """Deterministic synthetic corpora and cached exact ground truth.
 
 The calibration harness needs, for a given ``(n, dim, seed)``, a reproducible
-vector corpus plus the *exact* k-nearest-neighbour answers for a fixed query set
-— the yardstick every approximate backend's recall is scored against.
+vector corpus plus the *exact* k-nearest-neighbour answers for a fixed query set,
+the yardstick every approximate backend's recall is scored against.
 
 Design choices that keep a 10M-scale sweep affordable and resumable:
 
@@ -12,7 +12,7 @@ Design choices that keep a 10M-scale sweep affordable and resumable:
 * **Ground truth is cached.** The queries (``q * dim``) and their exact neighbour
   ids (``q * k``) are tiny, so they are written once under ``results/gt/`` and
   reused across every backend and recall target at the same ``(n, dim, ...)``.
-* **Clustered data**, not uniform noise — real embeddings live on clusters, and
+* **Clustered data**, not uniform noise: real embeddings live on clusters, and
   ANN recall behaves very differently on clustered vs. uniform data.
 
 Consumes: numpy, faiss (for the exact search; falls back to chunked numpy).

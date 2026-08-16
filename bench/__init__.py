@@ -5,7 +5,7 @@ sweeps backends across corpus sizes and records recall/latency into a resumable
 YAML store, and :mod:`bench.calibrate` reads that store to derive each threshold
 with the evidence that justifies it.
 
-No LLM is involved anywhere in this package — it is pure numeric measurement
+No LLM is involved anywhere in this package: it is pure numeric measurement
 (numpy / faiss / hnswlib / annoy / turbovec). Everything runs locally.
 """
 

@@ -1,24 +1,24 @@
 """Derive justified routing thresholds from the measured YAML store.
 
 Reads ``results/measurements.yaml`` (produced by :mod:`bench.harness`) and turns
-it into ``results/calibrated_policy.yaml`` — the same threshold names the shipped
+it into ``results/calibrated_policy.yaml``: the same threshold names the shipped
 policy uses, but each value carries the *measured rows that justify it* and the
 method used, so nothing is a guess.
 
 Thresholds derived here
 -----------------------
-* ``EXACT_MAX_N`` — largest ``n`` (per dim) where the exact scan's p50 latency is
+* ``EXACT_MAX_N``: largest ``n`` (per dim) where the exact scan's p50 latency is
   still within the interactive budget **and** no approximate backend is faster:
   below it, approximation only adds build cost.
-* ``FAISS_MIN_N`` — smallest ``n`` where FAISS meets the recall target with lower
+* ``FAISS_MIN_N``: smallest ``n`` where FAISS meets the recall target with lower
   p50 latency than HNSW: the "very large volume" regime.
-* ``HIGH_RECALL`` — the recall target at/above which a quantised backend
+* ``HIGH_RECALL``: the recall target at/above which a quantised backend
   (turbovec / FAISS-PQ) can no longer meet it, so routing must steer to
   exact/HNSW.
-* memory compression factors — ``index_bytes / raw_bytes`` per backend, the
+* memory compression factors: ``index_bytes / raw_bytes`` per backend, the
   evidence behind the tight-memory (Annoy / turbovec) branch.
 
-ScaNN is not a registered backend (no Apple-Silicon wheel; dropped entirely —
+ScaNN is not a registered backend (no Apple-Silicon wheel; dropped entirely,
 see CHANGELOG.md), so it never appears here.
 
 Consumes: ``results/measurements.yaml``, PyYAML.

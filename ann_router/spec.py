@@ -6,7 +6,7 @@ This module holds the *input* side of the router: a single, explicit
 update pattern, metadata-filtering need, hardware, persistence), plus the
 ``BackendChoice`` result the router returns.
 
-The design goal — mirrored from the ``best-engine-ai-helper`` sibling — is
+The design goal, mirrored from the ``best-engine-ai-helper`` sibling, is
 that the choice is *measured and discussable*: every field here is a lever
 that can flip the decision, and the router explains which levers mattered.
 

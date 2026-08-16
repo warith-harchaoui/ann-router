@@ -1,9 +1,9 @@
-"""Annoy backend — read-only, memory-mapped, very lean.
+"""Annoy backend: read-only, memory-mapped, very lean.
 
 Annoy (Spotify) builds a forest of random-projection trees, freezes it, and
-memory-maps it from disk — so many processes share one on-disk index at almost
+memory-maps it from disk, so many processes share one on-disk index at almost
 zero RAM cost. That frugality is the whole point: the router picks Annoy for a
-**read-only corpus under a tight memory budget**. The flip side is rigidity —
+**read-only corpus under a tight memory budget**. The flip side is rigidity:
 once ``build`` is called the index is immutable, so ``add``/``remove`` genuinely
 cannot work and honestly raise :class:`NotSupported` rather than pretending.
 

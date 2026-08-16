@@ -1,4 +1,4 @@
-"""click command-line interface — the optional, ergonomic CLI twin.
+"""click command-line interface: the optional, ergonomic CLI twin.
 
 Identical behaviour to :mod:`ann_router.cli_argparse`, but built on click for a
 nicer help/UX. click is an *optional* dependency (``pip install

@@ -5,9 +5,9 @@ Each ``references/landscape-<lang>.csv`` (options as rows, criteria as
 columns, integer 1-5 ratings in the cells) drives two rendered artefacts:
 
 * the **star table** inside the matching Markdown file (``LANDSCAPE.md`` /
-  ``PAYSAGE.md``) — integers become ``⭐`` runs, and the row labels regain their
+  ``PAYSAGE.md``): integers become ``⭐`` runs, and the row labels regain their
   editorial voice ("Just use **FAISS**" in English, "**FAISS** seul" in French);
-* the **positioning map** SVG under ``assets/`` — produced by the external
+* the **positioning map** SVG under ``assets/``: produced by the external
   ``standpoint`` tool, which reads the same CSV.
 
 Run it after any edit to a CSV so the table and the map never drift from the

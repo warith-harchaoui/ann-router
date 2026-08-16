@@ -1,15 +1,15 @@
-"""FastAPI HTTP surface — the web-API door (optional ``[api]`` extra).
+"""FastAPI HTTP surface: the web-API door (optional ``[api]`` extra).
 
 The third of ann-router's five surfaces exposes the router over HTTP so a
 service can ask "which backend for this problem?" (and benchmark/inspect
 backends) without a Python import. FastAPI + uvicorn live behind the ``[api]``
 extra, imported lazily here so the core package never pays for a web stack it
-does not use — the same quarantine os-helper applies to its GUI. Every endpoint
+does not use (the same quarantine os-helper applies to its GUI). Every endpoint
 delegates to :mod:`ann_router._core_cli`, so the HTTP behaviour matches the CLI
 and library exactly.
 
 Each route carries an explicit ``operation_id`` (``route``/``capabilities``/
-``bench``) — not just OpenAPI hygiene: :mod:`ann_router.mcp_server` mounts
+``bench``). This is not just OpenAPI hygiene: :mod:`ann_router.mcp_server` mounts
 ``fastapi-mcp`` on a copy of this same app and selects exactly these
 operation ids as the exposed MCP tools, so the id *is* the tool name an agent
 calls. Rename a route here and the MCP door renames with it, automatically.

@@ -1,9 +1,9 @@
-"""FAISS backend (IVF + PQ) — scale, quantisation, optional GPU.
+"""FAISS backend (IVF + PQ): scale, quantisation, optional GPU.
 
 FAISS earns its place at the *large volume + batch (+ GPU)* end of the policy:
 an IVF coarse quantiser prunes the search to a few cells, and optional Product
 Quantisation compresses vectors ~8-16x so billions fit in RAM. The trade is a
-training step and lower recall than a graph index at small/medium N — which is
+training step and lower recall than a graph index at small/medium N, which is
 precisely why the router only reaches for FAISS once the corpus is big enough
 for those wins to matter, and prefers HNSW/turbovec below that.
 

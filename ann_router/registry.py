@@ -1,11 +1,11 @@
-"""Backend registry — the single lookup table from name to adapter class.
+"""Backend registry: the single lookup table from name to adapter class.
 
 Every backend adapter is a subclass of :class:`ann_router.base.ANNIndex`; this
 module is the one place that maps the seven backend names to those classes and
 answers the two questions the router asks about each: *what can it do*
 (capabilities, readable without the dependency) and *can it run here* (is the
-optional dependency importable). Importing this module — and therefore
-``ann_router`` — must stay dependency-free, so the adapter modules it imports
+optional dependency importable). Importing this module, and therefore
+``ann_router``, must stay dependency-free, so the adapter modules it imports
 all defer their heavy imports.
 
 Consumes: the seven ``ann_router.backends.*`` adapter modules.

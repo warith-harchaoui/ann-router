@@ -7,7 +7,7 @@ catalog) and ``hardware.yaml`` (the accelerator profiles). This module is the
 single reader for them: the Python constants in :mod:`ann_router.policy` stay the
 canonical defaults, and these functions let an operator *override* the
 thresholds from a YAML file (or the ``ANN_ROUTER_POLICY`` env var) without
-touching code — the "example config, profusely commented" house rule.
+touching code: the "example config, profusely commented" house rule.
 
 Consumes: ``pyyaml``; the packaged ``*.yaml`` files (via importlib.resources).
 Produces: :func:`policy_thresholds`, :func:`backend_catalog`,
