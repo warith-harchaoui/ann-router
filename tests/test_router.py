@@ -72,6 +72,23 @@ def test_auto_index_trusts_the_array_shape() -> None:
     assert index.dim == 24
 
 
+def test_auto_index_routes_on_the_arrays_true_shape_not_stale_criteria() -> None:
+    """The ROUTING decision must use the array's real n_vectors/dim too.
+
+    ``raw_memory_gb()`` (policy.py) is ``n_vectors * dim``, which feeds the
+    tight-memory rules -- so a stale/wrong ``Criteria.dim``/``n_vectors``
+    would silently skew *which backend gets picked*, not just the built
+    index's ``dim`` attribute (already covered by the test above). The
+    echoed ``choice.criteria`` must reflect the array, not the caller's
+    possibly-wrong input.
+    """
+    rng = np.random.default_rng(2)
+    vecs = rng.standard_normal((2_000, 16)).astype(np.float32)
+    _, choice = auto_index(vecs, Criteria(n_vectors=999_999, dim=99_999))
+    assert choice.criteria["n_vectors"] == 2_000
+    assert choice.criteria["dim"] == 16
+
+
 def test_markdown_report_is_wellformed() -> None:
     """to_markdown() produces a report with the expected headings."""
     md = to_markdown(route(Criteria(n_vectors=1_000, dim=64)))

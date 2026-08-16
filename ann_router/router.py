@@ -20,6 +20,8 @@ Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import numpy as np
 import os_helper as osh
 
@@ -197,11 +199,18 @@ def auto_index(
     >>> ids.shape
     (1, 5)
     """
+    # Honor the docstring's "the array wins" promise for the ROUTING decision
+    # too, not just the built index's dim: raw_memory_gb() (policy.py) is
+    # n_vectors * dim, which feeds the tight-memory annoy/turbovec rules, so a
+    # stale/wrong criteria.dim or .n_vectors silently skews which backend gets
+    # picked -- the old code only ever corrected dim when instantiating the
+    # class, after routing had already run on the un-corrected criteria.
+    n, dim = vectors.shape
+    if criteria.n_vectors != n or criteria.dim != dim:
+        criteria = replace(criteria, n_vectors=n, dim=dim)
     choice = route(criteria, thresholds)
     cls = BACKENDS[choice.backend]
-    # Instantiate with the routed config, then build; dim comes from the array so
-    # a mismatched Criteria.dim never corrupts the index.
-    index = cls(dim=vectors.shape[1], **choice.config)
+    index = cls(dim=dim, **choice.config)
     index.build(vectors, ids=ids)
     return index, choice
 

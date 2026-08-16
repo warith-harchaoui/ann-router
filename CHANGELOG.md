@@ -6,6 +6,25 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **`auto_index()` routed on the caller's possibly-stale `Criteria.n_vectors`/
+  `.dim`, not the array's real shape**, contradicting its own documented
+  contract ("the array wins... the criteria are advisory for routing"). Only
+  the *built index's* `dim` came from the array; the routing decision itself
+  (which backend gets picked) ran on the un-corrected criteria first —
+  `raw_memory_gb()` is `n_vectors * dim`, feeding the tight-memory rules, so a
+  wrong `dim` could silently route to the wrong backend. Now reconciles
+  `criteria` against `vectors.shape` before routing.
+- **Tests**: `test_backend_lifecycle[annoy]` could hard-fail with a confusing
+  "recall@10=0.000" on a machine where `annoy`'s native extension is
+  importable but returns wrong results (observed on Python 3.13; annoy is
+  unmaintained upstream, no official 3.13 support). Added a direct
+  self-check of the installed extension before running the recall test, and
+  skip with a clear reason when it fails — same treatment as the existing
+  pgvector-needs-a-live-server skip. Not an ann-router bug: verified with a
+  raw, ann-router-independent repro against the bare `annoy` package.
+
 ## [0.1.5] - 2026-08-15
 
 ### Fixed
