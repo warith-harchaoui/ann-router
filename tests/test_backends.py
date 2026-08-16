@@ -31,6 +31,27 @@ from tests.conftest import RECALL_THRESHOLDS, recall_at_k
 ALL_BACKENDS = list(BACKENDS)
 
 
+def _annoy_extension_is_functional() -> bool:
+    """Probe the installed ``annoy`` native extension with a trivial index.
+
+    ``annoy`` ships a compiled C++ extension that has been observed to build
+    "successfully" (importable, no error) yet silently return wrong results
+    on some Python/platform combinations (unmaintained upstream, no official
+    3.13 support at the time of writing) — a query for a point that is
+    itself in the index comes back with the wrong neighbour and a distance
+    that is not ~0. That is indistinguishable from a real ann-router bug
+    unless checked directly against a hand-verified expectation first.
+    """
+    from annoy import AnnoyIndex
+
+    idx = AnnoyIndex(4, "euclidean")
+    idx.add_item(0, [1.0, 0.0, 0.0, 0.0])
+    idx.add_item(1, [0.0, 1.0, 0.0, 0.0])
+    idx.build(10)
+    pos, dist = idx.get_nns_by_vector([1.0, 0.0, 0.0, 0.0], 2, include_distances=True)
+    return pos[:1] == [0] and dist[0] < 1e-4
+
+
 def _skip_if_unavailable(name: str) -> type[ANNIndex]:
     """Return the adapter class or skip the test with an actionable reason."""
     cls = BACKENDS[name]
@@ -40,6 +61,12 @@ def _skip_if_unavailable(name: str) -> type[ANNIndex]:
     # to test, so skip rather than fail on a connection error.
     if name == "pgvector" and not os.environ.get("ANN_ROUTER_PG_DSN"):
         pytest.skip("pgvector needs a live server — set ANN_ROUTER_PG_DSN to run it")
+    if name == "annoy" and not _annoy_extension_is_functional():
+        pytest.skip(
+            "annoy is importable but its native extension returns wrong results on this "
+            "machine/Python version (self-check failed) — not an ann-router bug, see "
+            "_annoy_extension_is_functional's docstring"
+        )
     return cls
 
 
