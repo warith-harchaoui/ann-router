@@ -9,14 +9,29 @@
 ![Local-first](https://img.shields.io/badge/local--first-oui-brightgreen)
 [![tests](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml/badge.svg)](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml)
 
+Transformer une photo, une phrase ou un produit en vecteur, une liste de nombres
+placée de telle sorte que deux choses semblables tombent à proximité l'une de
+l'autre, c'est ainsi que fonctionne la plupart des recherches en intelligence
+artificielle : un moteur de recherche, un système de recommandation qui trouve
+« encore comme ça », un agent conversationnel qui va chercher le bon paragraphe
+dans un document. La difficulté vient ensuite : retrouver, parmi des millions
+voire des milliards de vecteurs, ceux les plus proches d'un vecteur de requête.
+Les vérifier un par un ne tient pas la charge, on effectue donc une recherche
+approchée, qui échange une petite part d'exactitude, contrôlée, contre une
+recherche qui reste rapide quelle que soit la taille de la base.
+
 `ann-router` fait partie de la suite **AI Helpers**. C'est un *routeur* :
 vous décrivez votre problème de recherche de plus proches voisins approchés
-(ANN) en termes *mesurés* et il sélectionne, **justifie** et peut **instancier**
-le bon moteur, au lieu de vous marier à une seule bibliothèque.
+(_Approximate Nearest Neighbors_ ou ANN) en termes *mesurés* (combien de
+vecteurs, combien de dimensions, quelle exactitude est réellement nécessaire),
+et il sélectionne, **justifie** et peut **instancier** le bon moteur pour ce
+problème précis, au lieu de vous marier à une seule bibliothèque qui convient
+au corpus d'aujourd'hui mais pas à celui de demain.
 
-Trouver les vecteurs les plus proches d'un vecteur de requête, dans une base qui en contient beaucoup, est un problème très courant en intelligence artificielle. Naïvement, la complexité croît linéairement avec le nombre de vecteurs de la base. C'est souvent inacceptable, on effectue donc une recherche approchée, de complexité bien plus faible : c'est ce qui rend l'approche viable pour nos applications à des millions, voire des milliards de vecteurs.
-
-**C'est un composant indispensable pour les RAG.**
+**C'est un composant indispensable pour les RAG** (_Retrieval-Augmented
+Generation_ : un système qui va chercher le texte pertinent avant de répondre,
+plutôt que de s'appuyer seulement sur ce qu'un modèle de langage a mémorisé
+pendant son entraînement).
 
 C'est le pendant « recherche vectorielle » de
 [`best-engine-ai-helper`](https://github.com/warith-harchaoui/best-engine-ai-helper)

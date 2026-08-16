@@ -8,21 +8,27 @@
 ![Local-first](https://img.shields.io/badge/local--first-yes-brightgreen)
 [![tests](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml/badge.svg)](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml)
 
-`ann-router` belongs to the **AI Helpers** suite. It is a *router*: you describe
-your approximate-nearest-neighbour (ANN) vector-search problem in *measured*
-terms, and it selects, **justifies**, and can **instantiate** the right engine,
-instead of marrying you to a single library.
+Turning a photo, a sentence, or a product into a vector, a list of numbers placed
+so that similar things land close together, is how most AI search works: a search
+engine, a recommendation system finding "more like this," a chatbot pulling the
+right paragraph out of a document. The hard part comes next: finding the closest
+vectors to a query inside a database of millions or billions of them. Checking
+every one by one does not scale, so real systems run an *approximate* search
+instead, trading a small, controlled amount of accuracy for a search that stays
+fast no matter how large the database grows.
 
 <img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/logo.png" alt="ann-router logo" >
 
+`ann-router` belongs to the **AI Helpers** suite. It is a *router*: you describe
+your approximate-nearest-neighbour (ANN) search problem in *measured* terms (how
+many vectors, how many dimensions, how much accuracy you actually need), and it
+selects, **justifies**, and can **instantiate** the right engine for that problem,
+instead of marrying you to a single library that fits today's corpus and not
+tomorrow's.
 
-Finding the vectors closest to a query vector inside a large database of vectors
-is a very common problem in artificial intelligence. Naively, it has linear
-complexity in the number of vectors in the database. That is often unacceptable,
-so we run an *approximate* search with far lower complexity in the number of
-vectors, which is reasonable for applications at millions, even billions, of vectors.
-
-**It is an indispensable component for RAG.**
+**It is an indispensable component for RAG** (retrieval-augmented generation: an
+AI system that looks up the relevant text before answering, instead of relying
+only on what a language model memorized during training).
 
 It is the vector-search sibling of
 [`best-engine-ai-helper`](https://github.com/warith-harchaoui/best-engine-ai-helper)
