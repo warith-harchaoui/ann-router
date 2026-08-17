@@ -4,7 +4,7 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.6] - 2026-08-17
 
 ### Fixed
 
@@ -24,6 +24,19 @@ All notable changes to `ann-router` are documented here. The format follows
   skip with a clear reason when it fails — same treatment as the existing
   pgvector-needs-a-live-server skip. Not an ann-router bug: verified with a
   raw, ann-router-independent repro against the bare `annoy` package.
+
+### Documentation
+
+- **README.md/LISEZMOI.md** opened by using "vector," "ANN," and "engine"
+  before ever grounding what a vector actually is in this context. Reordered
+  so the concrete explanation (turning a photo, sentence, or product into a
+  list of numbers, similar things landing close together, why approximate
+  search is needed at scale) comes first, then the router framing. Also
+  glossed "RAG," used but never explained anywhere in the file.
+- Removed the em dash used as a title/subtitle separator and as a
+  mid-sentence aside from every module-opening docstring (25 files), per
+  this project's writing charter; no meaning change. Fixed a stray French
+  word ("brique") left in `ann_router/__init__.py`'s English docstring.
 
 ## [0.1.5] - 2026-08-15
 
