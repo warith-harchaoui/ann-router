@@ -112,6 +112,17 @@ def test_backend_lifecycle(name: str, dataset: dict, tmp_path) -> None:
     small = cls(dim=dim).build(dataset["corpus"][:2000])
     extra, extra_ids = dataset["corpus"][2000:2010], np.arange(2000, 2010)
     if cap.supports_add:
+        # Bare add() (no explicit ids) must work right after build(), with no
+        # intervening add_with_ids() call — regression: turbovec only seeded
+        # its internal id high-water mark inside add_with_ids(), so a bare
+        # add() straight after build() restarted id assignment at 0 and
+        # collided with the ids build() had already assigned.
+        bare = cls(dim=dim).build(dataset["corpus"][:2000])
+        more = dataset["corpus"][2000:2002]
+        bare.add(more)
+        found, _ = bare.search(more[:1], k=5)
+        assert found.shape == (1, 5)
+
         # Adding must grow the searchable set — the new ids become findable.
         small.add_with_ids(extra, extra_ids)
         found, _ = small.search(extra[:1], k=5)

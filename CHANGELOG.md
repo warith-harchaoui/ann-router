@@ -4,6 +4,21 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] - 2026-08-21
+
+### Fixed
+
+- **`TurboVecIndex.add()` (no explicit ids) crashed or silently collided with
+  the ids `build()` had already inserted.** The adapter's internal id
+  high-water mark (`_next_id`) was only ever set inside `add_with_ids()`;
+  `build()` never touched it, so a bare `add()` call right after `build()`,
+  with no `add_with_ids()` call in between, restarted id assignment at 0 and
+  collided with the ids `build()` had just assigned
+  (`ValueError: id 0 already present in index`). `build()` now seeds
+  `_next_id` from the ids it just inserted, so a later `add()` continues past
+  them. Added a regression test to `test_backend_lifecycle` covering a bare
+  `build()` then `add()` sequence, for every backend.
+
 ## [0.1.6] - 2026-08-17
 
 ### Fixed

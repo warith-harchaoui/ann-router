@@ -137,6 +137,10 @@ class TurboVecIndex(ANNIndex):
         arr = self._prep(vectors)
         labels = np.arange(arr.shape[0]) if ids is None else np.asarray(ids)
         self._index.add_with_ids(arr, labels.astype(np.uint64))
+        # Seed the high-water mark from the ids just inserted, so a later bare
+        # add() (no explicit ids) continues past them instead of restarting at
+        # 0 and colliding with the ids build() just assigned.
+        self._next_id = int(labels.max()) + 1 if labels.size else 0
         return self
 
     def add(self, vectors: np.ndarray) -> None:

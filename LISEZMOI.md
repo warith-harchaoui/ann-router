@@ -55,6 +55,27 @@ optionnelle de moteur n'est chargée à l'import, donc `import ann_router`
 fonctionne avec numpy seul et un backend dont la dépendance est absente se
 signale simplement indisponible pendant que le routeur le contourne. Il s'agit donc de _lazy import_.
 
+Rien de tout cela n'est un script isolé. Chaque changement passe par
+l'intégration continue (CI, vérifications automatiques déclenchées à chaque
+push et pull request) : contrôle du style puis suite de tests complète,
+définis dans
+[`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml),
+avant qu'un changement n'atteigne `main`. Chaque publication correspond à une
+étiquette git versionnée sémantiquement (`MAJOR.MINOR.PATCH`, visible avec
+`git tag`, par exemple `v0.1.6`) et publiée sur PyPI (le dépôt officiel des
+paquets Python) sous le nom `ann-router` : `pip install ann-router` installe
+donc toujours une version qui a déjà franchi cette porte.
+
+Le numéro de version reste honnête sur l'état du projet : en `0.1.x`,
+l'interface publique peut encore bouger d'une publication à l'autre, et aucun
+autre paquet publié de la suite AI Helpers ne dépend pour l'instant
+d'`ann-router`. On le lit donc aujourd'hui comme un outil de routage autonome
+au cœur testé et verrouillé par la CI, pas comme une brique au long passif de
+production ailleurs. Les planchers de rappel fixés dans `tests/conftest.py`
+(`RECALL_THRESHOLDS`) sont ce qui se rapproche le plus d'un contrat de
+production ici : des chiffres versionnés qu'une publication ne peut pas
+franchir silencieusement vers le bas.
+
 ## Documentation
 
 [💻 Documentation](https://harchaoui.org/warith/ai-helpers/docs/ann-router-doc/)
@@ -268,7 +289,7 @@ auto-détectable), `persistence`, `batch_queries`, `metric`
 
 ## Pour aller plus loin
 
-- [EXAMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXAMPLES.md) : un livre de recettes exécutable.
+- [EXEMPLES.md](https://github.com/warith-harchaoui/ann-router/blob/main/EXEMPLES.md) : un livre de recettes exécutable.
 - [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md) : comment ann-router se compare au choix d'un seul moteur.
 - [CODING.md](https://github.com/warith-harchaoui/ann-router/blob/main/CODING.md) : le standard de code que ce dépôt s'impose.
 - [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) : le harnais de calibrage mesuré.

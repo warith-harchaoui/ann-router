@@ -51,6 +51,25 @@ dependency is loaded at import time, so `import ann_router` works with only nump
 installed, and a backend whose dependency is absent simply reports itself
 unavailable while the router routes around it: this is lazy importing.
 
+None of this is a one-off script. Every change runs through continuous
+integration (CI, automated checks triggered by each push and pull request):
+lint and format checks, then the full test suite, defined in
+[`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml),
+before anything reaches `main`. Each release is a semantic-versioned
+(`MAJOR.MINOR.PATCH`) git tag, visible with `git tag` (e.g. `v0.1.6`),
+published to PyPI (the Python Package Index) as `ann-router`, so
+`pip install ann-router` always installs a version that already passed that
+gate.
+
+The version number stays honest about where the project actually stands,
+though: at `0.1.x`, the public interface can still move between releases, and
+no other published AI Helpers package depends on `ann-router` yet. Read it
+today as a standalone routing utility with a tested, CI-gated core, not as a
+component with years of production mileage behind it elsewhere. The recall
+floors pinned in `tests/conftest.py` (`RECALL_THRESHOLDS`) are the closest
+thing to a production contract this project makes: versioned numbers a
+release cannot quietly slip below.
+
 ## Documentation
 
 [💻 Documentation](https://harchaoui.org/warith/ai-helpers/docs/ann-router-doc/)

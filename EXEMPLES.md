@@ -127,7 +127,7 @@ idx = AnnoyIndex(dim=8).build(np.random.rand(100, 8).astype("float32"))
 try:
     idx.remove(np.array([1]))
 except NotSupported as e:
-    print(e)   # => "annoy: remove() unsupported (frozen index)"
+    print(e)   # => "annoy: remove() unsupported ..."
 ```
 
 ## 8. Régler la politique sans toucher au code
