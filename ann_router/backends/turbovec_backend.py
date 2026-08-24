@@ -150,12 +150,30 @@ class TurboVecIndex(ANNIndex):
         ----------
         vectors : numpy.ndarray
             Shape ``(m, dim)``.
+
+        Raises
+        ------
+        RuntimeError
+            If called on an index that was populated via :meth:`load` with no
+            subsequent :meth:`build`/:meth:`add_with_ids` call in this
+            process — the high-water mark can't be recovered from disk (see
+            :meth:`load`'s docstring), so guessing ``0`` here would silently
+            collide with ids already on disk instead of failing loudly. Call
+            :meth:`add_with_ids` with explicit ids instead.
         """
         # turbovec has no count getter we rely on, so track the high-water mark
-        # from the corpus we have inserted so far via a private counter.
-        start = getattr(self, "_next_id", None)
-        if start is None:
-            start = 0
+        # from the corpus we have inserted so far via a private counter. A
+        # freshly constructed, never-built index has no attribute at all
+        # (safe to start at 0); `load()` sets it to the None *sentinel*
+        # (unsafe to guess) -- these are deliberately not the same case.
+        if self._index is not None and getattr(self, "_next_id", 0) is None:
+            raise RuntimeError(
+                "TurboVecIndex.add() cannot infer the next id after load(): "
+                "the id high-water mark is not recoverable from the on-disk "
+                "index. Call add_with_ids(vectors, ids) with explicit ids "
+                "instead."
+            )
+        start = getattr(self, "_next_id", None) or 0
         self.add_with_ids(vectors, np.arange(start, start + len(vectors)))
 
     def add_with_ids(self, vectors: np.ndarray, ids: np.ndarray) -> None:
@@ -237,7 +255,18 @@ class TurboVecIndex(ANNIndex):
         -------
         TurboVecIndex
             ``self``, populated from disk.
+
+        Notes
+        -----
+        turbovec's native ``IdMapIndex`` exposes no way to enumerate or count
+        the ids it holds, so the id high-water mark :meth:`add` relies on
+        cannot be recovered here. ``_next_id`` is set to ``None`` — a
+        sentinel :meth:`add` checks for and refuses to guess past, raising a
+        clear error rather than silently restarting id assignment at 0 and
+        colliding with ids already in the loaded index. Use
+        :meth:`add_with_ids` with explicit ids after loading.
         """
         turbovec = _require()
         self._index = turbovec.IdMapIndex.load(path)
+        self._next_id = None
         return self

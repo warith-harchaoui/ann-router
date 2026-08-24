@@ -26,6 +26,16 @@ ruff format ann_router tests     # format
 pytest -q                        # full suite; uninstallable backends skip cleanly
 ```
 
+A git `pre-push` hook runs the same three checks automatically and blocks
+the push outright on failure, so a red local state never reaches CI.
+One-time setup per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Bypass only when you really mean it: `git push --no-verify`.
+
 ## Adding a new backend
 
 1. Create `ann_router/backends/<name>_backend.py` subclassing `ANNIndex`.

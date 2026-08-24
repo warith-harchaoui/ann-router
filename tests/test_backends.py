@@ -153,3 +153,28 @@ def test_backend_lifecycle(name: str, dataset: dict, tmp_path) -> None:
     else:
         with pytest.raises(NotSupported):
             small.remove(np.array([0]))
+
+
+def test_turbovec_bare_add_after_load_raises_instead_of_colliding(dataset: dict, tmp_path) -> None:
+    """load() can't recover turbovec's id high-water mark; add() must say so.
+
+    Regression, same root cause as the build()-then-add() bug fixed in
+    v0.1.7: turbovec's native IdMapIndex exposes no way to enumerate or
+    count its ids, so after load() the next free id is genuinely unknown.
+    Guessing 0 (the pre-fix behaviour) would silently collide with ids
+    already in the loaded index instead of failing loudly.
+    """
+    cls = _skip_if_unavailable("turbovec")
+    dim = dataset["dim"]
+    path = str(tmp_path / "turbovec_reload.idx")
+    cls(dim=dim).build(dataset["corpus"][:50]).save(path)
+
+    reloaded = cls(dim=dim).load(path)
+    with pytest.raises(RuntimeError, match="add_with_ids"):
+        reloaded.add(dataset["corpus"][50:52])
+
+    # The documented escape hatch still works: explicit ids need no high-water
+    # mark at all.
+    reloaded.add_with_ids(dataset["corpus"][50:52], np.array([50, 51]))
+    found, _ = reloaded.search(dataset["corpus"][50:51], k=5)
+    assert found.shape == (1, 5)

@@ -4,6 +4,21 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.8] - 2026-08-24
+
+### Fixed
+
+- **`TurboVecIndex.add()` could silently collide with ids already on disk
+  after `load()`.** Same root cause as the `build()` fix in v0.1.7, one
+  call away: turbovec's native `IdMapIndex` exposes no way to enumerate or
+  count its ids, so the id high-water mark `add()` relies on is genuinely
+  unrecoverable after loading a persisted index. `load()` now sets
+  `_next_id` to an explicit `None` sentinel, and a bare `add()` on an
+  index in that state raises a clear `RuntimeError` pointing at
+  `add_with_ids(vectors, ids)` instead of guessing `0` and colliding.
+  Regression test:
+  `test_turbovec_bare_add_after_load_raises_instead_of_colliding`.
+
 ## [0.1.7] - 2026-08-21
 
 ### Fixed
