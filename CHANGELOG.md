@@ -4,6 +4,16 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+
+- **Non-atomic `.meta.json` sidecar write in `do_build`.** A plain
+  `open(path, "w")` + `json.dump` could leave a truncated sidecar file if
+  the process died mid-write; `do_search` trusts that exact file to rebuild
+  the index adapter without guessing. Now written via a same-directory
+  temp file + `os.replace`.
+
 ## [0.1.8] - 2026-08-24
 
 ### Fixed

@@ -17,6 +17,8 @@ Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import time
 
 import numpy as np
@@ -25,6 +27,24 @@ import os_helper as osh
 from .registry import BACKENDS, all_capabilities, available_backends
 from .router import auto_index, route, to_markdown
 from .spec import Criteria
+
+
+def _atomic_write_json(path: str, payload: dict) -> None:
+    """Write JSON via a same-directory temp file + ``os.replace``.
+
+    A plain ``open(path, "w")`` can leave a truncated/partial file behind if
+    the process is killed mid-write; ``search`` trusts this sidecar to rebuild
+    the index adapter without guessing, so a half-written file breaks it.
+    """
+    directory = os.path.dirname(path) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".tmp-", suffix=".json")
+    try:
+        with os.fdopen(fd, "w") as fh:
+            json.dump(payload, fh)
+        os.replace(tmp_path, path)
+    except BaseException:
+        os.unlink(tmp_path)
+        raise
 
 
 def do_capabilities() -> dict:
@@ -150,8 +170,7 @@ def do_build(
     # Sidecar metadata lets `search` rebuild the same adapter without guessing.
     meta = {"backend": backend, "dim": int(vectors.shape[1]), "metric": c.metric}
     osh.info(f"ann-router: built '{backend}' index at {index_path} in {elapsed:.3f}s")
-    with open(index_path + ".meta.json", "w") as fh:
-        json.dump(meta, fh)
+    _atomic_write_json(index_path + ".meta.json", meta)
     return {
         "backend": backend,
         "rationale": rationale,
