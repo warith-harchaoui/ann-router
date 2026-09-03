@@ -4,7 +4,7 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.9] - 2026-09-03
 
 ### Fixed
 
