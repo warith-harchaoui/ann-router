@@ -272,7 +272,7 @@ def calibrate(store: dict, dims: list[int]) -> dict:
     return doc
 
 
-# House palette (https://harchaoui.org/warith/colors/) — one colour per backend,
+# House palette (https://deraison.ai/colors/) — one colour per backend,
 # reused verbatim in README.md/LISEZMOI.md's hand-authored tree so the generated
 # and documented diagrams always match.
 _PALETTE = {

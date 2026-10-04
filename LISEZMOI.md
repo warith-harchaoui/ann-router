@@ -78,7 +78,7 @@ franchir silencieusement vers le bas.
 
 ## Documentation
 
-[💻 Documentation](https://harchaoui.org/warith/ai-helpers/docs/ann-router-doc/)
+[💻 Documentation](https://deraison.ai/ai-helpers/docs/ann-router-doc/)
 
 [🗺️ Paysage](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md)
 
@@ -297,7 +297,7 @@ auto-détectable), `persistence`, `batch_queries`, `metric`
 
 ## Auteur
 
-[Warith HARCHAOUI](https://harchaoui.org/warith), Ph.D.
+[Warith HARCHAOUI](https://deraison.ai), Ph.D.
 
 ## Licence
 

@@ -72,7 +72,7 @@ release cannot quietly slip below.
 
 ## Documentation
 
-[💻 Documentation](https://harchaoui.org/warith/ai-helpers/docs/ann-router-doc/)
+[💻 Documentation](https://deraison.ai/ai-helpers/docs/ann-router-doc/)
 
 [🗺️ Landscape](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md)
 
@@ -285,7 +285,7 @@ auto-detectable), `persistence`, `batch_queries`, `metric`
 
 ## Author
 
-[Warith HARCHAOUI](https://harchaoui.org/warith), Ph.D.
+[Warith HARCHAOUI](https://deraison.ai), Ph.D.
 
 ## License
 
