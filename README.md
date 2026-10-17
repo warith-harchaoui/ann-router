@@ -141,16 +141,17 @@ import ann_router as ar
 
 # 1. Describe the problem in measured terms.
 criteria = ar.Criteria(
-    n_vectors=2_000_000, dim=768,
-    dynamic=True,              # frequent adds/removes
-    target_recall=0.85,        # below HIGH_RECALL=0.9, turbovec's calibrated ceiling
+    n_vectors=2_000_000,
+    dim=768,
+    dynamic=True,  # frequent adds/removes
+    target_recall=0.85,  # below HIGH_RECALL=0.9, turbovec's calibrated ceiling
     hardware=ar.detect_hardware(),
 )
 
 # 2. Ask which backend, and why.
 choice = ar.route(criteria)
-print(choice.backend)         # 'turbovec'
-print(choice.rationale)       # "corpus receives frequent updates: turbovec offers O(1) ..."
+print(choice.backend)  # 'turbovec'
+print(choice.rationale)  # "corpus receives frequent updates: turbovec offers O(1) ..."
 
 # 3. Or route + build in one call, then search.
 vectors = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float32")
@@ -168,10 +169,13 @@ Every backend speaks the same `ANNIndex` interface:
 
 ```python
 index.build(vectors, ids=None)
-index.add(vectors); index.add_with_ids(vectors, ids); index.remove(ids)
+index.add(vectors)
+index.add_with_ids(vectors, ids)
+index.remove(ids)
 ids, distances = index.search(queries, k)
-index.save(path); index.load(path)
-Backend.capabilities()        # supports_remove / supports_filter / persistent / needs_gpu ...
+index.save(path)
+index.load(path)
+Backend.capabilities()  # supports_remove / supports_filter / persistent / needs_gpu ...
 ```
 
 Operations a backend genuinely cannot do (e.g. `Annoy.remove`) raise a clear

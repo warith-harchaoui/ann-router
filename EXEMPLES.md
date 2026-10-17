@@ -11,16 +11,16 @@ import ann_router as ar
 # target_recall abaissé sous HIGH_RECALL=0.9, le plafond calibré de turbovec
 # (bench/results/calibrated_policy.yaml) -- sinon la politique l'écarte.
 choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True, target_recall=0.85))
-print(choice.backend)      # => turbovec
-print(choice.rationale)    # => "corpus receives frequent updates: turbovec offers O(1) ..."
-print([c["backend"] for c in choice.considered])   # => ['turbovec', 'hnsw']
+print(choice.backend)  # => turbovec
+print(choice.rationale)  # => "corpus receives frequent updates: turbovec offers O(1) ..."
+print([c["backend"] for c in choice.considered])  # => ['turbovec', 'hnsw']
 
 # Au target_recall=0.95 par défaut (>= HIGH_RECALL), ce même corpus dynamique
 # route vers hnsw à la place -- turbovec n'est même plus dans la liste, pas
 # parce qu'il n'est pas installé, mais parce qu'il ne peut pas atteindre ce rappel.
 choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
-print(choice.backend)      # => hnsw
-print([c["backend"] for c in choice.considered])   # => ['hnsw']
+print(choice.backend)  # => hnsw
+print([c["backend"] for c in choice.considered])  # => ['hnsw']
 ```
 
 Le routeur ne renvoie jamais qu'un moteur **installé**. Si le premier choix de la
@@ -30,8 +30,8 @@ détendu se rabat par exemple sur `hnsw` :
 
 ```python
 choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.85))
-print(choice.backend)      # => hnsw   (si turbovec n'est pas installé ici)
-print(choice.rationale)    # => "Preferred backend 'turbovec' is not installed here, so ..."
+print(choice.backend)  # => hnsw   (si turbovec n'est pas installé ici)
+print(choice.rationale)  # => "Preferred backend 'turbovec' is not installed here, so ..."
 ```
 
 ## 2. auto_index : router, construire et chercher en un seul appel
@@ -43,10 +43,10 @@ rng = np.random.default_rng(0)
 vectors = rng.standard_normal((5_000, 128)).astype("float32")
 
 index, choice = ar.auto_index(vectors, ar.Criteria(n_vectors=5_000, dim=128))
-print(choice.backend)                      # => exact  (petit corpus)
+print(choice.backend)  # => exact  (petit corpus)
 ids, distances = index.search(vectors[:2], k=5)
-print(ids.shape)                           # => (2, 5)
-print(int(ids[0, 0]))                      # => 0  (le plus proche voisin d'un point est lui-même)
+print(ids.shape)  # => (2, 5)
+print(int(ids[0, 0]))  # => 0  (le plus proche voisin d'un point est lui-même)
 ```
 
 ## 3. Piloter un moteur précis, directement
@@ -75,7 +75,9 @@ q = rng.standard_normal((50, 128)).astype("float32")
 truth, _ = ExactIndex(dim=128).build(corpus).search(q, 10)
 pred, _ = TurboVecIndex(dim=128).build(corpus).search(q, 10)
 recall = np.mean([len(set(a) & set(b)) / 10 for a, b in zip(truth, pred)])
-print(round(float(recall), 2))   # => ~0.85 (dépend des données ; TurboQuant est un procédé avec pertes)
+print(
+    round(float(recall), 2)
+)  # => ~0.85 (dépend des données ; TurboQuant est un procédé avec pertes)
 ```
 
 Ou plus simplement, lancer le banc d'essai intégré sur chaque moteur installé :
@@ -83,6 +85,7 @@ Ou plus simplement, lancer le banc d'essai intégré sur chaque moteur installé
 ```python
 import ann_router as ar
 from ann_router._core_cli import do_bench
+
 print(do_bench(n=5000, dim=128, k=10)["results"])
 # => {'exact': {'recall': 1.0, ...}, 'hnsw': {'recall': 1.0, ...}, 'turbovec': {...}, ...}
 ```
@@ -112,7 +115,7 @@ print(ar.available_backends())
 # => ['exact', 'turbovec', 'hnsw', 'faiss', 'annoy', 'qdrant', 'pgvector']
 
 caps = ar.all_capabilities()
-print(caps["annoy"].supports_remove)   # => False (figé après construction)
+print(caps["annoy"].supports_remove)  # => False (figé après construction)
 print(caps["qdrant"].supports_filter)  # => True
 ```
 
@@ -127,7 +130,7 @@ idx = AnnoyIndex(dim=8).build(np.random.rand(100, 8).astype("float32"))
 try:
     idx.remove(np.array([1]))
 except NotSupported as e:
-    print(e)   # => "annoy: remove() unsupported ..."
+    print(e)  # => "annoy: remove() unsupported ..."
 ```
 
 ## 8. Régler la politique sans toucher au code
@@ -136,9 +139,8 @@ except NotSupported as e:
 import ann_router as ar
 
 # élève à 100k le seuil de bascule exact -> ANN, pour cet appel :
-choice = ar.route(ar.Criteria(n_vectors=50_000, dim=128),
-                  thresholds={"EXACT_MAX_N": 100_000})
-print(choice.backend)   # => exact
+choice = ar.route(ar.Criteria(n_vectors=50_000, dim=128), thresholds={"EXACT_MAX_N": 100_000})
+print(choice.backend)  # => exact
 ```
 
 Ou exporter `ANN_ROUTER_POLICY=/path/to/policy.yaml` pour remplacer les seuils

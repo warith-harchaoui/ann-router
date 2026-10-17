@@ -11,16 +11,16 @@ import ann_router as ar
 # target_recall relaxed below HIGH_RECALL=0.9, turbovec's calibrated ceiling
 # (bench/results/calibrated_policy.yaml) -- otherwise the policy skips it.
 choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True, target_recall=0.85))
-print(choice.backend)      # => turbovec
-print(choice.rationale)    # => "corpus receives frequent updates: turbovec offers O(1) ..."
-print([c["backend"] for c in choice.considered])   # => ['turbovec', 'hnsw']
+print(choice.backend)  # => turbovec
+print(choice.rationale)  # => "corpus receives frequent updates: turbovec offers O(1) ..."
+print([c["backend"] for c in choice.considered])  # => ['turbovec', 'hnsw']
 
 # At the house default target_recall=0.95 (>= HIGH_RECALL), the same dynamic
 # corpus routes to hnsw instead -- turbovec is not even in the shortlist,
 # not because it's uninstalled, but because it can't meet that recall.
 choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
-print(choice.backend)      # => hnsw
-print([c["backend"] for c in choice.considered])   # => ['hnsw']
+print(choice.backend)  # => hnsw
+print([c["backend"] for c in choice.considered])  # => ['hnsw']
 ```
 
 The router only ever returns an **installed** backend. If the policy's first
@@ -30,8 +30,8 @@ to `hnsw`:
 
 ```python
 choice = ar.route(ar.Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.85))
-print(choice.backend)      # => hnsw   (if turbovec is uninstalled here)
-print(choice.rationale)    # => "Preferred backend 'turbovec' is not installed here, so ..."
+print(choice.backend)  # => hnsw   (if turbovec is uninstalled here)
+print(choice.rationale)  # => "Preferred backend 'turbovec' is not installed here, so ..."
 ```
 
 ## 2. auto_index: route + build + search in one call
@@ -43,10 +43,10 @@ rng = np.random.default_rng(0)
 vectors = rng.standard_normal((5_000, 128)).astype("float32")
 
 index, choice = ar.auto_index(vectors, ar.Criteria(n_vectors=5_000, dim=128))
-print(choice.backend)                      # => exact  (small corpus)
+print(choice.backend)  # => exact  (small corpus)
 ids, distances = index.search(vectors[:2], k=5)
-print(ids.shape)                           # => (2, 5)
-print(int(ids[0, 0]))                      # => 0  (a point's nearest neighbour is itself)
+print(ids.shape)  # => (2, 5)
+print(int(ids[0, 0]))  # => 0  (a point's nearest neighbour is itself)
 ```
 
 ## 3. Drive a specific backend directly
@@ -75,7 +75,7 @@ q = rng.standard_normal((50, 128)).astype("float32")
 truth, _ = ExactIndex(dim=128).build(corpus).search(q, 10)
 pred, _ = TurboVecIndex(dim=128).build(corpus).search(q, 10)
 recall = np.mean([len(set(a) & set(b)) / 10 for a, b in zip(truth, pred)])
-print(round(float(recall), 2))   # => ~0.85 (data-dependent; TurboQuant is lossy)
+print(round(float(recall), 2))  # => ~0.85 (data-dependent; TurboQuant is lossy)
 ```
 
 Or just run the built-in bench across every installed backend:
@@ -83,6 +83,7 @@ Or just run the built-in bench across every installed backend:
 ```python
 import ann_router as ar
 from ann_router._core_cli import do_bench
+
 print(do_bench(n=5000, dim=128, k=10)["results"])
 # => {'exact': {'recall': 1.0, ...}, 'hnsw': {'recall': 1.0, ...}, 'turbovec': {...}, ...}
 ```
@@ -112,7 +113,7 @@ print(ar.available_backends())
 # => ['exact', 'turbovec', 'hnsw', 'faiss', 'annoy', 'qdrant', 'pgvector']
 
 caps = ar.all_capabilities()
-print(caps["annoy"].supports_remove)   # => False (frozen after build)
+print(caps["annoy"].supports_remove)  # => False (frozen after build)
 print(caps["qdrant"].supports_filter)  # => True
 ```
 
@@ -127,7 +128,7 @@ idx = AnnoyIndex(dim=8).build(np.random.rand(100, 8).astype("float32"))
 try:
     idx.remove(np.array([1]))
 except NotSupported as e:
-    print(e)   # => "annoy: remove() unsupported ..."
+    print(e)  # => "annoy: remove() unsupported ..."
 ```
 
 ## 8. Tune the policy without touching code
@@ -136,9 +137,8 @@ except NotSupported as e:
 import ann_router as ar
 
 # Raise the exact->ANN crossover to 100k for this call:
-choice = ar.route(ar.Criteria(n_vectors=50_000, dim=128),
-                  thresholds={"EXACT_MAX_N": 100_000})
-print(choice.backend)   # => exact
+choice = ar.route(ar.Criteria(n_vectors=50_000, dim=128), thresholds={"EXACT_MAX_N": 100_000})
+print(choice.backend)  # => exact
 ```
 
 Or export `ANN_ROUTER_POLICY=/path/to/policy.yaml` to override the shipped

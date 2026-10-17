@@ -149,17 +149,18 @@ import ann_router as ar
 
 # 1. Décrire le problème en termes mesurés.
 criteres = ar.Criteria(
-    n_vectors=2_000_000, dim=768,
-    dynamic=True,              # ajouts/suppressions fréquents
-    target_recall=0.85,        # sous HIGH_RECALL=0.9, le plafond calibré de turbovec
+    n_vectors=2_000_000,
+    dim=768,
+    dynamic=True,  # ajouts/suppressions fréquents
+    target_recall=0.85,  # sous HIGH_RECALL=0.9, le plafond calibré de turbovec
     hardware=ar.detect_hardware(),
 )
 
 # 2. Demander quel backend et pourquoi.
 choix = ar.route(criteres)
-print(choix.backend)          # 'turbovec'
-print(choix.rationale)        # "corpus receives frequent updates: turbovec offers O(1) ..."
-                               # (le raisonnement est toujours renvoyé en anglais)
+print(choix.backend)  # 'turbovec'
+print(choix.rationale)  # "corpus receives frequent updates: turbovec offers O(1) ..."
+# (le raisonnement est toujours renvoyé en anglais)
 
 # 3. Ou router + construire en un appel, puis chercher.
 vecteurs = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float32")
@@ -178,10 +179,13 @@ Chaque backend parle la même interface `ANNIndex` :
 
 ```python
 index.build(vecteurs, ids=None)
-index.add(vecteurs); index.add_with_ids(vecteurs, ids); index.remove(ids)
+index.add(vecteurs)
+index.add_with_ids(vecteurs, ids)
+index.remove(ids)
 ids, distances = index.search(requetes, k)
-index.save(chemin); index.load(chemin)
-Backend.capabilities()        # supports_remove / supports_filter / persistent / needs_gpu ...
+index.save(chemin)
+index.load(chemin)
+Backend.capabilities()  # supports_remove / supports_filter / persistent / needs_gpu ...
 ```
 
 Une opération qu'un backend ne peut réellement pas faire (ex. `Annoy.remove`)
