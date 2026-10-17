@@ -5,7 +5,7 @@ the *policy* (before availability is applied) must prefer the backend the suite'
 documentation promises. These rows ARE the decision tree, pinned so a change to
 the branch logic is a visible, reviewed diff.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

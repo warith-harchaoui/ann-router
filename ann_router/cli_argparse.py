@@ -11,7 +11,7 @@ Subcommands: ``route``, ``build``, ``search``, ``bench``, ``capabilities``.
 Consumes: ``ann_router._core_cli``, ``os_helper`` (logging to stderr).
 Produces: :func:`main` (the ``ann-router`` console-script entry point).
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

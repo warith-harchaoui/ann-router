@@ -11,7 +11,7 @@ values.
 Consumes: ``os_helper`` (worker count), optional ``psutil``/``torch`` if present.
 Produces: :func:`detect_hardware`, :func:`hardware_report`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

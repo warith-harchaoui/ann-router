@@ -12,7 +12,7 @@ Consumes: ``pgvector`` + ``psycopg`` (optional, ``pip install 'ann-router[pgvect
 and a reachable PostgreSQL with the ``vector`` extension.
 Produces: :class:`PgVectorIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

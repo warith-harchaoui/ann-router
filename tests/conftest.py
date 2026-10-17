@@ -11,7 +11,7 @@ backend, set comfortably below the values measured on this dataset (Apple
 Silicon, 2026-08) so the suite is robust to run-to-run jitter but still catches a
 real regression. Bumping a floor is a deliberate, reviewed change.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

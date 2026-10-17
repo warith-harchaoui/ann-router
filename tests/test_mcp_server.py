@@ -6,7 +6,7 @@ over the Streamable HTTP transport ``fastapi-mcp`` mounts at ``/mcp``) through
 FastAPI's ``TestClient`` — not just "the app object exists". The session
 manager needs the app's lifespan running, hence ``with TestClient(app) as``.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

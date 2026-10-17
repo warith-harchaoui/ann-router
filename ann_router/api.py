@@ -22,7 +22,7 @@ Run it with::
 Consumes: ``fastapi`` (optional), ``ann_router._core_cli``.
 Produces: :data:`app` (the ASGI application), :func:`create_app`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

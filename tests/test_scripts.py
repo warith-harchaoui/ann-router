@@ -6,7 +6,7 @@ heavy, network-adjacent tool, out of scope for this ultra-light suite. Every
 test below drives the CSV -> Markdown-table path only (``--no-svg``), which
 is also the only path CI can run.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

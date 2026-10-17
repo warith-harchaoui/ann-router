@@ -14,7 +14,7 @@ already ships inside the ``roitelet`` prototype's ``core/personal.py``.
 Consumes: ``turbovec`` (optional, ``pip install 'ann-router[turbovec]'``).
 Produces: :class:`TurboVecIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

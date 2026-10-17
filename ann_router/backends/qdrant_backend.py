@@ -11,7 +11,7 @@ exposes a ``search_filter`` extension for the payload path.
 Consumes: ``qdrant-client`` (optional, ``pip install 'ann-router[qdrant]'``).
 Produces: :class:`QdrantIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

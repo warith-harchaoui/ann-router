@@ -11,7 +11,7 @@ Consumes: ``ann_router`` (route/auto_index), numpy, ``os_helper`` (io/logging).
 Produces: :func:`do_route`, :func:`do_build`, :func:`do_search`, :func:`do_bench`,
 :func:`do_capabilities`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

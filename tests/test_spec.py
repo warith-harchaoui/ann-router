@@ -5,7 +5,7 @@ their numeric ranges, that they round-trip losslessly through JSON (the CLI/API/
 MCP wire format), and that ``from_dict`` is forgiving of unknown keys so older
 clients keep working.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

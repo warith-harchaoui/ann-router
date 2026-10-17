@@ -11,7 +11,7 @@ Consumes: ``click`` (optional), ``ann_router._core_cli``, ``os_helper``.
 Produces: :func:`main` (the ``ann-router-click`` console-script entry point,
 wrapping :func:`cli`).
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

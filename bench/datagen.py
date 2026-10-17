@@ -18,7 +18,7 @@ Design choices that keep a 10M-scale sweep affordable and resumable:
 Consumes: numpy, faiss (for the exact search; falls back to chunked numpy).
 Produces: :func:`make_corpus`, :func:`make_queries`, :func:`ground_truth`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

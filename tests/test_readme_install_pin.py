@@ -5,7 +5,7 @@ README documents every backend the registry actually ships and that the package
 version string is consistent, so a backend added in code without a doc mention
 (or a stale version) fails CI rather than shipping.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

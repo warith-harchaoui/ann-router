@@ -27,7 +27,7 @@ and derives the justified thresholds.
 Consumes: :mod:`bench.datagen`, :mod:`ann_router.registry`, PyYAML.
 Produces: the ``coarse`` / ``bisect`` / ``status`` CLI and ``measure_cell``.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

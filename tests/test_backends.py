@@ -12,7 +12,7 @@ one. :func:`test_capability_descriptor_is_consistent` stays a separate,
 always-run check since it needs no dependency at all — it reads a classmethod
 off the un-instantiated class.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

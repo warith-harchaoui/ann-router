@@ -6,7 +6,7 @@ has no optional dependency; every other module defers its heavy import so that
 ``import ann_router`` (and importing this package) never fails because an engine
 is not installed. Use :mod:`ann_router.registry` to look adapters up by name.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

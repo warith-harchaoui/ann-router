@@ -14,7 +14,7 @@ external ids survive.
 Consumes: ``faiss`` (optional, ``pip install 'ann-router[faiss]'`` → faiss-cpu).
 Produces: :class:`FaissIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

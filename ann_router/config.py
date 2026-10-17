@@ -13,7 +13,7 @@ Consumes: ``pyyaml``; the packaged ``*.yaml`` files (via importlib.resources).
 Produces: :func:`policy_thresholds`, :func:`backend_catalog`,
 :func:`hardware_profiles`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

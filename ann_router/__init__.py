@@ -31,7 +31,7 @@ Quick start
 >>> ids.shape
 (2, 5)
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from .spec import BackendChoice, Criteria
 
 __version__ = "0.1.9"
 __author__ = "Warith Harchaoui, Ph.D."
-__email__ = "warith.harchaoui@deraison.ai"
+__email__ = "warithmetics@deraison.ai"
 
 __all__ = [
     # Problem description + decision result

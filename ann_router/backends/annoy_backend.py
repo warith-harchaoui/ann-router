@@ -10,7 +10,7 @@ cannot work and honestly raise :class:`NotSupported` rather than pretending.
 Consumes: ``annoy`` (optional, ``pip install 'ann-router[annoy]'``).
 Produces: :class:`AnnoyIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

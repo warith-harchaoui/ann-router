@@ -10,7 +10,7 @@ routes small problems here instead of paying an index-build cost for nothing.
 Consumes: ``ann_router.base`` (the ANNIndex contract), numpy.
 Produces: :class:`ExactIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

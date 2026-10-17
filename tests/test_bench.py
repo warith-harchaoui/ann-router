@@ -7,7 +7,7 @@ mean a silently wrong threshold. Every test here uses only the always-available
 disk-cache paths to ``tmp_path`` first — nothing here may touch the real
 ``bench/results/`` store or ground-truth cache.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

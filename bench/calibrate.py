@@ -25,7 +25,7 @@ Consumes: ``results/measurements.yaml``, PyYAML.
 Produces: ``results/calibrated_policy.yaml`` and a stdout summary. With
 ``--apply`` it would patch ``ann_router/policy.yaml`` (off by default).
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

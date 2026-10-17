@@ -11,7 +11,7 @@ tombstone-only and the policy keeps dynamic workloads on turbovec instead.
 Consumes: ``hnswlib`` (optional, ``pip install 'ann-router[hnsw]'``).
 Produces: :class:`HNSWIndex`.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

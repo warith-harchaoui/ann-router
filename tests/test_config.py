@@ -4,7 +4,7 @@ Proves the shipped policy.yaml is genuinely load-bearing: an external override
 file changes the routing crossover, and the catalogs stay in sync with the
 registry.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

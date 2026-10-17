@@ -5,7 +5,7 @@ it: that it only ever returns an *installed* backend, that it explains a fallbac
 when the policy's first pick is missing, that ``auto_index`` really builds a
 working index, and that the Markdown report is well-formed.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

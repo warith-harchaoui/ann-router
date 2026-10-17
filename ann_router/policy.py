@@ -24,7 +24,7 @@ definitively abandoned it as a supported backend (see CHANGELOG.md).
 Consumes: ``ann_router.spec``.
 Produces: :func:`rank_backends`, plus the ``THRESHOLDS`` constants.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

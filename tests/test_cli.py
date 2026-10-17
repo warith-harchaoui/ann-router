@@ -5,7 +5,7 @@ skipped when the ``[cli]`` extra is absent. Both drive the same core, so a
 build/search round-trip through the CLI exercises the whole persistence path end
 to end.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations

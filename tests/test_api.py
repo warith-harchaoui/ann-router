@@ -3,7 +3,7 @@
 The HTTP surface must return the same decisions as the library, so these drive
 the app through FastAPI's TestClient and check the route/capabilities endpoints.
 
-Author: Warith Harchaoui <warith.harchaoui@deraison.ai>
+Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations
