@@ -1,26 +1,27 @@
 ---
 name: ann-router
-description: >-
+description:>-
   Select the right approximate-nearest-neighbour (ANN) vector-search backend
   from measured problem criteria — exact / turbovec / HNSW / FAISS / Annoy /
   Qdrant / pgvector — and get a justified, discussable rationale plus a
   ready-to-use index. Use when someone must CHOOSE a vector index / ANN library
   (not serve one), asks "FAISS or HNSW or Annoy?", has a corpus with frequent
   updates, needs metadata-filtered vector search, or wants to benchmark recall.
-when_to_use:
-  - The user must decide which ANN engine / vector index to use for a given
-    corpus size, dimensionality, recall/latency/memory budget, or update pattern.
-  - The user is about to hard-code FAISS (or any single engine) and it may be
-    the wrong fit (small corpus, churny data, needs filtering/persistence).
-  - The user asks to benchmark recall@k of vector backends against exact truth.
-triggers:
-  - "which ANN / vector index library for N vectors"
-  - "FAISS vs HNSW vs Annoy vs Qdrant vs pgvector"
-  - "my corpus has constant inserts/deletes — what index"
-  - "metadata-filtered vector search"
-  - "brute force or ANN index?"
-  - "benchmark vector-search recall"
-  - "quel index vectoriel / bibliothèque ANN utiliser"
+  Fires on "which ANN / vector index for N vectors", "FAISS vs HNSW vs Annoy vs
+  Qdrant vs pgvector", "my corpus has constant inserts and deletes — what
+  index", "metadata-filtered vector search", "brute force or an ANN index?",
+  "benchmark vector-search recall", "quel index vectoriel utiliser", and on
+  `ann-router`, `ann-router-click`, `ann-router-mcp`, `import ann_router as
+  ar`. Do NOT use
+  to embed data, stand up a database, serve an existing index, or pick a local
+  LLM (best-engine-ai-helper). The exhaustive trigger catalogue is in
+  `references/triggers.md`.
+license: BSD-3-Clause
+metadata:
+  author: Warith Harchaoui
+  package: ann-router
+  suite: ai-helpers
+  homepage: https://deraison.ai/ai-helpers
 ---
 
 # ann-router
@@ -52,9 +53,10 @@ From Python:
 
 ```python
 import ann_router as ar
+
 choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
-choice.backend      # 'turbovec'
-choice.rationale    # the justification
+choice.backend  # 'turbovec'
+choice.rationale  # the justification
 ```
 
 Route + build + search in one step with `ar.auto_index(vectors, criteria)`.
@@ -75,11 +77,14 @@ measured data in `bench/` rather than guessed — see `bench/README.md`.
 
 ## Progressive disclosure — go deeper only if needed
 
-- **Full criteria & API** → repo `README.md`, `EXAMPLES.md`.
-- **Why not just pick FAISS** → `LANDSCAPE.md` / `PAYSAGE.md`.
+- **Full command and flag matrix, engine extras, policy thresholds** →
+  `references/cli-reference.md`.
+- **Library, HTTP API, MCP, configuration files** → `references/surfaces.md`.
+- **Exhaustive trigger catalogue (English and French)** →
+  `references/triggers.md`.
+- **Why not just pick FAISS** → the repo's `LANDSCAPE.md` / `PAYSAGE.md`.
 - **Install / platform caveats** (Apple-Silicon annoy, pgvector server)
-  → `INSTALL.md`.
-- **Tune the policy** → `ann_router/policy.yaml` or `ANN_ROUTER_POLICY`.
+  → the repo's `INSTALL.md`.
 - **Benchmark recall** → `ann-router bench --n 5000 --dim 128 -k 10`.
 - **Capabilities matrix** → `ann-router capabilities`.
 
