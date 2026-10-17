@@ -117,6 +117,11 @@ porte API HTTP :
 ```bash
 docker build -t ann-router .
 docker run --rm -p 8018:8018 ann-router
+
+# Ou via Compose, qui porte le port et une sonde de santé — et, derrière
+# --profile backends, les deux dorsales qui exigent un serveur (qdrant, pgvector)
+docker compose up --build
+docker compose --profile backends up --build
 curl -X POST localhost:8018/route -H 'content-type: application/json' \
     -d '{"n_vectors": 500000, "dim": 768, "dynamic": true}'
 ```

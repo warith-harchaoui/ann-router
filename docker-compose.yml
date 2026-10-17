@@ -1,0 +1,87 @@
+# ann-router — Compose entry point for the container image next to this file.
+#
+#   docker compose up --build                      # API + MCP on http://localhost:8018
+#   docker compose --profile backends up --build   # ... plus the two backends that need a server
+#   docker compose run --rm ann-router ann-router --help
+#
+# The image installs the [all] extra, so every backend the router can
+# recommend is also importable here. Per the suite's rule, MCP is never a
+# second implementation: fastapi-mcp mounts /mcp onto the same FastAPI app
+# api.py serves, and each MCP tool *is* one of its routes.
+#
+# The `backends` profile
+# ----------------------
+# Most backends the router recommends run in-process — exact, HNSW, FAISS,
+# Annoy, turbovec, and Qdrant in its embedded `:memory:` mode — so they need
+# nothing here. Two do need a server, and this profile is for them:
+#
+#   * qdrant, when you want the server mode rather than the embedded one.
+#     Pass location="http://qdrant:6333" when building the index.
+#   * pgvector, which has no embedded mode at all. ANN_ROUTER_PG_DSN is wired
+#     to the postgres service below, so /bench can actually exercise it.
+#
+# Without the profile the router still answers every routing question: the
+# recommendation is computed from measured criteria, not from a live index.
+
+services:
+  ann-router:
+    build: .
+    image: ann-router:local
+    ports:
+      - "${ANN_ROUTER_PORT:-8018}:8018"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      # Only read when the `backends` profile is up; harmless otherwise.
+      ANN_ROUTER_PG_DSN: ${ANN_ROUTER_PG_DSN:-postgresql://ann:ann@postgres:5432/ann}
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    healthcheck:
+      # /capabilities, since this app exposes no dedicated /health route.
+      # python, not curl: the slim image ships no HTTP client.
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import sys, urllib.request
+          sys.exit(0 if urllib.request.urlopen("http://localhost:8018/capabilities", timeout=3).status == 200 else 1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # Generous: faiss and the other backends are slow to import.
+      start_period: 45s
+
+  qdrant:
+    profiles: [backends]
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"   # HTTP
+      - "6334:6334"   # gRPC
+    volumes:
+      - ann-router-qdrant:/qdrant/storage
+    restart: unless-stopped
+
+  postgres:
+    profiles: [backends]
+    # The pgvector image, not plain postgres: the extension has to be present
+    # before `CREATE EXTENSION vector` can succeed.
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ann
+      POSTGRES_PASSWORD: ann
+      POSTGRES_DB: ann
+    ports:
+      - "5432:5432"
+    volumes:
+      - ann-router-postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ann -d ann"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ann-router-qdrant:
+  ann-router-postgres:

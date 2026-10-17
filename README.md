@@ -109,6 +109,11 @@ A single image builds every pip-installable backend plus the HTTP API door:
 ```bash
 docker build -t ann-router .
 docker run --rm -p 8018:8018 ann-router
+
+# Or through Compose, which carries the port and a health probe — and, behind
+# --profile backends, the two backends that need a server (qdrant, pgvector)
+docker compose up --build
+docker compose --profile backends up --build
 curl -X POST localhost:8018/route -H 'content-type: application/json' \
     -d '{"n_vectors": 500000, "dim": 768, "dynamic": true}'
 ```
