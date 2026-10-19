@@ -267,6 +267,13 @@ class BackendChoice:
     config: dict[str, Any] = field(default_factory=dict)
     considered: list[dict[str, Any]] = field(default_factory=list)
     criteria: dict[str, Any] = field(default_factory=dict)
+    #: Small changes to the criteria that would change this decision, nearest
+    #: first. Empty when the pick is robust. The rules are threshold-based, so
+    #: `rationale` can read equally confident a hair either side of a boundary
+    #: -- `target_recall=0.89` routes to turbovec and `0.90` to hnsw. Knowing
+    #: *how nearly* a verdict went the other way is the difference between a
+    #: recommendation you can argue with and one you can only accept.
+    sensitivity: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serialisable view of the choice.
@@ -287,4 +294,5 @@ class BackendChoice:
             "config": dict(self.config),
             "considered": list(self.considered),
             "criteria": dict(self.criteria),
+            "sensitivity": [dict(row) for row in self.sensitivity],
         }

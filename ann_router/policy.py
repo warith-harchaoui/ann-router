@@ -343,3 +343,122 @@ def rank_backends(c: Criteria, thresholds: dict[str, float] | None = None) -> li
         if rule.eligible(c, t):
             shortlist.append({"backend": rule.backend, "reason": rule.reason(c, t)})
     return shortlist
+
+
+# ── how close was the call? ───────────────────────────────────────────────────
+# `rank_backends` says which rule fired and why. It cannot say how nearly it
+# did not, and the rules are threshold-based, so that distance is often small:
+# `target_recall=0.89` routes to turbovec while `0.90` routes to hnsw. One
+# percentage point -- well inside the noise of how anyone picks a recall target
+# -- changes the answer, and the rationale reads just as confident either way.
+#
+# A recommendation you cannot argue with is not discussable, and discussable is
+# what this package offers. So: probe each numeric criterion for the nearest
+# value that changes the verdict, and report the ones that are close.
+
+#: Numeric criteria worth probing, with the smallest step worth reporting.
+#: Relative for counts (a thousand vectors means nothing at n=10M and
+#: everything at n=1200), absolute for the bounded ones.
+_PROBES: tuple[tuple[str, str, float], ...] = (
+    ("n_vectors", "relative", 0.01),
+    ("dim", "relative", 0.01),
+    ("target_recall", "absolute", 0.005),
+    ("latency_budget_ms", "relative", 0.01),
+    ("memory_budget_gb", "relative", 0.01),
+)
+
+#: How far a criterion may move before the flip stops being worth a warning.
+#: A verdict that survives a 25 % change in its inputs is a verdict, not a
+#: coin toss sitting on a threshold.
+SENSITIVITY_SPAN = 0.25
+
+
+def _top_backend(c: Criteria, t: dict[str, float] | None) -> str | None:
+    ranked = rank_backends(c, t)
+    return ranked[0]["backend"] if ranked else None
+
+
+def _flip_point(
+    c: Criteria, field: str, mode: float | str, baseline: str, t: dict[str, float] | None
+) -> tuple[float, str] | None:
+    """Smallest change to ``field`` that changes the top backend, if it is near.
+
+    Walks outward from the current value in both directions, in fine steps, up
+    to :data:`SENSITIVITY_SPAN`. A linear scan rather than a bisection on
+    purpose: the rules are not monotonic in every criterion, so bisection could
+    step straight over a narrow band and report stability that is not there.
+    """
+    import dataclasses
+
+    current = getattr(c, field, None)
+    if current is None or not isinstance(current, (int, float)) or isinstance(current, bool):
+        return None
+    if current <= 0:
+        return None
+
+    step = current * 0.01 if mode == "relative" else _PROBE_STEPS[field]
+    limit = current * SENSITIVITY_SPAN
+    offset = step
+    while offset <= limit:
+        for candidate in (current + offset, current - offset):
+            if candidate <= 0:
+                continue
+            value = type(current)(candidate) if isinstance(current, int) else candidate
+            probed = dataclasses.replace(c, **{field: value})
+            verdict = _top_backend(probed, t)
+            if verdict and verdict != baseline:
+                return value, verdict
+        offset += step
+    return None
+
+
+#: Absolute probe steps, for criteria where a percentage is meaningless.
+_PROBE_STEPS: dict[str, float] = {"target_recall": 0.005}
+
+
+def sensitivity(c: Criteria, thresholds: dict[str, float] | None = None) -> list[dict]:
+    """Which small changes to the criteria would change the recommendation.
+
+    Parameters
+    ----------
+    c : Criteria
+        The measured problem description, as given to :func:`rank_backends`.
+    thresholds : dict, optional
+        The same overrides :func:`rank_backends` accepts.
+
+    Returns
+    -------
+    list of dict
+        ``[{"criterion": str, "from": float, "to": float, "backend": str,
+        "relative_change": float}, ...]``, one row per criterion whose verdict
+        flips within :data:`SENSITIVITY_SPAN`. Empty when the recommendation is
+        robust, which is the common and reassuring case.
+
+    Examples
+    --------
+    >>> rows = sensitivity(Criteria(n_vectors=500_000, dim=768, dynamic=True,
+    ...                             target_recall=0.89))
+    >>> any(r["criterion"] == "target_recall" for r in rows)
+    True
+    """
+    baseline = _top_backend(c, thresholds)
+    if baseline is None:
+        return []
+    out: list[dict] = []
+    for field, mode, _ in _PROBES:
+        found = _flip_point(c, field, mode, baseline, thresholds)
+        if found is None:
+            continue
+        value, verdict = found
+        current = getattr(c, field)
+        out.append(
+            {
+                "criterion": field,
+                "from": current,
+                "to": value,
+                "backend": verdict,
+                "relative_change": round(abs(value - current) / current, 4),
+            }
+        )
+    out.sort(key=lambda r: r["relative_change"])
+    return out

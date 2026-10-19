@@ -12,7 +12,12 @@ from __future__ import annotations
 
 import pytest
 
-from ann_router.policy import EXACT_MAX_N, effective_exact_max_n, rank_backends
+from ann_router.policy import (
+    EXACT_MAX_N,
+    effective_exact_max_n,
+    rank_backends,
+    sensitivity,
+)
 from ann_router.spec import Criteria
 
 
@@ -131,3 +136,68 @@ def test_tight_latency_budget_pushes_a_borderline_corpus_off_exact() -> None:
     assert rank_backends(Criteria(n_vectors=n, dim=128))[0]["backend"] == "exact"
     tight = Criteria(n_vectors=n, dim=128, latency_budget_ms=1.0)  # affords EXACT_MAX_N/10
     assert rank_backends(tight)[0]["backend"] != "exact"
+
+
+# --------------------------------------------------------------------------- #
+# How close was the call?
+# --------------------------------------------------------------------------- #
+# `rank_backends` says which rule fired and why. It cannot say how nearly it
+# did not, and the rules are threshold-based: target_recall=0.89 routes to
+# turbovec while 0.90 routes to hnsw. One percentage point -- well inside the
+# noise of how anyone picks a recall target -- changes the answer, and the
+# rationale reads equally confident either side. A recommendation you cannot
+# argue with is not discussable, and discussable is this package's contract.
+
+
+def test_a_verdict_sitting_on_a_threshold_says_so() -> None:
+    near = Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.89)
+    assert rank_backends(near)[0]["backend"] == "turbovec"
+
+    rows = sensitivity(near)
+    recall = next(r for r in rows if r["criterion"] == "target_recall")
+    assert recall["backend"] == "hnsw"
+    assert recall["relative_change"] < 0.05, "a 1-point move must register as close"
+
+
+def test_a_verdict_well_inside_its_band_reports_nothing() -> None:
+    """Silence is the useful default: it means the pick is robust."""
+    assert sensitivity(Criteria(n_vectors=50_000_000, dim=768)) == []
+
+
+def test_it_surfaces_criteria_the_reader_was_not_watching() -> None:
+    """At n=900 the latency budget is also near a boundary, not just n.
+
+    This is the case for doing it by probe rather than by hand: nobody writing
+    the rationale would have thought to mention the latency budget here.
+    """
+    rows = sensitivity(Criteria(n_vectors=900, dim=768))
+    assert {r["criterion"] for r in rows} >= {"n_vectors", "latency_budget_ms"}
+
+
+def test_rows_are_ordered_nearest_first() -> None:
+    rows = sensitivity(Criteria(n_vectors=900, dim=768))
+    assert rows == sorted(rows, key=lambda r: r["relative_change"])
+
+
+def test_each_row_names_the_backend_it_would_switch_to() -> None:
+    """ "It would change" is not actionable; "it would become hnsw" is."""
+    for row in sensitivity(Criteria(n_vectors=900, dim=768)):
+        assert (
+            row["backend"]
+            and row["backend"] != rank_backends(Criteria(n_vectors=900, dim=768))[0]["backend"]
+        )
+
+
+def test_booleans_and_absent_criteria_are_not_probed() -> None:
+    """`dynamic` is not a dial; `memory_budget_gb=None` is not a number."""
+    rows = sensitivity(Criteria(n_vectors=900, dim=768, dynamic=False))
+    assert not any(r["criterion"] in {"dynamic", "memory_budget_gb"} for r in rows)
+
+
+def test_the_decision_object_carries_it_for_every_surface() -> None:
+    """CLI, API and MCP all serialise through to_dict()."""
+    from ann_router import route
+
+    choice = route(Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.89))
+    assert choice.sensitivity
+    assert "sensitivity" in choice.to_dict()

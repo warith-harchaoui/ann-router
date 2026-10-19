@@ -277,6 +277,31 @@ The router returns not just the name but the **criteria that drove it** and the
 **alternatives it considered** (including any preferred-but-uninstalled engine it
 fell back from), so the choice is auditable and overridable.
 
+### How close was the call?
+
+The rules are threshold-based, so a rationale can read equally confident a hair
+either side of a boundary. `target_recall=0.89` routes to turbovec;
+`target_recall=0.90` routes to hnsw. One percentage point — well inside the
+noise of how anyone picks a recall target — changes the engine, and nothing in
+the wording suggests it.
+
+So every decision also carries `sensitivity`: the small changes to your criteria
+that would change the answer, nearest first.
+
+```python
+choice = route(Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.89))
+choice.sensitivity
+# [{'criterion': 'target_recall', 'from': 0.89, 'to': 0.9,
+#   'backend': 'hnsw', 'relative_change': 0.0112}]
+```
+
+An empty list is the reassuring case: no criterion flips the verdict within
+25 %, so the pick is robust to how roughly you measured.
+
+It is a probe, not a hand-written note, which is why it catches things nobody
+would have thought to mention. At `n_vectors=900` it flags the **latency
+budget** as well as `n_vectors` — both sit near a boundary there.
+
 ## Criteria (the input spec)
 
 `n_vectors`, `dim`, `target_recall`, `latency_budget_ms`, `memory_budget_gb`,

@@ -289,6 +289,32 @@ Le routeur renvoie non seulement le nom mais les **critères qui l'ont dicté** 
 les **alternatives considérées** (y compris un moteur préféré mais non installé
 dont il a dû se rabattre), pour que le choix soit auditable et surchargeable.
 
+### À quel point la décision était-elle serrée ?
+
+Les règles reposent sur des seuils : une justification peut donc paraître tout
+aussi assurée d'un côté comme de l'autre d'une frontière. `target_recall=0.89`
+route vers turbovec ; `target_recall=0.90` route vers hnsw. Un point de
+pourcentage — bien dans le bruit de la façon dont on choisit une cible de
+rappel — change le moteur, sans que la formulation le laisse deviner.
+
+Chaque décision porte donc aussi `sensitivity` : les petits changements de vos
+critères qui changeraient la réponse, du plus proche au plus lointain.
+
+```python
+choice = route(Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.89))
+choice.sensitivity
+# [{'criterion': 'target_recall', 'from': 0.89, 'to': 0.9,
+#   'backend': 'hnsw', 'relative_change': 0.0112}]
+```
+
+Une liste vide est le cas rassurant : aucun critère ne fait basculer le verdict
+à 25 % près, donc le choix résiste à l'approximation de vos mesures.
+
+C'est une sonde, pas une note rédigée à la main — d'où sa capacité à relever ce
+que personne n'aurait songé à mentionner. À `n_vectors=900`, elle signale le
+**budget de latence** autant que `n_vectors` : les deux sont près d'une
+frontière à cet endroit.
+
 ## Les critères (la spécification d'entrée)
 
 `n_vectors`, `dim`, `target_recall`, `latency_budget_ms`, `memory_budget_gb`,

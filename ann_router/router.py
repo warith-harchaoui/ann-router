@@ -26,7 +26,7 @@ import numpy as np
 import os_helper as osh
 
 from .base import ANNIndex
-from .policy import POLICY_VERSION, rank_backends
+from .policy import POLICY_VERSION, rank_backends, sensitivity
 from .registry import BACKENDS, get_backend
 from .spec import BackendChoice, Criteria
 
@@ -158,6 +158,11 @@ def route(c: Criteria, thresholds: dict[str, float] | None = None) -> BackendCho
         config=config,
         considered=considered,
         criteria={**c.to_dict(), "policy_version": POLICY_VERSION},
+        # Computed against the *policy*, not against availability: it answers
+        # "would the rules have chosen differently?", which is the question a
+        # reader of the rationale is actually weighing. A pick forced by a
+        # missing backend is already explained by `considered`.
+        sensitivity=sensitivity(c, thresholds),
     )
 
 

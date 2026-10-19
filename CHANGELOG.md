@@ -4,6 +4,50 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-10-19
+
+### Added
+
+- **`sensitivity`: how close the routing call actually was.**
+
+  The policy is a priority-ordered tree of threshold guards, so a rationale
+  reads exactly as confident a hair either side of a boundary. With
+  `n_vectors=500_000, dim=768, dynamic=True`, a `target_recall` of **0.89**
+  routes to turbovec and **0.90** routes to hnsw. One percentage point —
+  comfortably inside the noise of how anyone picks a recall target — changes
+  the engine, and nothing in the wording suggests it. `n_vectors` has the same
+  shape: 800 routes to exact, 1000 to hnsw.
+
+  This package's contract is a *discussable* rationale, and a recommendation
+  you cannot argue with is not discussable. So every decision now carries the
+  small changes that would change it:
+
+  ```python
+  choice = route(Criteria(n_vectors=500_000, dim=768, dynamic=True, target_recall=0.89))
+  choice.sensitivity
+  # [{'criterion': 'target_recall', 'from': 0.89, 'to': 0.9,
+  #   'backend': 'hnsw', 'relative_change': 0.0112}]
+  ```
+
+  Available on `BackendChoice.sensitivity` and through `to_dict()`, so the
+  library, CLI, API and MCP surfaces all get it without asking.
+
+  An empty list is the reassuring case: no criterion flips the verdict within
+  25 %, so the pick survives however roughly the criteria were measured.
+
+  **It reports what a hand-written note would miss.** At `n_vectors=900` it
+  flags the *latency budget* alongside `n_vectors` — both sit near a boundary
+  there, and nobody writing the rationale by hand would have thought to mention
+  the latency budget on a 900-vector corpus.
+
+  Implementation notes worth keeping: it scans linearly rather than bisecting,
+  because the rules are not monotonic in every criterion and a bisection could
+  step over a narrow band and report stability that is not there; and it is
+  computed against the *policy* rather than against availability, since "would
+  the rules have chosen differently?" is the question a reader of the rationale
+  is weighing — a pick forced by a missing backend is already explained by
+  `considered`.
+
 ## [0.1.9] - 2026-09-03
 
 ### Fixed
