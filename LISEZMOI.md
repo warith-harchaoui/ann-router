@@ -67,7 +67,7 @@ paquets Python) sous le nom `ann-router` : `pip install ann-router` installe
 donc toujours une version qui a déjà franchi cette porte.
 
 Le numéro de version reste honnête sur l'état du projet : en `0.1.x`,
-l'interface publique peut encore bouger d'une publication à l'autre, et aucun
+l'interface publique peut encore bouger d'une publication à l'autre et aucun
 autre paquet publié de la suite AI Helpers ne dépend pour l'instant
 d'`ann-router`. On le lit donc aujourd'hui comme un outil de routage autonome
 au cœur testé et verrouillé par la CI, pas comme une brique au long passif de
