@@ -16,6 +16,7 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 
 from __future__ import annotations
 
+import functools
 import os
 import platform
 
@@ -24,8 +25,13 @@ import os_helper as osh
 from .spec import HardwareName
 
 
+@functools.lru_cache(maxsize=1)
 def _has_cuda_gpu() -> bool:
-    """Return ``True`` if an NVIDIA CUDA GPU looks usable on this machine."""
+    """Return ``True`` if an NVIDIA CUDA GPU looks usable on this machine.
+
+    Cached: the answer cannot change inside one process, and the probes below
+    are not free.
+    """
     # Prefer a real driver probe: nvidia-smi exits 0 only when a GPU is present.
     try:
         res = osh.system("nvidia-smi -L", check_exitcode=False)
@@ -33,7 +39,25 @@ def _has_cuda_gpu() -> bool:
             return True
     except Exception:  # noqa: BLE001 - probing must never raise
         pass
-    # Fall back to torch's view if it happens to be installed (e.g. ROCm/CUDA).
+
+    # Fall back to torch's view where CUDA can actually exist — which is not
+    # macOS. Two reasons to gate this, and the second is the serious one:
+    #
+    #   * Apple never shipped CUDA, so the answer there is always False and the
+    #     import buys nothing.
+    #   * `import torch` is not free of consequence. On macOS it loads its own
+    #     `libomp.dylib`, and FAISS loads another; the second threaded FAISS
+    #     call in that process then dies with `OMP: Error #15` — an abort, not
+    #     an exception, so nothing can catch it. This package's own test suite
+    #     hit exactly that: asking for capabilities pulled torch in, and the
+    #     next `bench` killed the interpreter. A capability probe has no
+    #     business loading a deep-learning framework as a side effect.
+    #
+    # The documented escape, `KMP_DUPLICATE_LIB_OK=TRUE`, is described upstream
+    # as unsafe and liable to "silently produce incorrect results" — not a
+    # trade worth making underneath a recall benchmark.
+    if platform.system() == "Darwin":
+        return False
     try:
         import torch
 

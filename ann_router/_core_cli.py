@@ -39,7 +39,16 @@ def _atomic_write_json(path: str, payload: dict) -> None:
     directory = os.path.dirname(path) or "."
     fd, tmp_path = tempfile.mkstemp(dir=directory, prefix=".tmp-", suffix=".json")
     try:
-        with os.fdopen(fd, "w") as fh:
+        # `encoding="utf-8"` explicitly rather than the locale's choice. This
+        # is not currently load-bearing — `json.dump` defaults to
+        # `ensure_ascii=True`, so what reaches the file is pure ASCII whatever
+        # the locale decides — and it is written down because that is a
+        # non-obvious reason to be safe. Pass `ensure_ascii=False` here one day
+        # (to keep accents readable in the sidecar) and the locale starts
+        # mattering immediately: under `LC_ALL=C` the write would raise
+        # `UnicodeEncodeError`. Stating the encoding costs nothing and removes
+        # that trap in advance.
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(payload, fh)
         os.replace(tmp_path, path)
     except BaseException:
@@ -198,7 +207,10 @@ def do_search(index_path: str, queries_path: str, k: int) -> dict:
     dict
         ``{"backend", "ids": [[...]], "distances": [[...]]}``.
     """
-    with open(index_path + ".meta.json") as fh:
+    # Read as UTF-8 to match how it was written. A bare `open` would use the
+    # reader's locale, so a sidecar written on a UTF-8 host and read under a
+    # different one decodes to mojibake — or raises — for no visible reason.
+    with open(index_path + ".meta.json", encoding="utf-8") as fh:
         meta = json.load(fh)
     # Reconstruct the exact adapter the index was built with, then load it.
     cls = BACKENDS[meta["backend"]]
