@@ -166,7 +166,7 @@ ids, distances = index.search(vectors[:3], k=10)
 
 At the house default `target_recall=0.95`, this same `dynamic=True` corpus routes
 to **hnsw** instead: turbovec's own calibration
-([bench/results/calibrated_policy.yaml](bench/results/calibrated_policy.yaml))
+([bench/results/calibrated_policy.yaml](https://github.com/warith-harchaoui/ann-router/blob/main/bench/results/calibrated_policy.yaml))
 consistently undershoots recall 0.9, so the router prefers HNSW's better recall
 over turbovec's O(1) mutation once the target climbs past `HIGH_RECALL=0.9`.
 
