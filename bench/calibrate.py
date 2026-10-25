@@ -21,7 +21,7 @@ Thresholds derived here
 ScaNN is not a registered backend (no Apple-Silicon wheel; dropped entirely,
 see CHANGELOG.md), so it never appears here.
 
-Consumes: ``results/measurements.yaml``, PyYAML.
+Consumes: ``results/measurements.yaml``, ``click``, PyYAML.
 Produces: ``results/calibrated_policy.yaml`` and a stdout summary. With
 ``--apply`` it would patch ``ann_router/policy.yaml`` (off by default).
 
@@ -30,10 +30,12 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 
+import click
 import yaml
+
+from . import VariadicCommand
 
 RESULTS = Path(__file__).resolve().parent / "results"
 STORE = RESULTS / "measurements.yaml"
@@ -377,32 +379,61 @@ def mermaid_decision_tree(doc: dict) -> str:
     return "\n".join(lines)
 
 
-def main() -> None:
-    """Entry point for ``python -m bench.calibrate``: derive and write the thresholds."""
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--dims", type=int, nargs="+", default=[128, 384, 768])
-    ap.add_argument(
-        "--apply",
-        action="store_true",
-        help="(guarded) patch ann_router/policy.yaml from the measured values",
-    )
-    args = ap.parse_args()
+# ``-h`` beside ``--help``. argparse supplied the short form for free and
+# click does not, so the conversion has to ask for it back.
+_CONTEXT: dict[str, object] = {"help_option_names": ["-h", "--help"]}
 
+
+# `cls=VariadicCommand` keeps `--dims 128 384 768` working in one occurrence,
+# which is how `bench/README.md` and `run_bench.sh` both spell it. Plain
+# `multiple=True` would take 128 and leave `384 768` as stray positionals,
+# i.e. calibrate a third of the dims and say nothing.
+@click.command("calibrate", cls=VariadicCommand, context_settings=_CONTEXT)
+@click.option("--dims", type=int, multiple=True, default=(128, 384, 768), help="one or more")
+@click.option(
+    "--apply",
+    "apply_",
+    is_flag=True,
+    help="(guarded) patch ann_router/policy.yaml from the measured values",
+)
+def cli(dims: tuple[int, ...], apply_: bool) -> None:
+    """Derive justified routing thresholds from the measured YAML store.
+
+    \f
+
+    Everything past the form feed is for readers of the source: click
+    truncates --help there. The argparse version passed the whole module
+    docstring as its description, so the RST markup above was printed to
+    users verbatim; it is not help text and no longer pretends to be.
+
+    Parameters
+    ----------
+    dims : tuple of int
+        The dimensionalities to derive a threshold for.
+    apply_ : bool
+        Named with a trailing underscore because ``apply`` is a builtin; the
+        flag itself stays ``--apply``.
+    """
     if not STORE.exists():
         raise SystemExit(f"no measurements yet at {STORE} — run bench.harness coarse first")
     store = yaml.safe_load(STORE.read_text()) or {}
-    doc = calibrate(store, args.dims)
+    doc = calibrate(store, list(dims))
     RESULTS.mkdir(parents=True, exist_ok=True)
     OUT.write_text(yaml.safe_dump(doc, sort_keys=False, allow_unicode=True))
     TREE_OUT.write_text(mermaid_decision_tree(doc))
     print(f"wrote {OUT}")
     print(f"wrote {TREE_OUT}\n")
     print(yaml.safe_dump(doc["thresholds"], sort_keys=False, allow_unicode=True))
-    if args.apply:
+    if apply_:
         print(
             "--apply is intentionally a no-op stub: review calibrated_policy.yaml, "
             "then bump ann_router/policy.yaml + POLICY_VERSION deliberately."
         )
+
+
+def main() -> None:
+    """Entry point for ``python -m bench.calibrate``: derive and write the thresholds."""
+    cli()
 
 
 if __name__ == "__main__":

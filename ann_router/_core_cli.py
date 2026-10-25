@@ -1,8 +1,8 @@
-"""Shared CLI business logic: one core behind both the argparse and click doors.
+"""Shared CLI business logic: one core behind every door.
 
 The house rule (from the sibling repos' CODING.md) is that every surface (the
-argparse CLI, the click twin, the FastAPI app, the MCP server) must call the
-*same* library functions, never re-implement the decision or index logic. This
+click CLI, the FastAPI app, the MCP server) must call the *same* library
+functions, never re-implement the decision or index logic. This
 module is that shared core: thin functions that take already-parsed, primitive
 arguments and return JSON-ready dicts (or persist/read an index), so each front
 end is a trivial adapter over these.

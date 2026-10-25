@@ -23,6 +23,35 @@ All notable changes to `ann-router` are documented here. The format follows
 - `cli_click.py` is now `cli.py`, and `cli_argparse.py` is deleted. The module
   no longer guards its own `import click` behind a try/except with an
   install hint, because the dependency is no longer optional.
+
+- **The dev command lines moved to click as well**, so no argparse is left in
+  the repository: `bench/harness.py`, `bench/calibrate.py` and
+  `scripts/sync_docs_from_csv.py`. Every flag keeps its exact spelling, and
+  `-h` keeps working beside `--help` — argparse supplied the short form for
+  free and click does not, so each command declares
+  `context_settings={"help_option_names": ["-h", "--help"]}`: a regression
+  prevented, not a gap filled. None of these files ships in the wheel
+  (`[tool.setuptools.packages.find]` includes only `ann_router*`, verified by
+  building one), so no version moved.
+
+  The sweep flags were the risk. `--dims`, `--targets`, `--ns` and
+  `--backends` were argparse `nargs="+"`, which takes every value after one
+  occurrence; click's `multiple=True` takes one value *per occurrence*, so
+  `python -m bench.calibrate --dims 128 384 768` — the spelling in
+  `bench/README.md` and `run_bench.sh` — would have calibrated dim 128 alone
+  and treated `384 768` as stray positionals. Silently: a wrong threshold, not
+  an error. `bench.VariadicCommand` normalises the argv through click's public
+  `Command.parse_args` hook before parsing, and two tests in
+  `tests/test_bench.py` hold it — one asserts the three-value form arrives as
+  three, the other that no command carrying a multi-value flag is a plain
+  `click.Command`. Both were watched failing with the `cls=` removed.
+
+- `tests/test_bench.py` built `argparse.Namespace` objects to drive
+  `cmd_dryrun` and called `build_parser()`. It never had a command line of its
+  own, so it gained none: the `cmd_*` functions now take keyword arguments,
+  and the parser test became a click-group test that also pins the `\f`
+  keeping numpydoc out of every rendered `--help`.
+
 - `os-helper` cap widened to `<4` (os-helper 3.0.0 dropped its own CLI).
 
 ### Migration

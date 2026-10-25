@@ -24,28 +24,30 @@ cells not yet present. To keep it affordable we go **coarse-then-dichotomic**:
 Nothing here mutates the shipped policy; :mod:`bench.calibrate` reads the YAML
 and derives the justified thresholds.
 
-Consumes: :mod:`bench.datagen`, :mod:`ann_router.registry`, PyYAML.
-Produces: the ``coarse`` / ``bisect`` / ``status`` CLI and ``measure_cell``.
+Consumes: :mod:`bench.datagen`, :mod:`ann_router.registry`, ``click``, PyYAML.
+Produces: the ``coarse`` / ``bisect`` / ``status`` / ``dry-run`` CLI and
+``measure_cell``.
 
 Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
 
 from __future__ import annotations
 
-import argparse
 import math
 import os
 import tempfile
 import time
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+import click
 import numpy as np
 import yaml
 
 from ann_router.registry import available_backends, get_backend
 
-from . import datagen
+from . import VariadicCommand, datagen
 
 RESULTS = Path(__file__).resolve().parent / "results"
 STORE = RESULTS / "measurements.yaml"
@@ -518,33 +520,56 @@ def _coarse_ns(max_n: int) -> list[int]:
     return [n for n in grid if n <= max_n]
 
 
-def cmd_coarse(args) -> None:
+def cmd_coarse(
+    *,
+    dims: Sequence[int],
+    targets: Sequence[float],
+    k: int,
+    max_n: int,
+    max_cells: int,
+    time_budget: float,
+    backends: Sequence[str],
+    metric: str,
+    nq: int,
+    seed: int,
+) -> None:
     """Run coarse-grid cells (ascending n), bounded by budget — one 'piece'.
 
     Parameters
     ----------
-    args : argparse.Namespace
-        Parsed ``coarse`` subcommand arguments (dims, targets, k, max_n,
-        max_cells, time_budget, backends, metric, nq, seed).
+    dims, targets : sequence
+        The dimensionality and recall-target axes to sweep over.
+    k : int
+        Neighbours per query.
+    max_n : int
+        Cap on corpus size for this run.
+    max_cells : int
+        Stop after this many *new* cells; ``0`` means unbounded.
+    time_budget : float
+        Stop after this many seconds; ``0`` means unbounded.
+    backends : sequence of str
+        Which backends to measure; empty means every available one.
+    metric : str
+        Distance metric.
+    nq, seed : int
+        Query count and base seed, part of a cell's identity.
     """
     store = load_store()
-    backends = args.backends or available_backends()
-    ns = _coarse_ns(args.max_n)
-    cells = [
-        (b, n, d, args.k, r) for n in ns for d in args.dims for r in args.targets for b in backends
-    ]
+    backends = list(backends) or available_backends()
+    ns = _coarse_ns(max_n)
+    cells = [(b, n, d, k, r) for n in ns for d in dims for r in targets for b in backends]
     t_start, done, ran = time.time(), 0, 0
     for b, n, d, k, r in cells:
-        key = cell_id(b, n, d, k, r, args.metric, args.nq, args.seed)
+        key = cell_id(b, n, d, k, r, metric, nq, seed)
         if key in store and store[key].get("status") in ("ok", "skipped"):
             done += 1
             continue
-        if args.max_cells and ran >= args.max_cells:
+        if max_cells and ran >= max_cells:
             break
-        if args.time_budget and time.time() - t_start > args.time_budget:
-            print(f"[coarse] time budget {args.time_budget}s reached")
+        if time_budget and time.time() - t_start > time_budget:
+            print(f"[coarse] time budget {time_budget}s reached")
             break
-        m = measure_cell(b, n, d, k, r, args.metric, args.nq, args.seed, store=store)
+        m = measure_cell(b, n, d, k, r, metric, nq, seed, store=store)
         ran += 1
         print(
             f"[coarse] {b:9s} n={n:>9,} d={d} r={r} -> {m.status} "
@@ -625,7 +650,20 @@ def _fit_predict_crossover(
     return int(round(math.exp(x_cross)))
 
 
-def cmd_bisect(args) -> None:
+def cmd_bisect(
+    *,
+    a: str,
+    b: str,
+    dim: int,
+    k: int,
+    target: float,
+    lo: int,
+    hi: int,
+    rounds: int,
+    metric: str,
+    nq: int,
+    seed: int,
+) -> None:
     """Binary-search the n where backend A's p50 crosses backend B's, at target.
 
     Seeds the bracket from the interpolated prediction, then refines by bisection
@@ -634,9 +672,21 @@ def cmd_bisect(args) -> None:
 
     Parameters
     ----------
-    args : argparse.Namespace
-        Parsed ``bisect`` subcommand arguments (a, b, dim, k, target, lo, hi,
-        rounds, metric, nq, seed).
+    a, b : str
+        The two backends: ``a`` is the one expected to be faster below the
+        crossover.
+    dim, k : int
+        Dimensionality and neighbours per query.
+    target : float
+        Recall@k target both backends are measured at.
+    lo, hi : int
+        The initial bracket on corpus size.
+    rounds : int
+        How many bisection steps to take.
+    metric : str
+        Distance metric.
+    nq, seed : int
+        Query count and base seed, part of a cell's identity.
     """
     store = load_store()
 
@@ -655,18 +705,13 @@ def cmd_bisect(args) -> None:
         float or None
             p50 latency in ms, or ``None`` if the cell errored/was skipped.
         """
-        m = measure_cell(
-            backend, n, args.dim, args.k, args.target, args.metric, args.nq, args.seed, store=store
-        )
+        m = measure_cell(backend, n, dim, k, target, metric, nq, seed, store=store)
         return m.latency_ms_p50 if m.status == "ok" else None
 
-    pred = _fit_predict_crossover(
-        store, args.a, args.b, args.dim, args.k, args.target, args.metric, args.nq, args.seed
-    )
-    lo, hi = args.lo, args.hi
+    pred = _fit_predict_crossover(store, a, b, dim, k, target, metric, nq, seed)
     if pred and lo < pred < hi:
         print(f"[bisect] interpolation predicts crossover near n={pred:,}; bracketing it")
-        lo, hi = max(args.lo, pred // 4), min(args.hi, pred * 4)
+        lo, hi = max(lo, pred // 4), min(hi, pred * 4)
 
     def faster_a(n):
         """Return whether backend A is faster than B at corpus size ``n``.
@@ -681,29 +726,37 @@ def cmd_bisect(args) -> None:
         bool or None
             ``True`` if A's p50 < B's p50, ``None`` if either is unmeasurable.
         """
-        pa, pb = p50(args.a, n), p50(args.b, n)
+        pa, pb = p50(a, n), p50(b, n)
         if pa is None or pb is None:
             return None
         return pa < pb
 
     base = faster_a(lo)
-    for _ in range(args.rounds):
+    for _ in range(rounds):
         mid = int(round(math.sqrt(lo * hi)))  # geometric midpoint (log scale)
         f = faster_a(mid)
-        print(f"[bisect] n={mid:,}: {args.a} faster? {f}   bracket=[{lo:,}, {hi:,}]")
+        print(f"[bisect] n={mid:,}: {a} faster? {f}   bracket=[{lo:,}, {hi:,}]")
         if f is None:
             break
         if f == base:
             lo = mid
         else:
             hi = mid
-    print(
-        f"[bisect] {args.a} vs {args.b} @dim={args.dim},r={args.target}: "
-        f"crossover n in [{lo:,}, {hi:,}]"
-    )
+    print(f"[bisect] {a} vs {b} @dim={dim},r={target}: crossover n in [{lo:,}, {hi:,}]")
 
 
-def cmd_dryrun(args) -> None:
+def cmd_dryrun(
+    *,
+    ns: Sequence[int],
+    dims: Sequence[int],
+    targets: Sequence[float],
+    k: int,
+    backends: Sequence[str],
+    metric: str,
+    nq: int,
+    seed: int,
+    allow_fail: bool,
+) -> None:
     """Fast, exhaustive-over-backends sanity sweep — catches breakage cheaply.
 
     Runs every available backend (plus any explicitly requested) on a tiny grid
@@ -721,26 +774,36 @@ def cmd_dryrun(args) -> None:
 
     Parameters
     ----------
-    args : argparse.Namespace
-        Parsed ``dry-run`` subcommand arguments (ns, dims, targets, k,
-        backends, metric, nq, seed, allow_fail).
+    ns, dims, targets : sequence
+        The tiny grid to sweep; each empty sequence falls back to its default
+        (``200 2000`` / ``16 128`` / ``0.9``).
+    k : int
+        Neighbours per query.
+    backends : sequence of str
+        Which backends to smoke-test; empty means every available one.
+    metric : str
+        Distance metric.
+    nq, seed : int
+        Query count and base seed.
+    allow_fail : bool
+        Exit 0 even when a backend FAILed, for CI triage.
 
     Raises
     ------
     SystemExit
-        If any backend FAILed and ``args.allow_fail`` is not set.
+        If any backend FAILed and ``allow_fail`` is not set.
     """
-    ns = args.ns or [200, 2_000]
-    dims = args.dims or [16, 128]
-    targets = args.targets or [0.9]
-    backends = args.backends or available_backends()
+    ns = list(ns) or [200, 2_000]
+    dims = list(dims) or [16, 128]
+    targets = list(targets) or [0.9]
+    backends = list(backends) or available_backends()
 
     rows: list[tuple[str, int, int, str, float | None, str]] = []
     for b in sorted(backends):
         for n in ns:
             for d in dims:
                 for r in targets:
-                    m = measure_cell(b, n, d, args.k, r, args.metric, args.nq, args.seed)
+                    m = measure_cell(b, n, d, k, r, metric, nq, seed)
                     rows.append((b, n, d, m.status, m.achieved_recall, m.note))
 
     fails, warns = [], []
@@ -759,18 +822,16 @@ def cmd_dryrun(args) -> None:
     if fails:
         broken = sorted({b for b, *_ in fails})
         print(f"[dry-run] broken backends: {broken}")
-        if not args.allow_fail:
+        if not allow_fail:
             raise SystemExit(1)
 
 
-def cmd_status(args) -> None:
+def cmd_status() -> None:
     """Summarise how much of the coarse plan is measured.
 
-    Parameters
-    ----------
-    args : argparse.Namespace
-        Unused — the ``status`` subcommand takes no flags; accepted only so
-        every subcommand's ``func`` shares the same call signature.
+    Takes nothing: ``status`` has no flags, and it no longer has to accept an
+    unused namespace to share a signature with the other subcommands — each
+    click command below passes its own options by name.
     """
     store = load_store()
     by_status: dict[str, int] = {}
@@ -785,65 +846,115 @@ def cmd_status(args) -> None:
     print("available backends:", available_backends())
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Construct the ``coarse`` / ``bisect`` / ``status`` CLI."""
-    p = argparse.ArgumentParser(description="ANN calibration harness (resumable).")
-    sub = p.add_subparsers(dest="cmd", required=True)
+# ``-h`` beside ``--help``. argparse supplied the short form for free and
+# click does not, so a conversion that forgets this line silently takes it
+# away; `ann_router/cli.py` spells it the same way.
+_CONTEXT: dict[str, object] = {"help_option_names": ["-h", "--help"]}
 
-    c = sub.add_parser("coarse", help="run a bounded piece of the coarse n-grid sweep")
-    c.add_argument("--dims", type=int, nargs="+", default=[128, 384, 768])
-    c.add_argument("--targets", type=float, nargs="+", default=[0.90, 0.95, 0.98])
-    c.add_argument("--k", type=int, default=10)
-    c.add_argument("--max-n", type=int, default=1_000_000, help="cap corpus size this run")
-    c.add_argument("--max-cells", type=int, default=0, help="stop after N new cells (0=unbounded)")
-    c.add_argument(
-        "--time-budget", type=float, default=0, help="stop after S seconds (0=unbounded)"
-    )
-    c.add_argument("--backends", nargs="+", default=None)
-    c.add_argument("--metric", default="cosine")
-    c.add_argument("--nq", type=int, default=500)
-    c.add_argument("--seed", type=int, default=0)
-    c.set_defaults(func=cmd_coarse)
+# Every command below passes `help=` explicitly instead of letting click derive
+# it from the docstring, and cuts the docstring with a `\f` besides: the
+# docstrings are full numpydoc, which click would otherwise reflow into the
+# user's --help, "Parameters ----------" and all. Same convention as
+# `ann_router/cli.py`.
 
-    b = sub.add_parser("bisect", help="dichotomic crossover search between two backends")
-    b.add_argument("--a", required=True, help="backend A (faster below the crossover)")
-    b.add_argument("--b", required=True, help="backend B (faster above the crossover)")
-    b.add_argument("--dim", type=int, default=768)
-    b.add_argument("--k", type=int, default=10)
-    b.add_argument("--target", type=float, default=0.95)
-    b.add_argument("--lo", type=int, default=1_000)
-    b.add_argument("--hi", type=int, default=10_000_000)
-    b.add_argument("--rounds", type=int, default=8)
-    b.add_argument("--metric", default="cosine")
-    b.add_argument("--nq", type=int, default=500)
-    b.add_argument("--seed", type=int, default=0)
-    b.set_defaults(func=cmd_bisect)
 
-    s = sub.add_parser("status", help="show sweep progress")
-    s.set_defaults(func=cmd_status)
+@click.group(context_settings=_CONTEXT)
+def cli() -> None:
+    """ANN calibration harness (resumable)."""
 
-    dr = sub.add_parser(
-        "dry-run", help="fast exhaustive-over-backends smoke test (never touches STORE)"
-    )
-    dr.add_argument("--ns", type=int, nargs="+", default=None, help="default: 200 2000")
-    dr.add_argument("--dims", type=int, nargs="+", default=None, help="default: 16 128")
-    dr.add_argument("--targets", type=float, nargs="+", default=None, help="default: 0.9")
-    dr.add_argument("--k", type=int, default=5)
-    dr.add_argument("--backends", nargs="+", default=None)
-    dr.add_argument("--metric", default="cosine")
-    dr.add_argument("--nq", type=int, default=50)
-    dr.add_argument("--seed", type=int, default=0)
-    dr.add_argument(
-        "--allow-fail", action="store_true", help="exit 0 even if a backend fails (for CI triage)"
-    )
-    dr.set_defaults(func=cmd_dryrun)
-    return p
+
+# `multiple=True` plus `cls=VariadicCommand` is what keeps argparse's
+# `nargs="+"` spelling alive: `--dims 128 384 768` in one occurrence. Plain
+# `multiple=True` would bind only `128` and leave `384 768` as stray
+# positionals -- a sweep silently measuring a third of its grid. See
+# `bench/expand_variadic`.
+@cli.command("coarse", cls=VariadicCommand, help="run a bounded piece of the coarse n-grid sweep")
+@click.option("--dims", type=int, multiple=True, default=(128, 384, 768), help="one or more")
+@click.option(
+    "--targets", type=float, multiple=True, default=(0.90, 0.95, 0.98), help="one or more"
+)
+@click.option("--k", type=int, default=10)
+@click.option("--max-n", type=int, default=1_000_000, help="cap corpus size this run")
+@click.option("--max-cells", type=int, default=0, help="stop after N new cells (0=unbounded)")
+@click.option("--time-budget", type=float, default=0, help="stop after S seconds (0=unbounded)")
+@click.option("--backends", multiple=True, help="one or more")
+@click.option("--metric", default="cosine")
+@click.option("--nq", type=int, default=500)
+@click.option("--seed", type=int, default=0)
+def coarse_cmd(**kw: object) -> None:
+    """Run a bounded piece of the coarse n-grid sweep.
+
+    \f
+
+    Parameters
+    ----------
+    **kw
+        The options declared above, forwarded verbatim to :func:`cmd_coarse`.
+    """
+    cmd_coarse(**kw)  # type: ignore[arg-type]
+
+
+@cli.command("bisect", help="dichotomic crossover search between two backends")
+@click.option("--a", required=True, help="backend A (faster below the crossover)")
+@click.option("--b", required=True, help="backend B (faster above the crossover)")
+@click.option("--dim", type=int, default=768)
+@click.option("--k", type=int, default=10)
+@click.option("--target", type=float, default=0.95)
+@click.option("--lo", type=int, default=1_000)
+@click.option("--hi", type=int, default=10_000_000)
+@click.option("--rounds", type=int, default=8)
+@click.option("--metric", default="cosine")
+@click.option("--nq", type=int, default=500)
+@click.option("--seed", type=int, default=0)
+def bisect_cmd(**kw: object) -> None:
+    """Dichotomic crossover search between two backends.
+
+    \f
+
+    Parameters
+    ----------
+    **kw
+        The options declared above, forwarded verbatim to :func:`cmd_bisect`.
+    """
+    cmd_bisect(**kw)  # type: ignore[arg-type]
+
+
+@cli.command("status", help="show sweep progress")
+def status_cmd() -> None:
+    """Show sweep progress."""
+    cmd_status()
+
+
+@cli.command(
+    "dry-run",
+    cls=VariadicCommand,
+    help="fast exhaustive-over-backends smoke test (never touches STORE)",
+)
+@click.option("--ns", type=int, multiple=True, help="one or more (default: 200 2000)")
+@click.option("--dims", type=int, multiple=True, help="one or more (default: 16 128)")
+@click.option("--targets", type=float, multiple=True, help="one or more (default: 0.9)")
+@click.option("--k", type=int, default=5)
+@click.option("--backends", multiple=True, help="one or more")
+@click.option("--metric", default="cosine")
+@click.option("--nq", type=int, default=50)
+@click.option("--seed", type=int, default=0)
+@click.option("--allow-fail", is_flag=True, help="exit 0 even if a backend fails (for CI triage)")
+def dry_run_cmd(**kw: object) -> None:
+    """Fast exhaustive-over-backends smoke test (never touches STORE).
+
+    \f
+
+    Parameters
+    ----------
+    **kw
+        The options declared above, forwarded verbatim to :func:`cmd_dryrun`.
+    """
+    cmd_dryrun(**kw)  # type: ignore[arg-type]
 
 
 def main() -> None:
     """Entry point for ``python -m bench.harness``: parse argv and dispatch."""
-    args = build_parser().parse_args()
-    args.func(args)
+    cli()
 
 
 if __name__ == "__main__":

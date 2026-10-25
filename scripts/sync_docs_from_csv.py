@@ -21,11 +21,12 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 
 from __future__ import annotations
 
-import argparse
 import csv
 import subprocess
 import sys
 from pathlib import Path
+
+import click
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -156,20 +157,66 @@ def render_svg(csv_path: Path, stem: str, model: str) -> None:
     )
 
 
-def main() -> None:
-    """Sync every configured CSV into its Markdown table and SVG."""
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--no-svg", action="store_true", help="update tables only, skip standpoint")
-    ap.add_argument("--model", default="gemma3:12b", help="Ollama model for axis naming")
-    args = ap.parse_args()
+# ``-h`` beside ``--help``. argparse supplied the short form for free and
+# click does not, so the conversion has to ask for it back.
+_CONTEXT: dict[str, object] = {"help_option_names": ["-h", "--help"]}
 
+
+@click.command("sync_docs_from_csv", context_settings=_CONTEXT)
+@click.option("--no-svg", is_flag=True, help="update tables only, skip standpoint")
+@click.option("--model", default="gemma3:12b", help="Ollama model for axis naming")
+def cli(no_svg: bool, model: str) -> None:
+    """Sync every configured CSV into its Markdown table and SVG.
+
+    \f
+
+    Everything past the form feed is for readers of the source: click
+    truncates --help there. The argparse version handed it the whole module
+    docstring as the description, which printed that RST to users verbatim.
+
+    Parameters
+    ----------
+    no_svg : bool
+        Update the Markdown tables only, skipping the standpoint render.
+    model : str
+        Ollama model standpoint uses to name the axes.
+    """
     for t in TARGETS:
         changed = replace_table(t["md"], build_table(t["csv"], t["lang"]))
         print(f"{t['md'].name}: table {'updated' if changed else 'unchanged'} from {t['csv'].name}")
-        if not args.no_svg:
-            render_svg(t["csv"], t["stem"], args.model)
+        if not no_svg:
+            render_svg(t["csv"], t["stem"], model)
             print(f"{t['stem']}.white.svg: regenerated")
 
 
+def main(argv: list[str] | None = None) -> int:
+    """Run the command line and return its exit code instead of exiting.
+
+    ``standalone_mode=False`` is what keeps this an ordinary function:
+    ``tests/test_scripts.py`` calls ``main()`` and asserts on what it printed,
+    which a click command line that called :func:`sys.exit` itself would turn
+    into a ``SystemExit`` the test has to catch. The two ``bench/`` command
+    lines do run in standalone mode, like :mod:`ann_router.cli` — they are
+    ``python -m`` entry points, not modules a test loads by path.
+
+    The observable behaviour is argparse's: 0 on success, 2 on a usage error.
+
+    Parameters
+    ----------
+    argv : list of str, optional
+        Command-line arguments; defaults to ``sys.argv[1:]``.
+
+    Returns
+    -------
+    int
+        ``0`` on success, or click's own code (2) for a usage error.
+    """
+    try:
+        return int(cli.main(args=argv, prog_name="sync_docs_from_csv", standalone_mode=False) or 0)
+    except click.ClickException as exc:
+        exc.show()
+        return exc.exit_code
+
+
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -12,13 +12,14 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 
 from __future__ import annotations
 
-import argparse
 import sys
 
+import click
 import numpy as np
 import pytest
+from click.testing import CliRunner
 
-from bench import calibrate, datagen, harness
+from bench import VariadicCommand, calibrate, datagen, expand_variadic, harness
 
 
 @pytest.fixture(autouse=True)
@@ -132,7 +133,8 @@ def test_measure_cell_skips_unavailable_backend() -> None:
 
 def test_dry_run_passes_for_exact(capsys) -> None:
     """cmd_dryrun() reports 0 FAILED for the always-correct exact backend."""
-    args = argparse.Namespace(
+    # must not raise: exact always clears the recall floor.
+    harness.cmd_dryrun(
         ns=[100, 300],
         dims=[8],
         targets=[0.9],
@@ -143,7 +145,6 @@ def test_dry_run_passes_for_exact(capsys) -> None:
         seed=0,
         allow_fail=False,
     )
-    harness.cmd_dryrun(args)  # must not raise (exact always clears the recall floor)
     out = capsys.readouterr().out
     assert "0 FAILED" in out
     assert not harness.STORE.exists()  # dry-run never touches the real store
@@ -153,17 +154,17 @@ def test_dry_run_fails_loudly_on_broken_recall(capsys) -> None:
     """cmd_dryrun() FAILs a backend that 'succeeds' with near-zero recall."""
     # A backend that "succeeds" with near-zero recall must FAIL the dry-run,
     # exactly the class of bug (broken annoy build) this mode exists to catch.
-    args = argparse.Namespace(
-        ns=[100],
-        dims=[8],
-        targets=[0.9],
-        k=5,
-        backends=["exact"],
-        metric="cosine",
-        nq=10,
-        seed=0,
-        allow_fail=True,
-    )
+    kwargs = {
+        "ns": [100],
+        "dims": [8],
+        "targets": [0.9],
+        "k": 5,
+        "backends": ["exact"],
+        "metric": "cosine",
+        "nq": 10,
+        "seed": 0,
+        "allow_fail": True,
+    }
 
     # exact can't actually fail recall, so patch measure_cell to simulate one that does.
     def _fake_measure_cell(backend, n, d, k, r, metric, nq, seed):
@@ -184,7 +185,7 @@ def test_dry_run_fails_loudly_on_broken_recall(capsys) -> None:
     orig = harness.measure_cell
     harness.measure_cell = _fake_measure_cell
     try:
-        harness.cmd_dryrun(args)
+        harness.cmd_dryrun(**kwargs)
     finally:
         harness.measure_cell = orig
     out = capsys.readouterr().out
@@ -231,29 +232,95 @@ def test_fit_predict_crossover_finds_a_plausible_n() -> None:
 
 def test_cmd_status_reports_empty_then_populated_store(capsys) -> None:
     """cmd_status() reports 'empty' with no store, then real counts once populated."""
-    harness.cmd_status(None)  # args is unused by this command
+    harness.cmd_status()
     assert "empty" in capsys.readouterr().out
 
     harness.save_store({"exact|n1": {"status": "ok", "backend": "exact"}})
-    harness.cmd_status(None)
+    harness.cmd_status()
     out = capsys.readouterr().out
     assert "'ok': 1" in out
     assert "'exact': 1" in out
 
 
-def test_build_parser_exposes_every_subcommand() -> None:
-    """build_parser() wires coarse/bisect/status/dry-run, each to a callable func."""
-    parser = harness.build_parser()
-    for cmd in ("coarse", "bisect", "status", "dry-run"):
-        ns = parser.parse_args([cmd] if cmd != "bisect" else [cmd, "--a", "x", "--b", "y"])
-        assert ns.cmd == cmd
-        assert callable(ns.func)
+def test_the_cli_exposes_every_subcommand() -> None:
+    """The click group wires coarse/bisect/status/dry-run, each answering -h.
+
+    Also pins the `\f` in every command docstring: click renders a docstring
+    as help text, and these are full numpydoc, so without the form feed the
+    user's --help would carry a reflowed "Parameters ----------" block.
+    """
+    assert set(harness.cli.commands) == {"coarse", "bisect", "status", "dry-run"}
+    for name, command in harness.cli.commands.items():
+        assert isinstance(command, click.Command), name
+        # argparse supplied -h for free; click supplies only --help, so the
+        # short form is something the conversion had to ask for explicitly.
+        result = CliRunner().invoke(harness.cli, [name, "-h"])
+        assert result.exit_code == 0, result.output
+        assert "Parameters" not in result.output, name
+
+
+def test_a_sweep_axis_keeps_every_value_after_one_occurrence(monkeypatch) -> None:
+    """`--dims 128 384 768` sweeps three dims, not silently just the first.
+
+    click's `multiple=True` binds one value per *occurrence*, so the argparse
+    spelling `bench/README.md` and `run_bench.sh` both use would keep 128 and
+    treat `384 768` as stray positionals. `bench.VariadicCommand` is what
+    prevents it; drop the `cls=` and this test sees one dim and three targets
+    collapse to one.
+    """
+    seen: dict[str, object] = {}
+    monkeypatch.setattr(harness, "cmd_coarse", lambda **kw: seen.update(kw))
+    result = CliRunner().invoke(
+        harness.cli,
+        ["coarse", "--dims", "128", "384", "768", "--targets", "0.9", "0.95", "--max-n", "1000"],
+    )
+    assert result.exit_code == 0, result.output
+    assert seen["dims"] == (128, 384, 768)
+    assert seen["targets"] == (0.9, 0.95)
+    assert seen["max_n"] == 1000
+
+
+def test_every_command_with_a_multi_value_flag_is_variadic() -> None:
+    """A `multiple=True` option on a plain click.Command would eat one value.
+
+    Structural, because that failure is silent rather than loud: it calibrates
+    a third of the dims and says nothing. Listing both command lines here means
+    a new multi-value flag cannot be added to either without this naming it.
+    """
+    for command in (calibrate.cli, *harness.cli.commands.values()):
+        multi = [p.name for p in command.params if isinstance(p, click.Option) and p.multiple]
+        if multi:
+            assert isinstance(command, VariadicCommand), f"{command.name}: {multi}"
+
+
+def test_expand_variadic_stops_at_the_next_flag_and_passes_equals_through() -> None:
+    """The argv rewrite takes values, not flags, and leaves `--flag=v` alone."""
+    greedy = {"--dims"}
+    # A run of values becomes one occurrence each; the next flag ends the run.
+    assert expand_variadic(["--dims", "1", "2", "--metric", "l2"], greedy) == [
+        "--dims",
+        "1",
+        "--dims",
+        "2",
+        "--metric",
+        "l2",
+    ]
+    # argparse never consumed anything after the `=` form, and neither does this.
+    assert expand_variadic(["--dims=1", "2"], greedy) == ["--dims=1", "2"]
+    # A negative number is a value, not a one-character short option.
+    assert expand_variadic(["--dims", "-1"], greedy) == ["--dims", "-1"]
+    # No values at all falls through to click, which reports the missing one.
+    assert expand_variadic(["--dims", "--metric"], greedy) == ["--dims", "--metric"]
 
 
 def test_main_dispatches_status_via_argv(monkeypatch, capsys) -> None:
     """main() parses sys.argv and dispatches to the right subcommand."""
     monkeypatch.setattr(sys, "argv", ["harness.py", "status"])
-    harness.main()
+    # click's standalone mode exits the process on success where argparse's
+    # main() simply returned; `python -m bench.harness status` sees 0 either way.
+    with pytest.raises(SystemExit) as exc:
+        harness.main()
+    assert exc.value.code == 0
     assert "store:" in capsys.readouterr().out
 
 
