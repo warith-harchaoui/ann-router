@@ -4,6 +4,32 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-10-25
+
+### Changed
+- **One command line, built with click.** `ann-router` now runs the click
+  implementation. The argparse CLI and the `ann-router-click` twin are both
+  gone, along with the `[cli]` extra: `click` is a core dependency, since the
+  CLI is no longer optional.
+
+  The suffix named the parsing library, not the interface — it belonged to the
+  migration. And keeping two front-ends meant every scenario was written twice
+  so the pair could be checked for drift; one door needs no such check.
+
+  Verified before the removal, by introspecting the `ArgumentParser` and
+  `click.Group` objects rather than diffing help text: the two agreed on all
+  five subcommands and on every flag, so nothing was lost in the swap.
+
+- `cli_click.py` is now `cli.py`, and `cli_argparse.py` is deleted. The module
+  no longer guards its own `import click` behind a try/except with an
+  install hint, because the dependency is no longer optional.
+- `os-helper` cap widened to `<4` (os-helper 3.0.0 dropped its own CLI).
+
+### Migration
+`ann-router-click <cmd>` becomes `ann-router <cmd>` — same subcommands, same
+flags. `pip install "ann-router[cli]"` fails on the unknown extra; plain
+`pip install ann-router` now carries the CLI.
+
 ## [0.2.0] - 2026-10-19
 
 ### Added

@@ -11,7 +11,7 @@ description:>-
   Qdrant vs pgvector", "my corpus has constant inserts and deletes — what
   index", "metadata-filtered vector search", "brute force or an ANN index?",
   "benchmark vector-search recall", "quel index vectoriel utiliser", and on
-  `ann-router`, `ann-router-click`, `ann-router-mcp`, `import ann_router as
+  `ann-router`, `ann-router-mcp`, `import ann_router as
   ar`. Do NOT use
   to embed data, stand up a database, serve an existing index, or pick a local
   LLM (best-engine-ai-helper). The exhaustive trigger catalogue is in
@@ -91,6 +91,6 @@ measured data in `bench/` rather than guessed — see `bench/README.md`.
 ## Install
 
 ```bash
-pip install ann-router            # core: library + argparse CLI + exact backend
+pip install ann-router            # core: library + click CLI + exact backend
 pip install 'ann-router[all]'     # every pip-installable engine + cli + api
 ```

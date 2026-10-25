@@ -1,14 +1,15 @@
-"""click command-line interface: the optional, ergonomic CLI twin.
+"""The ann-router command line, built with click.
 
-Identical behaviour to :mod:`ann_router.cli_argparse`, but built on click for a
-nicer help/UX. click is an *optional* dependency (``pip install
-'ann-router[cli]'``): the argparse CLI is the always-available one, so importing
-this module lazily requires click and fails with an actionable message if it is
-missing. Every command delegates to the shared :mod:`ann_router._core_cli`, so
-the two CLIs can never drift apart.
+The one command-line surface. It used to be the optional twin of an argparse
+CLI; the two were kept in lock-step by hand, and a flag naming the parsing
+library (``ann-router-click``) described the implementation rather than the
+interface. Both are gone: ``click`` is now a core dependency and this module
+is the whole CLI. Every command still delegates to the shared
+:mod:`ann_router._core_cli`, which is what the API and MCP doors also call,
+so no door can answer differently from another.
 
-Consumes: ``click`` (optional), ``ann_router._core_cli``, ``os_helper``.
-Produces: :func:`main` (the ``ann-router-click`` console-script entry point,
+Consumes: ``click``, ``ann_router._core_cli``, ``os_helper``.
+Produces: :func:`main` (the ``ann-router`` console-script entry point,
 wrapping :func:`cli`).
 
 Author: Warith Harchaoui <warithmetics@deraison.ai>
@@ -20,16 +21,10 @@ import json
 import logging
 import sys
 
-try:
-    import click
-except ImportError as exc:  # pragma: no cover - exercised only without the extra
-    raise ImportError(
-        "the click CLI needs the [cli] extra. Run: pip install 'ann-router[cli]' "
-        "(the argparse CLI `ann-router` is always available without it)."
-    ) from exc
-
+import click
 import os_helper as osh
 
+from . import __version__
 from . import _core_cli as core
 from .detect import detect_hardware
 
@@ -103,18 +98,30 @@ def _criteria_options(func):
 # "Parameters" header and all — as the command's --help text.
 
 
-@click.group()
-@click.version_option(package_name="ann-router")
+# ``-h`` beside ``--help`` and ``-V`` beside ``--version``: the short forms are
+# the ones people type, and the suite spells them the same way everywhere.
+# ``-v`` is already --verbose, hence the capital for the version.
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+# Single-sourced from ``__version__``, not from the installed distribution
+# metadata: an editable checkout reports whatever was last pip-installed, so
+# ``-V`` would disagree with the package it is actually running.
+@click.version_option(__version__, "-V", "--version", package_name="ann-router")
 @click.option("-v", "--verbose", count=True, help="repeat for more logs")
 def cli(verbose: int) -> None:
     """Route to the right ANN vector-search backend from measured criteria.
+
+    \f
+
+    Everything after the form feed is for readers of the source: click
+    truncates ``--help`` there. Without it the numpydoc block below is
+    rendered to users as one reflowed paragraph of "Parameters ----------".
 
     Parameters
     ----------
     verbose : int
         ``-v`` repeat count; raises the log level (0=WARNING, 1=INFO, 2+=DEBUG).
     """
-    # Same stderr-logging / clean-stdout contract as the argparse twin.
+    # Diagnostics to stderr, results to stdout: a pipe gets data, not logging.
     level = {0: logging.WARNING, 1: logging.INFO}.get(verbose, logging.DEBUG)
     osh.init_logging(level=level, stdout=False)
 
@@ -202,7 +209,7 @@ def capabilities_cmd() -> None:
 
 
 def main() -> None:
-    """Console entry point (``ann-router-click``).
+    """Console entry point (``ann-router``).
 
     click's own dispatch only special-cases ``ClickException``/``Abort`` (and
     a broken pipe); a plain library exception (e.g. ``Criteria.validate()``'s

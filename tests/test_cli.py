@@ -1,9 +1,12 @@
-"""Tests for the CLI doors — argparse (always on) and the click twin.
+"""Tests for the command line — one door now, built with click.
 
-The argparse CLI must work with zero optional dependencies; the click twin is
-skipped when the ``[cli]`` extra is absent. Both drive the same core, so a
-build/search round-trip through the CLI exercises the whole persistence path end
-to end.
+There used to be two: an always-on argparse CLI and an optional click twin,
+with every scenario written twice so the pair could be checked for drift. The
+twin is the only CLI now, so the duplication is gone and each scenario is
+asserted once, against the thing that ships.
+
+A build/search round-trip through the CLI exercises the whole persistence path
+end to end, which is why it lives here rather than in a unit test.
 
 Author: Warith Harchaoui <warithmetics@deraison.ai>
 """
@@ -11,74 +14,57 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 from __future__ import annotations
 
 import json
+import sys
 
 import numpy as np
 import pytest
+from click.testing import CliRunner
 
-from ann_router import cli_argparse
+from ann_router import cli
 
 
-def _run(capsys, argv: list[str]) -> str:
-    """Drive ``cli_argparse.main(argv)`` and capture its stdout.
+def _run(argv: list[str]) -> str:
+    """Drive the click CLI and return its stdout.
 
     Parameters
     ----------
-    capsys : pytest fixture
-        Captures stdout/stderr.
     argv : list of str
-        Argument vector to pass to ``main``.
+        The subcommand and its flags, e.g. ``["route", "--n-vectors", "500"]``.
 
     Returns
     -------
     str
         Captured stdout (JSON or Markdown, depending on the command).
     """
-    # Drive main() and capture stdout (JSON or Markdown) for assertions.
-    assert cli_argparse.main(argv) == 0
-    return capsys.readouterr().out
+    result = CliRunner().invoke(cli.cli, argv)
+    assert result.exit_code == 0, result.output
+    return result.output
 
 
-def test_route_json(capsys) -> None:
+def test_route_json() -> None:
     """``ann-router route`` on a tiny corpus prints a JSON decision for exact."""
-    out = _run(capsys, ["route", "--n-vectors", "500", "--dim", "16"])
-    payload = json.loads(out)
+    payload = json.loads(_run(["route", "--n-vectors", "500", "--dim", "16"]))
     assert payload["backend"] == "exact"
 
 
-def test_route_markdown(capsys) -> None:
+def test_route_markdown() -> None:
     """``ann-router route --markdown`` prints a Markdown report."""
-    out = _run(
-        capsys, ["route", "--n-vectors", "500000", "--dim", "768", "--dynamic", "--markdown"]
-    )
+    out = _run(["route", "--n-vectors", "500000", "--dim", "768", "--dynamic", "--markdown"])
     assert out.startswith("# ann-router decision:")
 
 
-def test_route_clean_error_on_invalid_criteria_not_a_traceback(capsys) -> None:
-    # Criteria.validate()'s ValueError (n_vectors < 0 here, unconstrained by
-    # argparse unlike --metric/--hardware which use `choices=`) used to
-    # propagate as a raw Python traceback instead of a clean CLI error.
-    exit_code = cli_argparse.main(["route", "--n-vectors", "-1", "--dim", "16"])
-    assert exit_code == 1
-    captured = capsys.readouterr()
-    assert captured.out == ""
-    assert captured.err.startswith("Error: ")
-    assert "n_vectors" in captured.err
-
-
-def test_capabilities_lists_exact(capsys) -> None:
+def test_capabilities_lists_exact() -> None:
     """``ann-router capabilities`` lists exact among the available backends."""
-    out = _run(capsys, ["capabilities"])
-    assert "exact" in json.loads(out)["available"]
+    assert "exact" in json.loads(_run(["capabilities"]))["available"]
 
 
-def test_bench_runs(capsys) -> None:
+def test_bench_runs() -> None:
     """``ann-router bench`` reports recall 1.0 for the exact backend."""
-    out = _run(capsys, ["bench", "--n", "1200", "--dim", "32", "-k", "5"])
-    results = json.loads(out)["results"]
+    results = json.loads(_run(["bench", "--n", "1200", "--dim", "32", "-k", "5"]))["results"]
     assert results["exact"]["recall"] == 1.0
 
 
-def test_build_search_round_trip(capsys, tmp_path) -> None:
+def test_build_search_round_trip(tmp_path) -> None:
     """``ann-router build`` then ``search`` round-trips a persisted index."""
     # Persist a corpus, build via the CLI, then search it — the full data path.
     rng = np.random.default_rng(3)
@@ -87,86 +73,38 @@ def test_build_search_round_trip(capsys, tmp_path) -> None:
     np.save(vpath, vecs)
     ipath = str(tmp_path / "idx")
     build_out = json.loads(
-        _run(
-            capsys,
-            ["build", "--n-vectors", "500", "--dim", "32", "--vectors", vpath, "--index", ipath],
-        )
+        _run(["build", "--n-vectors", "500", "--dim", "32", "--vectors", vpath, "--index", ipath])
     )
     assert build_out["backend"] == "exact"
 
     qpath = str(tmp_path / "q.npy")
     np.save(qpath, vecs[:2])
-    search_out = json.loads(
-        _run(capsys, ["search", "--index", ipath, "--queries", qpath, "-k", "5"])
-    )
+    search_out = json.loads(_run(["search", "--index", ipath, "--queries", qpath, "-k", "5"]))
     assert len(search_out["ids"]) == 2
     assert search_out["ids"][0][0] == 0  # a point's nearest neighbour is itself
 
 
-def test_click_twin_drives_every_subcommand(tmp_path, capsys) -> None:
-    """The click CLI exposes route/capabilities/bench/build/search, matching argparse."""
-    # The click CLI is optional; when present it must expose the same commands
-    # as argparse (route/build/search/bench/capabilities), not just route.
-    pytest.importorskip("click")
-    from click.testing import CliRunner
+def test_clean_error_on_invalid_criteria_not_a_traceback(capsys) -> None:
+    """A library ValueError leaves the console script, not a raw traceback.
 
-    from ann_router import cli_click
+    ``n_vectors < 0`` is unconstrained by the parser, unlike ``--metric`` /
+    ``--hardware`` which use a ``click.Choice``, so it reaches
+    ``Criteria.validate()`` and used to surface as a Python traceback.
 
-    runner = CliRunner()
-
-    def invoke(*args) -> dict:
-        """Run a click subcommand and parse its JSON stdout.
-
-        Parameters
-        ----------
-        *args
-            The subcommand and its flags, e.g. ``"route", "--n-vectors", "500"``.
-
-        Returns
-        -------
-        dict
-            The parsed JSON output.
-        """
-        result = runner.invoke(cli_click.cli, list(args))
-        assert result.exit_code == 0, result.output
-        return json.loads(result.output)
-
-    assert invoke("route", "--n-vectors", "500", "--dim", "16")["backend"] == "exact"
-    assert "exact" in invoke("capabilities")["available"]
-
-    # main() (the ann-router-click console-script entry point, wrapping cli())
-    # must print one clean "Error: ..." line + exit 1 on a library ValueError,
-    # not a raw traceback -- CliRunner.invoke(cli, ...) above bypasses main()'s
-    # own wrapper entirely, so it is tested separately, driving main() the way
-    # the real console script does (argv + sys.exit).
-    import sys
-
+    This drives :func:`cli.main` with a patched ``sys.argv`` rather than
+    ``CliRunner``, because ``CliRunner.invoke(cli, ...)`` bypasses ``main()``'s
+    own wrapper — which is precisely the layer that turns the exception into one
+    line on stderr. Driving the wrapper is the only way to assert it.
+    """
     monkeypatch = pytest.MonkeyPatch()
-    monkeypatch.setattr(
-        sys, "argv", ["ann-router-click", "route", "--n-vectors", "-1", "--dim", "16"]
-    )
+    monkeypatch.setattr(sys, "argv", ["ann-router", "route", "--n-vectors", "-1", "--dim", "16"])
     try:
         with pytest.raises(SystemExit) as exc_info:
-            cli_click.main()
+            cli.main()
         assert exc_info.value.code == 1
     finally:
         monkeypatch.undo()
-    assert capsys.readouterr().err.startswith("Error: ")
-    assert (
-        invoke("bench", "--n", "1200", "--dim", "32", "-k", "5")["results"]["exact"]["recall"]
-        == 1.0
-    )
-
-    rng = np.random.default_rng(4)
-    vecs = rng.standard_normal((500, 16)).astype(np.float32)
-    vpath, ipath = str(tmp_path / "v.npy"), str(tmp_path / "idx")
-    np.save(vpath, vecs)
-    build_out = invoke(
-        "build", "--n-vectors", "500", "--dim", "16", "--vectors", vpath, "--index", ipath
-    )
-    assert build_out["backend"] == "exact"
-
-    qpath = str(tmp_path / "q.npy")
-    np.save(qpath, vecs[:2])
-    search_out = invoke("search", "--index", ipath, "--queries", qpath, "-k", "5")
-    assert search_out["ids"][0][0] == 0  # a point's nearest neighbour is itself
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("Error: ")
+    assert "n_vectors" in captured.err

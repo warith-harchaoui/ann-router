@@ -3,7 +3,7 @@
 `ann-router` uses **conda (miniconda) + pip** as its base tooling (the suite
 standard is conda + poetry; poetry is not required for this pure-setuptools
 package). The core is deliberately tiny (`numpy` + `os-helper` + `pyyaml`), so
-the library and the always-on argparse CLI install in seconds. Every ANN engine
+the library and its click CLI install in seconds. Every ANN engine
 is an optional extra you add only if you route to it.
 
 There are three supported paths; pick one:
@@ -34,7 +34,7 @@ conda activate ann-router
 
 ```bash
 cd ~/ann-router
-pip install -e .                    # core only (library + argparse CLI)
+pip install -e .                    # core only (library + click CLI)
 ```
 
 At this point `import ann_router`, `ann-router route ...`, and the exact backend
@@ -71,7 +71,6 @@ The verified dev environment therefore runs **numpy 1.26.4** with faiss-cpu
 ## 4. Install the extra "doors" (optional)
 
 ```bash
-pip install click                    # ann-router-click CLI       ([cli])
 pip install "fastapi<1" "uvicorn<1" httpx   # HTTP API             ([api])
 pip install "fastapi-mcp<1" "mcp<2,>=1.20"  # MCP server (mounts on FastAPI)  ([mcp])
 ```

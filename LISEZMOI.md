@@ -200,9 +200,8 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
 ## Les cinq portes (un cœur, cinq surfaces)
 
 1. **Bibliothèque** : tout ce qui précède (`ann_router`).
-2. **CLI** : `ann-router` (argparse, toujours disponible) et le jumeau
-   `ann-router-click` (extra `[cli]`). Sous-commandes : `route`, `build`,
-   `search`, `bench`, `capabilities`.
+2. **CLI** : `ann-router`, construite avec click. Sous-commandes : `route`,
+   `build`, `search`, `bench`, `capabilities`.
 3. **API HTTP** : `uvicorn ann_router.api:app` (extra `[api]` ou l'image
    Docker ci-dessus) : `POST /route`, `GET /capabilities`, `GET /bench`.
 4. **Serveur MCP** : `python -m ann_router.mcp_server` (extra `[mcp]`), les

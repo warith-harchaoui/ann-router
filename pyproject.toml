@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ann-router"
-version = "0.2.0"
+version = "0.3.0"
 description = "Route to the right approximate-nearest-neighbour backend from measured problem criteria (exact/turbovec/HNSW/FAISS/Annoy/Qdrant/pgvector), with a justified, discussable rationale."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
@@ -34,8 +34,9 @@ classifiers = [
 # (logging/config/hashing/timing) — the two the whole suite shares. Every engine
 # is an optional extra below, so `import ann_router` costs nothing heavy.
 dependencies = [
+    "click>=8.1,<9",
     "numpy>=1.23",
-    "os-helper>=2.0.0,<3",
+    "os-helper>=2.0.0,<4",
     "pyyaml>=6.0,<7",
 ]
 
@@ -47,8 +48,7 @@ annoy = ["annoy>=1.17,<2"]
 turbovec = ["turbovec>=0.5"]
 qdrant = ["qdrant-client>=1.7"]
 pgvector = ["pgvector>=0.2", "psycopg[binary]>=3.1"]
-# The other four "doors" beyond the library + argparse CLI.
-cli = ["click>=8.1,<9"]                     # optional click twin (argparse is always on)
+# The other doors beyond the library + the click CLI.
 api = ["fastapi>=0.111,<1", "uvicorn>=0.30,<1"]
 # fastapi-mcp mounts the MCP server onto a FastAPI app (see mcp_server.py), so
 # this extra needs the api extra's own deps too. `mcp<2` is pinned because
@@ -74,10 +74,9 @@ dev = [
 ]
 
 [project.scripts]
-# argparse CLI — no runtime dependency beyond the stdlib + core package.
-ann-router = "ann_router.cli_argparse:main"
-# click twin — install with the [cli] extra.
-ann-router-click = "ann_router.cli_click:main"
+# The one command line, built with click. There is no second spelling: a flag
+# naming the parsing library belonged to the migration, not to the interface.
+ann-router = "ann_router.cli:main"
 # HTTP API + MCP server (needs [mcp]) — fastapi-mcp mounts /mcp on the same
 # FastAPI app api.py serves, so one entry point covers both doors.
 ann-router-mcp = "ann_router.mcp_server:main"
@@ -116,8 +115,8 @@ ignore = [
 [tool.pytest.ini_options]
 # Run the unit suite plus the docstring Examples on the pure/core modules (the
 # coding standard puts a runnable Example on every function). The optional
-# backend modules, the click twin, the API and the MCP server are excluded from
+# backend modules, the API and the MCP server are excluded from
 # --doctest-modules because collecting them would require optional deps / a
 # running server; their behaviour is covered by tests/ with importorskip.
-addopts = "--doctest-modules --ignore=ann_router/backends --ignore=ann_router/cli_click.py --ignore=ann_router/api.py --ignore=ann_router/mcp_server.py"
+addopts = "--doctest-modules --ignore=ann_router/backends --ignore=ann_router/api.py --ignore=ann_router/mcp_server.py"
 testpaths = ["ann_router", "tests"]

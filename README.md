@@ -190,9 +190,8 @@ with the `pip install` line that fixes it.
 ## The five doors (one core, five surfaces)
 
 1. **Library**: everything above (`ann_router`).
-2. **CLI**: `ann-router` (argparse, always available) and the `ann-router-click`
-   twin (`[cli]` extra). Subcommands: `route`, `build`, `search`, `bench`,
-   `capabilities`.
+2. **CLI**: `ann-router`, built with click. Subcommands: `route`, `build`,
+   `search`, `bench`, `capabilities`.
 3. **HTTP API**: `uvicorn ann_router.api:app` (`[api]` extra, or the Docker
    image above): `POST /route`, `GET /capabilities`, `GET /bench`.
 4. **MCP server**: `python -m ann_router.mcp_server` (`[mcp]` extra), the same

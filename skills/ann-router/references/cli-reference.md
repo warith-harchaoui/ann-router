@@ -1,8 +1,8 @@
 # ann-router CLI reference
 
-Two CLIs over the same core. `ann-router` (argparse) ships with the core
-package; `ann-router-click` (needs `[cli]`) is the click twin. Both dispatch
-to the shared `_core_cli`, so flags match exactly.
+One CLI, `ann-router`, built with click and shipped with the core package. It
+dispatches to the shared `_core_cli`, which is also what the HTTP API and the
+MCP server call, so every door answers the same way.
 
 ## `route` — which backend, and why
 
@@ -74,7 +74,7 @@ policy with the `ANN_ROUTER_POLICY` environment variable.
 ## Installing the engines
 
 ```bash
-pip install ann-router                 # core: library + argparse CLI + exact backend
+pip install ann-router                 # core: library + click CLI + exact backend
 pip install 'ann-router[hnsw]'         # HNSW
 pip install 'ann-router[faiss]'        # FAISS
 pip install 'ann-router[annoy]'        # Annoy

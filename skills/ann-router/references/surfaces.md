@@ -26,9 +26,9 @@ the decision reviewable later.
 
 Logging and file management route through `os_helper` — the suite convention.
 
-## 2. CLIs — argparse (core) and click (`[cli]`)
+## 2. CLI — click (core)
 
-`ann-router` and `ann-router-click`, both over a shared `_core_cli`. See
+`ann-router`, over the shared `_core_cli` the API and MCP doors also call. See
 `cli-reference.md`.
 
 ## 3. HTTP API — FastAPI (`[api]`)
