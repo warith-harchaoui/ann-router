@@ -1,6 +1,6 @@
 ---
 name: ann-router
-description:>-
+description: >-
   Select the right approximate-nearest-neighbour (ANN) vector-search backend
   from measured problem criteria — exact / turbovec / HNSW / FAISS / Annoy /
   Qdrant / pgvector — and get a justified, discussable rationale plus a

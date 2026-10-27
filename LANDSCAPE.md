@@ -6,13 +6,6 @@ How `ann-router` compares to *just picking one engine*. Each tool is rated on
 **this project's job, selecting the right ANN backend from measured criteria**,
 not penalised for excelling at a different job (serving one engine well).
 
-## Positioning
-
-`ann-router` does not compete with FAISS, HNSW, Qdrant or the rest: it
-**orchestrates** them. They solve *indexing and serving*; ann-router solves
-*which one to use, and why*. The closest analogue is not another vector library
-but its own sibling [best-engine-ai-helper](https://github.com/warith-harchaoui/best-engine-ai-helper), which routes over LLMs.
-
 ## At a glance
 
 <!-- TABLE:START -->
@@ -53,15 +46,31 @@ Several options find themselves grouped in the bottom-right corner, including Mi
 Ultimately, the map illustrates that different vector databases and tools make different trade-offs. While ann-router leads in overall performance, the other options demonstrate distinct strengths, and the best choice will depend on the specific priorities of the application. The clustering of several options in the right-bottom corner suggests a common design philosophy focused on comprehensive features and stability, while the concentration of options in the top-left corner indicates a shared emphasis on robustness and precision.
 <!-- FIGURE:END -->
 
+## Positioning
+
+`ann-router` does not compete with FAISS, HNSW, Qdrant or the rest: it
+**orchestrates** them. They solve *indexing and serving*; ann-router solves
+*which one to use, and why*. The closest analogue is not another vector library
+but its own sibling [best-engine-ai-helper](https://github.com/warith-harchaoui/best-engine-ai-helper), which routes over LLMs.
+
+Two boundaries of that claim are worth stating before the write-ups. First,
+ann-router *instantiates* seven engines — exact, turbovec, hnswlib, FAISS,
+Annoy, Qdrant, pgvector — and only those. The other rows of the table are
+there to site this project honestly inside its field, not because
+`ar.route()` can hand you a Milvus cluster. Second, the router decides *which
+engine*, not *which index inside that engine*: it will route you to pgvector,
+but choosing HNSW over DiskANN underneath it is still yours to make.
+
 ## Per-tool write-up
 
 ### FAISS
 The scale king: IVF + PQ + GPU handle billions of vectors. But it is a *library*,
-not a decision: its recall collapses on small or near-orthogonal corpora (the
-`roitelet` study measured FAISS-HNSW recall ~0.47 at N=5k), it has no metadata
-filtering, and choosing IVF vs Flat vs PQ and their parameters is exactly the
-work ann-router automates. ann-router routes **to** FAISS for the very-large +
-GPU/batch regime where it wins.
+not a decision: its recall is corpus-shaped rather than uniform (the `roitelet`
+study measured FAISS-HNSW recall ~0.47 on near-orthogonal vectors at N=5k,
+while this repo's own `ann-router bench --n 5000 --dim 128` measures 1.0 on
+Gaussian data), it has no metadata filtering, and choosing IVF vs Flat vs PQ and
+their parameters is exactly the work ann-router automates. ann-router routes
+**to** FAISS for the very-large + GPU/batch regime where it wins.
 
 ### HNSW (hnswlib)
 Best recall/latency in memory for a **stable** corpus. Deletes are tombstone-only
@@ -87,13 +96,16 @@ maximal-recall static workloads.
 
 ### pgvectorscale
 The reason "just use Postgres" stopped being a concession. pgvectorscale adds a
-DiskANN index and SBQ compression to pgvector, and the published benchmarks put
-it at **471 QPS at 99% recall on 50M vectors where Qdrant managed 41** — an
-11x gap at the recall end, from the engine most teams already run. It confirms
-the premise rather than threatening it: the *index* inside an engine moves
-recall and latency as much as the choice of engine, which is precisely the axis
-ann-router has to reason about. Routing to pgvector now means asking which
-index, not only which database.
+DiskANN index and SBQ compression to pgvector, and its vendor's published
+benchmark puts it at **471.57 QPS at 99 % recall over 50M 768-dimensional
+Cohere embeddings, where Qdrant on the same hardware managed 41.47** — an
+11.4x gap at the recall end, from the engine most teams already run. Read it as
+a vendor benchmark, and read the rest of it too: the same run has pgvectorscale
+taking ~11.1 hours to build that index against Qdrant's ~3.3, because its build
+is still single-threaded. It confirms the premise rather than threatening it:
+the *index* inside an engine moves recall and latency as much as the choice of
+engine, which is precisely the axis ann-router has to reason about. Routing to
+pgvector now means asking which index, not only which database.
 
 ### Milvus
 The distributed answer: separated query/data/index nodes, GPU index builds
@@ -151,11 +163,48 @@ converged on offering several. A decision that used to be "which store" is now
 "which store, which index, which quantisation", which is more routing to do,
 not less.
 
+## When to pick what
+
+**Pick `ann-router`** when the engine is still an open question: a corpus whose
+size, churn rate or filtering need you cannot yet pin down, a decision somebody
+will ask you to justify later, or a benchmark you would otherwise write by hand.
+Its output is a name *plus* the rationale, the alternatives, and the criteria
+that were a hair from flipping it.
+
+**Do not pick it** in these cases, which are the honest majority:
+
+- **You already run one engine and it works.** `hnswlib.Index(...)` is three
+  lines; a router that always answers `hnsw` is indirection you are paying for
+  and not using. Run `ann-router route` once, read the rationale, and hard-code
+  the answer.
+- **The corpus is tiny and will stay tiny.** Below the calibrated
+  `EXACT_MAX_N=1000` the router's own advice is a brute-force numpy scan. Write
+  the scan.
+- **The decision is an architecture, not a backend.** Milvus, Vespa and
+  Weaviate come with clusters, ranking stacks and operational surfaces that no
+  `route()` call can abstract — and ann-router cannot instantiate any of them.
+  If the requirement is distributed scale past one machine (Milvus), multi-phase
+  ranking (Vespa) or fused BM25 + dense retrieval (Weaviate), go read their
+  docs, not this router's.
+- **You already run Postgres at scale.** Reach for pgvector, and then for
+  **pgvectorscale** on top of it: the numbers in its write-up above are hard to
+  argue with, and ann-router routes to plain pgvector without choosing the
+  DiskANN index for you.
+- **You want a prototype running this afternoon.** Chroma, with its dict-like
+  metadata and no server. ann-router will tell you when you have outgrown it;
+  it will not make the first hour easier.
+- **The corpus has to live in object storage.** LanceDB, whose versioned
+  columnar format is a different bet from anything in this router's registry.
+
 ## Sources and as-of date
 
-The ratings above were last checked on **2026-10-23**. This field moves fast
-enough that a stale table is a wrong table, so the date is part of the claim.
+The ratings above were last checked on **2026-10-23**, and the citations below
+were re-verified on **2026-10-27**. This field moves fast enough that a stale
+table is a wrong table, so the date is part of the claim.
 
+- [Pgvector vs. Qdrant: Open-Source Vector Database Comparison](https://www.tigerdata.com/blog/pgvector-vs-qdrant) — TigerData (formerly Timescale). The source of the pgvectorscale figures above; note that TigerData publishes pgvectorscale, so this is a vendor benchmark.
 - [Open-source vector database benchmarks](https://aimultiple.com/open-source-vector-databases) — AIMultiple
 - [Best vector databases in 2026: pricing, scale limits and architecture trade-offs](https://www.marktechpost.com/2026/05/10/best-vector-databases-in-2026-pricing-scale-limits-and-architecture-tradeoffs-across-nine-leading-systems/) — MarkTechPost
 - [Best vector databases](https://encore.dev/articles/best-vector-databases) — Encore
+- [references/DECISION_STUDY.md](https://github.com/warith-harchaoui/ann-router/blob/main/references/DECISION_STUDY.md) — where the `roitelet` recall figures quoted above come from, and what has since superseded them.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — this project's own measurements, the only numbers here taken on our hardware rather than read from someone else's post.

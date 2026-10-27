@@ -19,12 +19,19 @@ fast no matter how large the database grows.
 
 <img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/logo.png" alt="ann-router logo" >
 
+## The Promise
+
 `ann-router` belongs to the **AI Helpers** suite. It is a *router*: you describe
 your approximate-nearest-neighbour (ANN) search problem in *measured* terms (how
 many vectors, how many dimensions, how much accuracy you actually need), and it
 selects, **justifies**, and can **instantiate** the right engine for that problem,
 instead of marrying you to a single library that fits today's corpus and not
 tomorrow's.
+
+**Local-first by design.** A routing decision is a pure function of the criteria
+you pass plus a probe of the machine you are on: no account, no API key, no
+telemetry, no network call. The engines it then builds run inside your own
+process unless you deliberately point one at a server.
 
 **It is an indispensable component for RAG** (retrieval-augmented generation: an
 AI system that looks up the relevant text before answering, instead of relying
@@ -46,23 +53,26 @@ The engines it routes among:
 project has abandoned it as a supported backend; see
 [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md).)
 
-Importing the package is cheap and dependency-free: no engine's optional
-dependency is loaded at import time, so `import ann_router` works with only numpy
-installed, and a backend whose dependency is absent simply reports itself
-unavailable while the router routes around it: this is lazy importing.
+Importing the package is cheap: no engine's optional dependency is loaded at
+import time, so `import ann_router` costs only the four declared core
+dependencies (numpy, click, pyyaml, os-helper), and a backend whose dependency
+is absent simply reports itself unavailable while the router routes around it:
+this is lazy importing.
+
+## Status
 
 None of this is a one-off script. Every change runs through continuous
 integration (CI, automated checks triggered by each push and pull request):
 lint and format checks, then the full test suite, defined in
 [`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml),
 before anything reaches `main`. Each release is a semantic-versioned
-(`MAJOR.MINOR.PATCH`) git tag, visible with `git tag` (e.g. `v0.1.6`),
-published to PyPI (the Python Package Index) as `ann-router`, so
+(`MAJOR.MINOR.PATCH`) git tag, visible with `git tag` (the current one is
+`v0.3.0`), published to PyPI (the Python Package Index) as `ann-router`, so
 `pip install ann-router` always installs a version that already passed that
 gate.
 
 The version number stays honest about where the project actually stands,
-though: at `0.1.x`, the public interface can still move between releases, and
+though: at `0.3.x`, the public interface can still move between releases, and
 no other published AI Helpers package depends on `ann-router` yet. Read it
 today as a standalone routing utility with a tested, CI-gated core, not as a
 component with years of production mileage behind it elsewhere. The recall
@@ -81,10 +91,10 @@ release cannot quietly slip below.
 ## Why route instead of just picking FAISS (or any one engine)?
 
 Because the right engine is a *function of the problem*, and the problem changes:
-a 5k-vector corpus wants an exact scan (instant, recall 1.0); a corpus with
-constant inserts/deletes wants turbovec (O(1) mutation); one needing SQL
-`WHERE`-filters wants pgvector; a frozen, memory-tight corpus wants Annoy. Hard
--coding one library gets one of these right and the rest wrong. See
+a corpus of a few hundred vectors wants an exact scan (instant, recall 1.0); a
+corpus with constant inserts/deletes wants turbovec (O(1) mutation); one needing
+SQL `WHERE`-filters wants pgvector; a frozen, memory-tight corpus wants Annoy.
+Hard-coding one library gets one of these right and the rest wrong. See
 [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md).
 
 ## Installation
@@ -138,7 +148,7 @@ Full, platform-specific instructions, including the **Apple Silicon annoy**
 caveat and **pgvector** notes, are in
 [INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/main/INSTALL.md).
 
-## Quick start (library)
+## Quick start
 
 ```python
 import numpy as np
@@ -155,13 +165,22 @@ criteria = ar.Criteria(
 
 # 2. Ask which backend, and why.
 choice = ar.route(criteria)
-print(choice.backend)  # 'turbovec'
-print(choice.rationale)  # "corpus receives frequent updates: turbovec offers O(1) ..."
+print(choice.backend)
+# turbovec
+print(choice.rationale)
+# corpus receives frequent updates: turbovec offers O(1) add_with_ids/remove(id)
+# with no index rebuild, plus TurboQuant 2-4 bit (~16x) compression — graph
+# indexes degrade under deletes, so they are avoided here. target_recall=0.85
+# is below HIGH_RECALL=0.9, within turbovec's calibrated range.
 
 # 3. Or route + build in one call, then search.
 vectors = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float32")
 index, choice = ar.auto_index(vectors, ar.Criteria(n_vectors=5_000, dim=768))
+print(choice.backend)
+# hnsw           (5 000 is already past the calibrated EXACT_MAX_N=1000)
 ids, distances = index.search(vectors[:3], k=10)
+print(ids.shape)
+# (3, 10)
 ```
 
 At the house default `target_recall=0.95`, this same `dynamic=True` corpus routes
@@ -194,7 +213,8 @@ with the `pip install` line that fixes it.
    `search`, `bench`, `capabilities`.
 3. **HTTP API**: `uvicorn ann_router.api:app` (`[api]` extra, or the Docker
    image above): `POST /route`, `GET /capabilities`, `GET /bench`.
-4. **MCP server**: `python -m ann_router.mcp_server` (`[mcp]` extra), the same
+4. **MCP server**: `ann-router-mcp`, equivalently
+   `python -m ann_router.mcp_server` (`[mcp]` extra), the same
    `route`/`capabilities`/`bench` operations as the HTTP API, auto-exposed as
    MCP tools via [`fastapi-mcp`](https://github.com/tadata-org/fastapi_mcp) at
    `http://127.0.0.1:8019/mcp` (Streamable HTTP, not stdio).
@@ -257,6 +277,10 @@ flowchart TD
 | 5 | read-only + tight memory | **Annoy** | frozen, memory-mapped, very lean |
 | 6 | stable in-memory (default) | **HNSW** | best recall/latency when the index rarely changes |
 
+The shipped values are `EXACT_MAX_N=1000`, `FAISS_MIN_N=20000` and
+`HIGH_RECALL=0.9`, each carrying its calibration note in
+[`ann_router/policy.yaml`](https://github.com/warith-harchaoui/ann-router/blob/main/ann_router/policy.yaml).
+
 Row 1's `EXACT_MAX_N` scales with `Criteria.latency_budget_ms`: a brute-force
 scan's cost is ~linear in n for fixed dim, so a budget looser than the 10 ms
 reference extends the exact/ANN crossover proportionally, and a tighter one
@@ -299,7 +323,15 @@ An empty list is the reassuring case: no criterion flips the verdict within
 
 It is a probe, not a hand-written note, which is why it catches things nobody
 would have thought to mention. At `n_vectors=900` it flags the **latency
-budget** as well as `n_vectors` — both sit near a boundary there.
+budget** as well as `n_vectors` — both sit near a boundary there:
+
+```python
+route(Criteria(n_vectors=900, dim=128)).sensitivity
+# [{'criterion': 'latency_budget_ms', 'from': 10.0, 'to': 9.0,
+#   'backend': 'hnsw', 'relative_change': 0.1},
+#  {'criterion': 'n_vectors', 'from': 900, 'to': 1008,
+#   'backend': 'hnsw', 'relative_change': 0.12}]
+```
 
 ## Criteria (the input spec)
 

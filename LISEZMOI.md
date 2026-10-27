@@ -20,6 +20,8 @@ Les vérifier un par un ne tient pas la charge, on effectue donc une recherche
 approchée, qui échange une petite part d'exactitude, contrôlée, contre une
 recherche qui reste rapide quelle que soit la taille de la base.
 
+## La promesse
+
 `ann-router` fait partie de la suite **AI Helpers**. C'est un *routeur* :
 vous décrivez votre problème de recherche de plus proches voisins approchés
 (_Approximate Nearest Neighbors_ ou ANN) en termes *mesurés* (combien de
@@ -27,6 +29,12 @@ vecteurs, combien de dimensions, quelle exactitude est réellement nécessaire),
 et il sélectionne, **justifie** et peut **instancier** le bon moteur pour ce
 problème précis, au lieu de vous marier à une seule bibliothèque qui convient
 au corpus d'aujourd'hui mais pas à celui de demain.
+
+**Tout reste local.** Une décision de routage est une fonction pure des
+critères que vous passez, plus une inspection de la machine où vous êtes :
+aucun compte, aucune clé d'API, aucune télémétrie, aucun appel réseau. Les
+moteurs qu'il construit ensuite tournent dans votre propre processus, sauf si
+vous en pointez un délibérément vers un serveur.
 
 **C'est un composant indispensable pour les RAG** (_Retrieval-Augmented
 Generation_ : un système qui va chercher le texte pertinent avant de répondre,
@@ -50,10 +58,13 @@ Les moteurs entre lesquels il arbitre :
 projet l'a définitivement abandonné comme backend supporté ; voir
 [CHANGELOG.md](https://github.com/warith-harchaoui/ann-router/blob/main/CHANGELOG.md).)
 
-Importer le paquet est peu coûteux et sans dépendance : aucune dépendance
-optionnelle de moteur n'est chargée à l'import, donc `import ann_router`
-fonctionne avec numpy seul et un backend dont la dépendance est absente se
-signale simplement indisponible pendant que le routeur le contourne. Il s'agit donc de _lazy import_.
+Importer le paquet est peu coûteux : aucune dépendance optionnelle de moteur
+n'est chargée à l'import, donc `import ann_router` ne coûte que les quatre
+dépendances de base déclarées (numpy, click, pyyaml, os-helper) et un backend
+dont la dépendance est absente se signale simplement indisponible pendant que
+le routeur le contourne. Il s'agit donc de _lazy import_.
+
+## État du projet
 
 Rien de tout cela n'est un script isolé. Chaque changement passe par
 l'intégration continue (CI, vérifications automatiques déclenchées à chaque
@@ -62,11 +73,11 @@ définis dans
 [`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml),
 avant qu'un changement n'atteigne `main`. Chaque publication correspond à une
 étiquette git versionnée sémantiquement (`MAJOR.MINOR.PATCH`, visible avec
-`git tag`, par exemple `v0.1.6`) et publiée sur PyPI (le dépôt officiel des
-paquets Python) sous le nom `ann-router` : `pip install ann-router` installe
-donc toujours une version qui a déjà franchi cette porte.
+`git tag` ; la courante est `v0.3.0`) et publiée sur PyPI (le dépôt officiel
+des paquets Python) sous le nom `ann-router` : `pip install ann-router`
+installe donc toujours une version qui a déjà franchi cette porte.
 
-Le numéro de version reste honnête sur l'état du projet : en `0.1.x`,
+Le numéro de version reste honnête sur l'état du projet : en `0.3.x`,
 l'interface publique peut encore bouger d'une publication à l'autre et aucun
 autre paquet publié de la suite AI Helpers ne dépend pour l'instant
 d'`ann-router`. On le lit donc aujourd'hui comme un outil de routage autonome
@@ -87,11 +98,11 @@ franchir silencieusement vers le bas.
 ## Pourquoi router plutôt que choisir FAISS d'office (ou un autre) ?
 
 Parce que le bon moteur est une *fonction du problème* et le problème change :
-un corpus de 5 000 vecteurs veut un balayage exact (instantané, rappel 1.0) ;
-un corpus avec insertions/suppressions constantes veut turbovec (mutation
-O(1)) ; un besoin de filtres SQL `WHERE` veut pgvector ; un corpus figé et
-contraint en mémoire veut Annoy. Coder en dur une seule bibliothèque en réussit
-un cas et rate les autres. Voir
+un corpus de quelques centaines de vecteurs veut un balayage exact (instantané,
+rappel 1.0) ; un corpus avec insertions/suppressions constantes veut turbovec
+(mutation O(1)) ; un besoin de filtres SQL `WHERE` veut pgvector ; un corpus
+figé et contraint en mémoire veut Annoy. Coder en dur une seule bibliothèque en
+réussit un cas et rate les autres. Voir
 [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md).
 
 ## Installation
@@ -146,7 +157,7 @@ Les instructions complètes et spécifiques à la plateforme, dont la mise en
 garde **annoy sur Apple Silicon** et les notes **pgvector**, sont dans
 [INSTALL.md](https://github.com/warith-harchaoui/ann-router/blob/main/INSTALL.md).
 
-## Démarrage rapide (bibliothèque)
+## Prise en main rapide
 
 ```python
 import numpy as np
@@ -163,19 +174,27 @@ criteres = ar.Criteria(
 
 # 2. Demander quel backend et pourquoi.
 choix = ar.route(criteres)
-print(choix.backend)  # 'turbovec'
-print(choix.rationale)  # "corpus receives frequent updates: turbovec offers O(1) ..."
-# (le raisonnement est toujours renvoyé en anglais)
+print(choix.backend)
+# turbovec
+print(choix.rationale)  # (le raisonnement est toujours renvoyé en anglais)
+# corpus receives frequent updates: turbovec offers O(1) add_with_ids/remove(id)
+# with no index rebuild, plus TurboQuant 2-4 bit (~16x) compression — graph
+# indexes degrade under deletes, so they are avoided here. target_recall=0.85
+# is below HIGH_RECALL=0.9, within turbovec's calibrated range.
 
 # 3. Ou router + construire en un appel, puis chercher.
 vecteurs = np.random.default_rng(0).standard_normal((5_000, 768)).astype("float32")
 index, choix = ar.auto_index(vecteurs, ar.Criteria(n_vectors=5_000, dim=768))
+print(choix.backend)
+# hnsw           (5 000 dépasse déjà l'EXACT_MAX_N=1000 calibré)
 ids, distances = index.search(vecteurs[:3], k=10)
+print(ids.shape)
+# (3, 10)
 ```
 
 Au `target_recall=0.95` par défaut, ce même corpus `dynamic=True` route vers
 **hnsw** à la place : la propre calibration de turbovec
-([bench/results/calibrated_policy.yaml](bench/results/calibrated_policy.yaml))
+([bench/results/calibrated_policy.yaml](https://github.com/warith-harchaoui/ann-router/blob/main/bench/results/calibrated_policy.yaml))
 n'atteint systématiquement pas un rappel de 0.9, donc le routeur préfère le
 meilleur rappel de HNSW à la mutation O(1) de turbovec dès que la cible dépasse
 `HIGH_RECALL=0.9`.
@@ -204,7 +223,8 @@ lève un `NotSupported` clair ; un backend dont la dépendance manque lève un
    `build`, `search`, `bench`, `capabilities`.
 3. **API HTTP** : `uvicorn ann_router.api:app` (extra `[api]` ou l'image
    Docker ci-dessus) : `POST /route`, `GET /capabilities`, `GET /bench`.
-4. **Serveur MCP** : `python -m ann_router.mcp_server` (extra `[mcp]`), les
+4. **Serveur MCP** : `ann-router-mcp`, c'est-à-dire
+   `python -m ann_router.mcp_server` (extra `[mcp]`), les
    mêmes opérations `route`/`capabilities`/`bench` que l'API HTTP, exposées
    automatiquement comme outils MCP via
    [`fastapi-mcp`](https://github.com/tadata-org/fastapi_mcp) sur
@@ -268,6 +288,10 @@ flowchart TD
 | 5 | lecture seule + mémoire serrée | **Annoy** | figé, mappé en mémoire, très léger |
 | 6 | corpus stable en mémoire (défaut) | **HNSW** | meilleur rappel/latence quand l'index change rarement |
 
+Les valeurs livrées sont `EXACT_MAX_N=1000`, `FAISS_MIN_N=20000` et
+`HIGH_RECALL=0.9`, chacune accompagnée de sa note de calibrage dans
+[`ann_router/policy.yaml`](https://github.com/warith-harchaoui/ann-router/blob/main/ann_router/policy.yaml).
+
 La ligne 1 : `EXACT_MAX_N` s'ajuste selon `Criteria.latency_budget_ms`. Un
 balayage force brute a un coût quasi linéaire en n à dim fixe donc un budget
 plus large que la référence de 10 ms étend proportionnellement le seuil
@@ -313,6 +337,14 @@ C'est une sonde, pas une note rédigée à la main — d'où sa capacité à rel
 que personne n'aurait songé à mentionner. À `n_vectors=900`, elle signale le
 **budget de latence** autant que `n_vectors` : les deux sont près d'une
 frontière à cet endroit.
+
+```python
+route(Criteria(n_vectors=900, dim=128)).sensitivity
+# [{'criterion': 'latency_budget_ms', 'from': 10.0, 'to': 9.0,
+#   'backend': 'hnsw', 'relative_change': 0.1},
+#  {'criterion': 'n_vectors', 'from': 900, 'to': 1008,
+#   'backend': 'hnsw', 'relative_change': 0.12}]
+```
 
 ## Les critères (la spécification d'entrée)
 

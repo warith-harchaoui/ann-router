@@ -4,6 +4,55 @@ All notable changes to `ann-router` are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Documentation
+- **The six documents now carry the suite's shared spine** (CODING.md rules
+  16-18). `README`/`LISEZMOI` gained `## The Promise` / `## La promesse` and
+  `## Status` / `## État du projet` as headings over prose that was already
+  there, and `Quick start (library)` / `Démarrage rapide (bibliothèque)` lost
+  their parenthetical so the heading is the two words the rule names.
+  `LANDSCAPE`/`PAYSAGE` gained `## When to pick what` / `## Quand choisir
+  quoi`, including the cases where the honest answer is *not* this package, and
+  `Positioning` moved below `Positioning map` to match the required order.
+  `EXAMPLES`/`EXEMPLES` gained the language-switch links they never had, plus
+  `## Table of Contents` / `## Table des matières`, `## Setup` / `## Mise en
+  place`, `## Command line` / `## Ligne de commande` and `## Troubleshooting` /
+  `## Dépannage`.
+
+- **Every example output is now measured rather than sketched.** All thirteen
+  Python blocks in each examples file were executed and their real stdout
+  pasted back. That caught three documents making a false claim: `auto_index`
+  on 5 000 vectors was shown returning `exact`, when the calibrated
+  `EXACT_MAX_N` has been 1 000 since the policy was measured, so it returns
+  `hnsw`; the README and LISEZMOI repeated the same "a 5k-vector corpus wants
+  an exact scan" in prose; and the fallback example asserted an `hnsw` result
+  that only happens on a machine without the turbovec extra, which the
+  documenting machine was not. The fallback is now demonstrated by making one
+  adapter report itself unavailable, so the pasted rationale is the one the
+  router really prints.
+
+- **Stale version and dependency claims corrected.** Both entry points cited
+  `v0.1.6` and `0.1.x` three minor releases after 0.3.0 shipped, and claimed
+  `import ann_router` "works with only numpy installed" when the package
+  declares four core dependencies. The same numpy-only claim is still in
+  `ann_router/__init__.py`'s module docstring.
+
+- **The comparison document's one competitor benchmark is now sourced.** The
+  pgvectorscale figure was re-verified against TigerData's own post and is
+  cited there, with the dimensionality it was measured at, the note that its
+  publisher also publishes pgvectorscale, and the index-build time the original
+  reports alongside it — Qdrant builds the same index in under a third of the
+  time. A comparison that quotes only the flattering half of someone else's
+  benchmark is advertising.
+
+### Fixed
+- `skills/ann-router/SKILL.md`'s frontmatter was not valid YAML:
+  `description:>-` has no space after the colon, so the whole block failed to
+  parse and anything reading the skill saw no description at all.
+  `tests/test_skill.py` missed it by asserting the substring `"description:"`
+  rather than parsing the frontmatter.
+
 ## [0.3.0] - 2026-10-25
 
 ### Changed

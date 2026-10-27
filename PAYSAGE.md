@@ -7,14 +7,6 @@ est noté sur **le travail de ce projet, sélectionner le bon backend ANN à par
 de critères mesurés**, sans être pénalisé pour exceller à un autre travail
 (servir un moteur donné).
 
-## Positionnement
-
-`ann-router` ne concurrence pas FAISS, HNSW, Qdrant et les autres : il les
-**orchestre**. Ils résolvent *l'indexation et le service* ; ann-router résout
-*lequel utiliser et pourquoi*. Son analogue le plus proche n'est pas une autre
-bibliothèque vectorielle mais son propre frère `best-engine-ai-helper`, qui route
-entre des LLM.
-
 ## En un coup d'œil
 
 <!-- TABLE:START -->
@@ -55,13 +47,32 @@ L'axe vertical met en opposition la facilité d'adaptation à de nouveaux besoin
 On observe une concentration importante de solutions dans le quadrant inférieur droit, regroupant Qdrant, pgvector, pgvectorscale, Milvus, Weaviate et Vespa. Elles partagent un profil axé sur la robustesse et l'adaptabilité, ce qui les rend potentiellement intéressantes pour des environnements où la stabilité et la flexibilité sont primordiales. À l'opposé, les options FAISS, HNSW, Annoy et turbovec se regroupent dans le coin supérieur gauche, privilégiant l'efficacité et la précision, ce qui les rend plus adaptées aux applications où la vitesse et la qualité des résultats sont essentielles. Ann-router et LangChain VectorStores, quant à elles, se trouvent dans le coin supérieur droit, combinant robustesse et précision, ce qui les rend potentiellement polyvalentes, bien qu'elles ne soient pas les leaders sur chaque axe.
 <!-- FIGURE:END -->
 
+## Positionnement
+
+`ann-router` ne concurrence pas FAISS, HNSW, Qdrant et les autres : il les
+**orchestre**. Ils résolvent *l'indexation et le service* ; ann-router résout
+*lequel utiliser et pourquoi*. Son analogue le plus proche n'est pas une autre
+bibliothèque vectorielle mais son propre frère
+[best-engine-ai-helper](https://github.com/warith-harchaoui/best-engine-ai-helper),
+qui route entre des LLM.
+
+Deux limites de cette affirmation méritent d'être posées avant les fiches.
+D'abord, ann-router *instancie* sept moteurs — exact, turbovec, hnswlib, FAISS,
+Annoy, Qdrant, pgvector — et eux seuls. Les autres lignes du tableau servent à
+situer honnêtement ce projet dans son domaine, non parce qu'`ar.route()`
+saurait vous livrer une grappe Milvus. Ensuite, le routeur décide *quel
+moteur*, pas *quel index dans ce moteur* : il vous enverra vers pgvector, mais
+préférer HNSW à DiskANN en dessous reste votre décision.
+
 ## Fiche par outil
 
 ### FAISS
 Le roi de l'échelle : IVF + PQ + GPU gèrent des milliards de vecteurs. Mais c'est
-une *bibliothèque*, pas une décision : son rappel s'effondre sur des corpus
-petits ou quasi-orthogonaux (l'étude `roitelet` a mesuré FAISS-HNSW à ~0,47 de
-rappel à N=5k), il n'a pas de filtrage par métadonnées et choisir IVF vs Flat vs
+une *bibliothèque*, pas une décision : son rappel dépend de la forme du corpus
+plus que d'un chiffre unique (l'étude `roitelet` a mesuré FAISS-HNSW à ~0,47 de
+rappel sur des vecteurs quasi-orthogonaux à N=5k, là où le banc de ce dépôt,
+`ann-router bench --n 5000 --dim 128`, mesure 1,0 sur des données
+gaussiennes), il n'a pas de filtrage par métadonnées et choisir IVF vs Flat vs
 PQ et leurs paramètres est exactement le travail qu'ann-router automatise.
 ann-router route **vers** FAISS pour le régime très-gros-volume + GPU/batch.
 
@@ -91,14 +102,17 @@ quantification est avec perte), donc ann-router le choisit pour la branche
 ### pgvectorscale
 La raison pour laquelle « prends juste Postgres » a cessé d'être une
 concession. pgvectorscale ajoute à pgvector un index DiskANN avec compression
-SBQ : les mesures publiées le placent à **471 requêtes par seconde à 99 % de
-rappel sur 50 millions de vecteurs, là où Qdrant en tient 41** — un facteur
-onze du côté du rappel, obtenu depuis le moteur que la plupart des équipes font
-déjà tourner. Cela confirme la prémisse d'ann-router plutôt que de la menacer :
-l'*index* choisi dans un moteur déplace le rappel et la latence autant que le
-choix du moteur lui-même : c'est exactement l'axe sur lequel un routeur doit
-raisonner. Router vers pgvector, c'est désormais demander quel index, pas
-seulement quelle base.
+SBQ : le banc publié par son éditeur le place à **471,57 requêtes par seconde à
+99 % de rappel sur 50 millions de plongements Cohere en 768 dimensions, là où
+Qdrant, sur le même matériel, en tient 41,47** — un facteur 11,4 du côté du
+rappel, obtenu depuis le moteur que la plupart des équipes font déjà tourner.
+À lire comme un banc d'éditeur — et à lire en entier : la même campagne donne
+~11,1 heures de construction d'index à pgvectorscale contre ~3,3 à Qdrant, sa
+construction étant encore mono-thread. Cela confirme la prémisse d'ann-router
+plutôt que de la menacer : l'*index* choisi dans un moteur déplace le rappel et
+la latence autant que le choix du moteur lui-même : c'est exactement l'axe sur
+lequel un routeur doit raisonner. Router vers pgvector, c'est désormais
+demander quel index, pas seulement quelle base.
 
 ### Milvus
 La réponse distribuée : nœuds de requête, de données et d'index séparés,
@@ -163,12 +177,53 @@ GPU déplace le rappel avec la latence plus loin que changer de base de données
 était « quel magasin » devient « quel magasin, quel index, quelle
 quantification » : davantage de routage à faire, pas moins.
 
+## Quand choisir quoi
+
+**Choisissez `ann-router`** quand le moteur reste une question ouverte : un
+corpus dont vous ne savez pas encore fixer la taille, le taux de renouvellement
+ni le besoin de filtrage, une décision que l'on vous demandera de justifier plus
+tard — ou un banc d'essai que vous écririez sinon à la main. Sa sortie est un nom
+*plus* la justification, les alternatives et les critères qui étaient à un
+cheveu de tout faire basculer.
+
+**Ne le choisissez pas** dans les cas suivants, qui sont honnêtement les plus
+nombreux :
+
+- **Vous faites déjà tourner un moteur, il vous convient.**
+  `hnswlib.Index(...)` tient en trois lignes ; un routeur qui répond toujours
+  `hnsw` est une indirection que vous payez sans l'utiliser. Lancez
+  `ann-router route` une fois, lisez la justification, codez la réponse en dur.
+- **Le corpus est minuscule, il le restera.** Sous l'`EXACT_MAX_N=1000`
+  calibré, le conseil du routeur lui-même est un balayage numpy en force brute.
+  Écrivez le balayage.
+- **La décision est une architecture, pas un backend.** Milvus, Vespa et
+  Weaviate arrivent avec des grappes, des piles de classement et une surface
+  d'exploitation qu'aucun appel à `route()` ne saurait abstraire — ann-router ne
+  sait d'ailleurs en instancier aucun. Si le besoin est le passage à l'échelle
+  au-delà d'une machine (Milvus), le classement multi-phases (Vespa) ou la
+  fusion BM25 avec le dense (Weaviate), allez lire leur documentation, pas celle
+  de ce routeur.
+- **Vous exploitez déjà Postgres à l'échelle.** Prenez pgvector, puis
+  **pgvectorscale** par-dessus : les chiffres de sa fiche ci-dessus sont
+  difficiles à contester, sachant qu'ann-router route vers pgvector sans
+  choisir l'index DiskANN pour vous.
+- **Vous voulez un prototype qui tourne cet après-midi.** Chroma, ses
+  métadonnées en forme de dictionnaire, son absence de serveur. ann-router vous
+  dira quand vous l'aurez dépassé ; il ne rendra pas la première heure plus
+  facile.
+- **Le corpus doit vivre dans un stockage objet.** LanceDB, dont le format
+  colonnaire versionné est un pari différent de tout ce que contient le registre
+  de ce routeur.
+
 ## Sources et date de relevé
 
-Les notes ci-dessus ont été vérifiées le **2026-10-23**. Ce domaine bouge assez
-vite pour qu'un tableau périmé soit un tableau faux : la date fait partie de
-l'affirmation.
+Les notes ci-dessus ont été vérifiées le **2026-10-23**, les citations
+ci-dessous revérifiées le **2026-10-27**. Ce domaine bouge assez vite pour qu'un
+tableau périmé soit un tableau faux : la date fait partie de l'affirmation.
 
+- [Pgvector vs. Qdrant: Open-Source Vector Database Comparison](https://www.tigerdata.com/blog/pgvector-vs-qdrant) — TigerData (ex-Timescale). Source des chiffres pgvectorscale ci-dessus ; TigerData publie pgvectorscale, c'est donc un banc d'éditeur.
 - [Open-source vector database benchmarks](https://aimultiple.com/open-source-vector-databases) — AIMultiple
 - [Best vector databases in 2026: pricing, scale limits and architecture trade-offs](https://www.marktechpost.com/2026/05/10/best-vector-databases-in-2026-pricing-scale-limits-and-architecture-tradeoffs-across-nine-leading-systems/) — MarkTechPost
 - [Best vector databases](https://encore.dev/articles/best-vector-databases) — Encore
+- [references/DECISION_STUDY.md](https://github.com/warith-harchaoui/ann-router/blob/main/references/DECISION_STUDY.md) — d'où viennent les chiffres de rappel `roitelet` cités plus haut, ainsi que ce qui les a depuis remplacés.
+- [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — les mesures propres à ce projet, les seuls chiffres de cette page relevés sur notre matériel plutôt que lus chez quelqu'un d'autre.
