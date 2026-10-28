@@ -6,7 +6,36 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-28
+
+### Added
+
+- `tests/test_catalog_matches_policy.py` keeps the catalogue honest about the
+  thresholds it quotes. Proven by breaking it: restoring `10k` fails with
+  `assert 1000 in {10, 10000}`.
+
+### Fixed
+
+- **`ann-router capabilities` told readers `n < 10k`; the router crosses over
+  at 1000.** `backends.yaml` is not an internal note -- the CLI prints it and
+  the docs render it -- and its `exact` entry had been quoting a figure ten
+  times larger than `policy.EXACT_MAX_N`. The entry now quotes the real
+  crossover and the 10 ms reference budget it was calibrated at, since the
+  number scales with `latency_budget_ms` and reads as absolute without it.
+
+- **The package docstring claimed `import ann_router` "works even with only
+  numpy installed".** It does not: four base dependencies are declared (click,
+  numpy, os-helper, pyyaml). The true and more useful claim -- that no *engine*
+  is imported at import time -- is what it says now.
+
+- `skills/ann-router/SKILL.md`'s frontmatter was not valid YAML:
+  `description:>-` has no space after the colon, so the whole block failed to
+  parse and anything reading the skill saw no description at all.
+  `tests/test_skill.py` missed it by asserting the substring `"description:"`
+  rather than parsing the frontmatter.
+
 ### Documentation
+
 - **The six documents now carry the suite's shared spine** (CODING.md rules
   16-18). `README`/`LISEZMOI` gained `## The Promise` / `## La promesse` and
   `## Status` / `## État du projet` as headings over prose that was already
@@ -45,13 +74,6 @@ All notable changes to `ann-router` are documented here. The format follows
   reports alongside it — Qdrant builds the same index in under a third of the
   time. A comparison that quotes only the flattering half of someone else's
   benchmark is advertising.
-
-### Fixed
-- `skills/ann-router/SKILL.md`'s frontmatter was not valid YAML:
-  `description:>-` has no space after the colon, so the whole block failed to
-  parse and anything reading the skill saw no description at all.
-  `tests/test_skill.py` missed it by asserting the substring `"description:"`
-  rather than parsing the frontmatter.
 
 ## [0.3.0] - 2026-10-25
 
