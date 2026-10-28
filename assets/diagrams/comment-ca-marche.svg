@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1414 432" width="1414" height="432" role="img" aria-labelledby="ar-title ar-desc" font-family="Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="ar-title">Comment ann-router fonctionne : votre problème de recherche en entrée, le moteur qui lui convient en sortie — raisonnement compris</title>
+  <desc id="ar-desc">Une plaque de gauche à droite. Entrée : la forme de votre problème de plus proches voisins — combien de vecteurs, combien de dimensions, le rappel qu'il vous faut, la latence que vous pouvez payer, puis si un serveur est acceptable. Le travail, en trois étapes numérotées : ces critères sont mesurés plutôt que supposés, y compris celui que la plupart sautent, à savoir à quel point la collection est réellement petite ; chaque moteur candidat est noté contre eux, recherche exacte, turbovec, HNSW, FAISS, Annoy, Qdrant puis pgvector ; le choix est justifié en mots nommant le seuil qui l'a emporté. Sortie : le moteur à employer, plus un raisonnement discutable.</desc>
+  <style>
+    .panel      { fill: #ffffff; stroke: #d6d6d6; stroke-width: 1.5; }
+    .panel-label{ fill: #6b6b6b; font-size: 13px; font-weight: 600; letter-spacing: .08em; }
+    .io         { fill: #F8F8F8; stroke: #9a9a9a; stroke-width: 1.5; }
+    .stage      { fill: #FFF4E0; stroke: #FF9500; stroke-width: 1.5; }
+    .core       { fill: #007AFF; stroke: #0062CC; stroke-width: 1.5; }
+    .surface    { fill: #EAF3FF; stroke: #007AFF; stroke-width: 1.5; }
+    .n-title    { font-size: 15px; font-weight: 600; fill: #111111; }
+    .n-sub      { font-size: 12px; fill: #5a5a5a; }
+    .on-dark    { fill: #ffffff; font-size: 15px; font-weight: 600; }
+    .on-dark-sub{ fill: #d8e8ff; font-size: 12px; }
+    .flow       { fill: none; stroke: #9a9a9a; stroke-width: 2; }
+    .tie        { fill: none; stroke: #007AFF; stroke-width: 1.5; }
+    .caption    { font-size: 12.5px; fill: #5a5a5a; font-style: italic; }
+    .step       { font-size: 11px; font-weight: 700; fill: #B26A00;
+                  font-family: 'Roboto Mono', ui-monospace, monospace; }
+    .surf-label { font-size: 13px; font-weight: 600; fill: #0062CC; }
+
+    @media (prefers-color-scheme: dark) {
+      .panel      { fill: #1b1b1d; stroke: #3a3a3d; }
+      .panel-label{ fill: #a0a0a6; }
+      .io         { fill: #2a2a2e; stroke: #6f6f76; }
+      .stage      { fill: #3a2d12; stroke: #FF9500; }
+      .surface    { fill: #10243d; stroke: #4da2ff; }
+      .n-title    { fill: #f2f2f4; }
+      .n-sub      { fill: #b4b4ba; }
+      .flow       { stroke: #7a7a82; }
+      .tie        { stroke: #4da2ff; }
+      .caption    { fill: #a0a0a6; }
+      .step       { fill: #FFCC00; }
+      .surf-label { fill: #4da2ff; }
+    }
+  </style>
+  <defs><marker id="ah-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9a9a9a"/></marker></defs>
+  <text class="panel-label" x="28" y="40">ENTRÉE</text>
+  <rect class="io" x="28" y="87" width="267" height="78" rx="10"/>
+  <text class="n-title" x="161" y="120" text-anchor="middle">votre problème de recherche</text>
+  <text class="n-sub" x="161" y="139" text-anchor="middle">n, dimensions, rappel, latence</text>
+  <path class="flow" d="M301 126 H317" marker-end="url(#ah-arrow)"/>
+  <rect class="panel" x="321" y="54" width="803" height="144" rx="12"/>
+  <text class="panel-label" x="341" y="76">CE QU'ELLE FAIT</text>
+  <rect class="stage" x="341" y="94" width="217" height="78" rx="10"/>
+  <text class="n-title" x="449" y="127" text-anchor="middle">mesurer les critères</text>
+  <text class="n-sub" x="449" y="146" text-anchor="middle">dont la vraie petitesse de n</text>
+  <text class="step" x="352" y="110">1</text>
+  <path class="flow" d="M562 133 H578" marker-end="url(#ah-arrow)"/>
+  <rect class="stage" x="584" y="94" width="283" height="78" rx="10"/>
+  <text class="n-title" x="726" y="127" text-anchor="middle">noter les moteurs</text>
+  <text class="n-sub" x="726" y="146" text-anchor="middle">exact, HNSW, FAISS, Qdrant, pgvector…</text>
+  <text class="step" x="595" y="110">2</text>
+  <path class="flow" d="M871 133 H887" marker-end="url(#ah-arrow)"/>
+  <rect class="stage" x="893" y="94" width="211" height="78" rx="10"/>
+  <text class="n-title" x="998" y="127" text-anchor="middle">justifier le choix</text>
+  <text class="n-sub" x="998" y="146" text-anchor="middle">en nommant le seuil décisif</text>
+  <text class="step" x="904" y="110">3</text>
+  <path class="flow" d="M1130 126 H1146" marker-end="url(#ah-arrow)"/>
+  <text class="panel-label" x="1150" y="40">SORTIE</text>
+  <rect class="io" x="1150" y="87" width="237" height="78" rx="10"/>
+  <text class="n-title" x="1268" y="120" text-anchor="middle">le moteur à employer</text>
+  <text class="n-sub" x="1268" y="139" text-anchor="middle">plus un raisonnement discutable</text>
+  <rect class="core" x="497" y="232" width="420" height="54" rx="10"/>
+  <text class="on-dark" x="707" y="253" text-anchor="middle">une bibliothèque, appelée pareil partout</text>
+  <text class="on-dark-sub" x="707" y="272" text-anchor="middle">os-helper dessous pour la journalisation et les fichiers</text>
+  <path class="tie" d="M707 286 V314 H443 V332"/>
+  <path class="tie" d="M707 314 H971 V332"/>
+  <path class="tie" d="M443 314 V332"/>
+  <rect class="surface" x="368" y="332" width="150" height="46" rx="9"/>
+  <text class="surf-label" x="443" y="360" text-anchor="middle">API Python</text>
+  <path class="tie" d="M619 314 V332"/>
+  <rect class="surface" x="544" y="332" width="150" height="46" rx="9"/>
+  <text class="surf-label" x="619" y="360" text-anchor="middle">CLI (click)</text>
+  <path class="tie" d="M795 314 V332"/>
+  <rect class="surface" x="720" y="332" width="150" height="46" rx="9"/>
+  <text class="surf-label" x="795" y="360" text-anchor="middle">FastAPI + MCP</text>
+  <path class="tie" d="M971 314 V332"/>
+  <rect class="surface" x="896" y="332" width="150" height="46" rx="9"/>
+  <text class="surf-label" x="971" y="360" text-anchor="middle">skill d'agent</text>
+  <text class="caption" x="707" y="412" text-anchor="middle">En dessous d'une collection étonnamment grande, la réponse honnête est la recherche exacte : pas d'index, pas de serveur, rien à périmer.</text>
+</svg>

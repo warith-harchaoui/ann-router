@@ -97,6 +97,10 @@ SQL `WHERE`-filters wants pgvector; a frozen, memory-tight corpus wants Annoy.
 Hard-coding one library gets one of these right and the rest wrong. See
 [LANDSCAPE.md](https://github.com/warith-harchaoui/ann-router/blob/main/LANDSCAPE.md).
 
+## How it works
+
+![How ann-router works: your search problem in, the backend that suits it out — with the reasoning attached](https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/diagrams/how-it-works.png)
+
 ## Installation
 
 ### Local (conda)

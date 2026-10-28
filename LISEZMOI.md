@@ -105,6 +105,10 @@ figé et contraint en mémoire veut Annoy. Coder en dur une seule bibliothèque 
 réussit un cas et rate les autres. Voir
 [PAYSAGE.md](https://github.com/warith-harchaoui/ann-router/blob/main/PAYSAGE.md).
 
+## Comment ça marche
+
+![Comment ann-router fonctionne : votre problème de recherche en entrée, le moteur qui lui convient en sortie — raisonnement compris](https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/diagrams/comment-ca-marche.png)
+
 ## Installation
 
 ### En local (conda)
