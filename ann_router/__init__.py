@@ -12,10 +12,11 @@ and can *instantiate* the appropriate engine among:
 
 instead of marrying a single library.
 
-Importing this package is cheap and dependency-free: no engine's optional
-dependency is imported at import time, so ``import ann_router`` works even with
-only numpy installed. A backend whose dependency is absent reports itself
-unavailable and the router routes around it, explaining the fallback.
+Importing this package is cheap: no engine's optional dependency is imported
+at import time, so ``import ann_router`` costs only the four declared base
+dependencies (click, numpy, os-helper, pyyaml) and none of the engines. A
+backend whose dependency is absent reports itself unavailable and the router
+routes around it, explaining the fallback.
 
 Quick start
 -----------

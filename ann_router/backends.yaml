@@ -11,7 +11,11 @@ version: "1.0.0"
 backends:
   - name: exact
     summary: Pure-numpy brute-force full scan. Always available; the reference truth.
-    when: "n < 10k, or any time perfect recall on a small corpus is wanted."
+    # The number is policy.EXACT_MAX_N, not a round figure: tests/test_catalog_matches_policy.py
+    # fails if the two drift. It read 10k here while the router used 1000.
+    when: "n under the exact/ANN crossover — 1000 vectors at the reference
+      10 ms budget, scaled linearly by latency_budget_ms — or any time perfect
+      recall is worth a full scan."
     pip_extra: ""            # numpy is a core dependency
   - name: turbovec
     summary: Rust/PyO3 TurboQuant (2-4 bit, ~16x) index; O(1) add_with_ids/remove(id).
