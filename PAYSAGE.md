@@ -227,3 +227,15 @@ tableau périmé soit un tableau faux : la date fait partie de l'affirmation.
 - [Best vector databases](https://encore.dev/articles/best-vector-databases) — Encore
 - [references/DECISION_STUDY.md](https://github.com/warith-harchaoui/ann-router/blob/main/references/DECISION_STUDY.md) — d'où viennent les chiffres de rappel `roitelet` cités plus haut, ainsi que ce qui les a depuis remplacés.
 - [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — les mesures propres à ce projet, les seuls chiffres de cette page relevés sur notre matériel plutôt que lus chez quelqu'un d'autre.
+
+## Idées à reprendre
+
+Étudié plutôt que deviné : ce que chaque voisin fait mieux, puis ce que cette bibliothèque devrait changer pour l'égaler. Rien ici n'est un engagement : c'est la liste de lecture dont part la version suivante.
+
+- **VIBE — se mesurer sur les plongements que les gens utilisent vraiment** — `ann-benchmarks` est le classique, mais ses jeux de données sont GloVe puis SIFT. Le Vector Index Benchmark for Embeddings fait tourner des jeux de plongements modernes, ce sur quoi un routeur qui conseille des charges réelles devrait être étalonné.
+
+- **`DiskANN` puis `pgvectorscale` — le cas où les vecteurs ne tiennent pas en mémoire** — Un index en graphe sur disque est un autre régime, avec d'autres arbitrages, puis c'est le régime qu'un routeur devrait reconnaître pour y orienter, au lieu de supposer en silence que la mémoire est disponible.
+
+- **`usearch` — compact, SIMD, lié à de nombreux langages** — Un index unique compact, doté de liaisons dans plusieurs langages, est un avantage réel de déploiement face à une réponse réservée à Python, puis il a sa place parmi les moteurs que ce routeur note.
+
+- **Le rappel se dégrade sous le brassage — en faire un critère** — La littérature sur l'ANN appliqué aux jeux de données dynamiques montre que les index en graphe se dégradent à mesure qu'on y insère puis qu'on y supprime. Un routeur qui ne note que le rappel à la construction recommandera le mauvais moteur pour une collection qui change chaque jour.

@@ -208,3 +208,15 @@ table is a wrong table, so the date is part of the claim.
 - [Best vector databases](https://encore.dev/articles/best-vector-databases) — Encore
 - [references/DECISION_STUDY.md](https://github.com/warith-harchaoui/ann-router/blob/main/references/DECISION_STUDY.md) — where the `roitelet` recall figures quoted above come from, and what has since superseded them.
 - [bench/README.md](https://github.com/warith-harchaoui/ann-router/blob/main/bench/README.md) — this project's own measurements, the only numbers here taken on our hardware rather than read from someone else's post.
+
+## Ideas worth stealing
+
+Researched rather than guessed: what each neighbour does better, and what this library would have to change to match it. Nothing here is a commitment — it is the reading list the next version starts from.
+
+- **VIBE — benchmark on embeddings people actually use** — `ann-benchmarks` is the classic, but its datasets are GloVe and SIFT. The Vector Index Benchmark for Embeddings runs modern embedding datasets, which is what a router advising on real workloads should be calibrated against.
+
+- **`DiskANN` and `pgvectorscale` — the case where the vectors do not fit in RAM** — An on-disk graph index is a different regime with different trade-offs, and it is the regime a router should recognise and route to rather than quietly assuming memory is available.
+
+- **`usearch` — small, SIMD, and bound to many languages** — A single compact index with bindings across languages is a real deployment advantage over a Python-only answer, and belongs among the engines this router scores.
+
+- **Recall decays under churn — make it a criterion** — The literature on ANN over dynamic datasets shows graph indexes degrade as they are inserted into and deleted from. A router that scores only build-time recall will recommend the wrong engine for a collection that changes daily.
