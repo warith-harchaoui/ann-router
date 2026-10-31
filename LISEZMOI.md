@@ -65,15 +65,9 @@ Rien de tout cela n'est un script isolé. Chaque changement passe par l'intégra
 
 Chaque publication correspond à une étiquette git versionnée sémantiquement (`MAJOR.MINOR.PATCH`, visible avec `git tag` ; la courante est `v0.3.0`), publiée sur PyPI sous le nom `ann-router`. Un `pip install ann-router` installe donc toujours une version qui a déjà franchi cette porte.
 
-Le numéro de version reste honnête sur l'état du projet : en `0.3.x`,
-l'interface publique peut encore bouger d'une publication à l'autre et aucun
-autre paquet publié de la suite AI Helpers ne dépend pour l'instant
-d'`ann-router`. On le lit donc aujourd'hui comme un outil de routage autonome
-au cœur testé et verrouillé par la CI, pas comme une brique au long passif de
-production ailleurs. Les planchers de rappel fixés dans `tests/conftest.py`
-(`RECALL_THRESHOLDS`) sont ce qui se rapproche le plus d'un contrat de
-production ici : des chiffres versionnés qu'une publication ne peut pas
-franchir silencieusement vers le bas.
+Le numéro de version reste honnête sur l'état du projet. En `0.3.x`, l'interface publique peut encore bouger d'une publication à l'autre, puis aucun autre paquet publié de la suite AI Helpers ne dépend pour l'instant d'`ann-router`. On le lit donc aujourd'hui comme un outil de routage autonome au cœur testé puis verrouillé par la CI, pas comme une brique au long passif de production ailleurs.
+
+Les planchers de rappel fixés dans `tests/conftest.py` (`RECALL_THRESHOLDS`) sont ce qui se rapproche le plus d'un contrat de production ici : des chiffres versionnés qu'une publication ne peut pas franchir silencieusement vers le bas.
 
 ## Documentation
 
