@@ -8,14 +8,11 @@
 ![Local-first](https://img.shields.io/badge/local--first-yes-brightgreen)
 [![tests](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml/badge.svg)](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml)
 
-Turning a photo, a sentence, or a product into a vector, a list of numbers placed
-so that similar things land close together, is how most AI search works: a search
-engine, a recommendation system finding "more like this," a chatbot pulling the
-right paragraph out of a document. The hard part comes next: finding the closest
-vectors to a query inside a database of millions or billions of them. Checking
-every one by one does not scale, so real systems run an *approximate* search
-instead, trading a small, controlled amount of accuracy for a search that stays
-fast no matter how large the database grows.
+Turning a photo, a sentence or a product into a **vector** — a list of numbers placed so that similar things land close together — is how most AI search works. A search engine, a recommendation system finding "more like this", a chatbot pulling the right paragraph out of a document: all of them do this.
+
+The hard part comes next: finding the closest vectors to a query inside a database of millions or billions of them.
+
+Checking every one of them does not scale, so real systems run an *approximate* search instead — trading a small, controlled amount of accuracy for a search that stays fast no matter how large the database grows.
 
 <img src="https://raw.githubusercontent.com/warith-harchaoui/ann-router/main/assets/logo.png" alt="ann-router logo" >
 
@@ -71,14 +68,9 @@ before anything reaches `main`. Each release is a semantic-versioned
 `pip install ann-router` always installs a version that already passed that
 gate.
 
-The version number stays honest about where the project actually stands,
-though: at `0.3.x`, the public interface can still move between releases, and
-no other published AI Helpers package depends on `ann-router` yet. Read it
-today as a standalone routing utility with a tested, CI-gated core, not as a
-component with years of production mileage behind it elsewhere. The recall
-floors pinned in `tests/conftest.py` (`RECALL_THRESHOLDS`) are the closest
-thing to a production contract this project makes: versioned numbers a
-release cannot quietly slip below.
+The version number stays honest about where the project actually stands. At `0.3.x` the public interface can still move between releases, and no other published AI Helpers package depends on `ann-router` yet. Read it today as a standalone routing utility with a tested, CI-gated core, not as a component with years of production mileage behind it elsewhere.
+
+The recall floors pinned in `tests/conftest.py` (`RECALL_THRESHOLDS`) are the closest thing to a production contract this project makes: versioned numbers a release cannot quietly slip below.
 
 ## Documentation
 

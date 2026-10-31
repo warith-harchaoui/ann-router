@@ -9,16 +9,11 @@
 ![Local-first](https://img.shields.io/badge/local--first-oui-brightgreen)
 [![tests](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml/badge.svg)](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml)
 
-Transformer une photo, une phrase ou un produit en vecteur, une liste de nombres
-placée de telle sorte que deux choses semblables tombent à proximité l'une de
-l'autre, c'est ainsi que fonctionne la plupart des recherches en intelligence
-artificielle : un moteur de recherche, un système de recommandation qui trouve
-« encore comme ça », un agent conversationnel qui va chercher le bon paragraphe
-dans un document. La difficulté vient ensuite : retrouver, parmi des millions
-voire des milliards de vecteurs, ceux les plus proches d'un vecteur de requête.
-Les vérifier un par un ne tient pas la charge, on effectue donc une recherche
-approchée, qui échange une petite part d'exactitude, contrôlée, contre une
-recherche qui reste rapide quelle que soit la taille de la base.
+Transformer une photo, une phrase ou un produit en **vecteur** — une liste de nombres placée de telle sorte que deux choses semblables tombent à proximité l'une de l'autre — c'est ainsi que fonctionne la plupart des recherches en intelligence artificielle. Un moteur de recherche, un système de recommandation qui trouve « encore comme ça », un agent conversationnel qui va chercher le bon paragraphe dans un document : tous procèdent ainsi.
+
+La difficulté vient ensuite : retrouver, parmi des millions voire des milliards de vecteurs, ceux qui sont les plus proches d'un vecteur de requête.
+
+Les vérifier un par un ne tient pas la charge. On effectue donc une recherche *approchée*, qui échange une petite part d'exactitude, contrôlée, contre une recherche qui reste rapide quelle que soit la taille de la base.
 
 ## La promesse
 
@@ -66,16 +61,9 @@ le routeur le contourne. Il s'agit donc de _lazy import_.
 
 ## État du projet
 
-Rien de tout cela n'est un script isolé. Chaque changement passe par
-l'intégration continue (CI, vérifications automatiques déclenchées à chaque
-push et pull request) : contrôle du style puis suite de tests complète,
-définis dans
-[`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml),
-avant qu'un changement n'atteigne `main`. Chaque publication correspond à une
-étiquette git versionnée sémantiquement (`MAJOR.MINOR.PATCH`, visible avec
-`git tag` ; la courante est `v0.3.0`) et publiée sur PyPI (le dépôt officiel
-des paquets Python) sous le nom `ann-router` : `pip install ann-router`
-installe donc toujours une version qui a déjà franchi cette porte.
+Rien de tout cela n'est un script isolé. Chaque changement passe par l'intégration continue (CI, vérifications automatiques déclenchées à chaque push puis pull request) : contrôle du style, ensuite suite de tests complète, définis dans [`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml), avant qu'un changement n'atteigne `main`.
+
+Chaque publication correspond à une étiquette git versionnée sémantiquement (`MAJOR.MINOR.PATCH`, visible avec `git tag` ; la courante est `v0.3.0`), publiée sur PyPI sous le nom `ann-router`. Un `pip install ann-router` installe donc toujours une version qui a déjà franchi cette porte.
 
 Le numéro de version reste honnête sur l'état du projet : en `0.3.x`,
 l'interface publique peut encore bouger d'une publication à l'autre et aucun
