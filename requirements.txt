@@ -1,6 +1,9 @@
 # Core runtime dependencies (the library + argparse CLI need only these).
 # Every ANN engine is an optional extra — see pyproject.toml [project.optional-dependencies]
 # and INSTALL.md. Install the package itself with `pip install -e .` (or `.[all]`).
-numpy>=1.23,<2        # <2: the PyPI `annoy` build is ABI-broken under numpy 2.x
+numpy>=1.23           # the `<2` cap lives on the annoy extra, where its reason is:
+                      # the PyPI annoy build is ABI-broken under numpy 2.x, which is
+                      # no reason to hold back a user routing to another engine.
 os-helper>=2.0.0,<5
 pyyaml>=6.0,<7
+click>=8.1,<9        # the CLI is click-built and not optional since the argparse door was dropped
