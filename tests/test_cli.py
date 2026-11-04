@@ -108,3 +108,18 @@ def test_clean_error_on_invalid_criteria_not_a_traceback(capsys) -> None:
     assert captured.out == ""
     assert captured.err.startswith("Error: ")
     assert "n_vectors" in captured.err
+
+
+@pytest.mark.parametrize("flag", ["-V", "--version"])
+def test_version_flag_reports_the_package_version(flag: str) -> None:
+    """``-V`` reads ``__version__``, the version the running code carries.
+
+    The docs promise ``-V`` beside ``--version`` on the group; a release that
+    bumped ``__version__`` without this option reading it would print the stale
+    number an editable install last recorded.
+    """
+    from ann_router import __version__
+
+    result = CliRunner().invoke(cli.cli, [flag], prog_name="ann-router")
+    assert result.exit_code == 0, result.output
+    assert result.output.strip() == f"ann-router, version {__version__}"

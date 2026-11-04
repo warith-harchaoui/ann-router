@@ -5,16 +5,16 @@
 ```python
 import ann_router as ar
 
-choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
-choice.backend  # 'turbovec'
+choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True, target_recall=0.85))
+choice.backend  # 'turbovec' (at the default target_recall=0.95: 'hnsw')
 choice.rationale  # the justification, in words
-choice.alternatives  # what else was considered, and why it lost
+choice.considered  # what else was considered, and why it lost
 ```
 
 Route, build and search in one step:
 
 ```python
-index = ar.auto_index(vectors, ar.Criteria(n_vectors=len(vectors), dim=768))
+index, choice = ar.auto_index(vectors, ar.Criteria(n_vectors=len(vectors), dim=768))
 hits = index.search(queries, k=10)
 ```
 
@@ -35,17 +35,18 @@ Logging and file management route through `os_helper` — the suite convention.
 
 ```bash
 pip install 'ann-router[api]'
-python -m ann_router.api            # 127.0.0.1:8000, OpenAPI docs at /docs
+python -m ann_router.api            # 127.0.0.1:8018, OpenAPI docs at /docs
 ```
 
-Routes cover the same verbs as the CLI: routing a set of criteria, building
-and searching an index, benchmarking, and reporting capabilities.
+Three routes: `POST /route` (a set of criteria in, the justified choice out),
+`GET /bench` and `GET /capabilities`. Building and searching an index stay on
+the library and the CLI.
 
 ## 4. MCP — `fastapi-mcp` over the *same* app (`[mcp]`)
 
 ```bash
 pip install 'ann-router[mcp]'
-ann-router-mcp                      # same app, MCP mounted at /mcp
+ann-router-mcp                      # same app on 127.0.0.1:8019, MCP at /mcp
 ```
 
 `ann_router.mcp_server` takes the FastAPI app that `api.py` serves and mounts
@@ -55,7 +56,7 @@ surfaces cannot drift.
 Register it with Claude Code:
 
 ```bash
-claude mcp add ann-router --transport http http://127.0.0.1:8000/mcp
+claude mcp add ann-router --transport http http://127.0.0.1:8019/mcp
 ```
 
 ## 5. Configuration

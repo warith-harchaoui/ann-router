@@ -338,7 +338,7 @@ ann-router bench --n 5000 --dim 128 -k 10
 # Availability + capability matrix, merged with the prose catalogue
 ann-router capabilities
 
-# -V/--version and -h/--help both work, on the group and on every subcommand
+# -h/--help works on the group and on every subcommand; -V/--version on the group
 ann-router --version
 # ann-router, version 0.3.0
 ```

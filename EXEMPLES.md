@@ -340,7 +340,7 @@ ann-router bench --n 5000 --dim 128 -k 10
 # Matrice de disponibilité et de capacités, fusionnée avec le catalogue en prose
 ann-router capabilities
 
-# -V/--version comme -h/--help marchent, sur le groupe et sur chaque sous-commande
+# -h/--help marche sur le groupe et sur chaque sous-commande ; -V/--version sur le groupe
 ann-router --version
 # ann-router, version 0.3.0
 ```

@@ -63,9 +63,8 @@ integration (CI, automated checks triggered by each push and pull request):
 lint and format checks, then the full test suite, defined in
 [`.github/workflows/tests.yml`](https://github.com/warith-harchaoui/ann-router/blob/main/.github/workflows/tests.yml),
 before anything reaches `main`. Each release is a semantic-versioned
-(`MAJOR.MINOR.PATCH`) git tag, visible with `git tag` (the current one is
-`v0.3.0`), published to PyPI (the Python Package Index) as `ann-router`, so
-`pip install ann-router` always installs a version that already passed that
+(`MAJOR.MINOR.PATCH`) git tag, visible with `git tag`, published to PyPI (the
+Python Package Index) as `ann-router`, so `pip install ann-router` always installs a version that already passed that
 gate.
 
 The version number stays honest about where the project actually stands. At `0.3.x` the public interface can still move between releases, and no other published AI Helpers package depends on `ann-router` yet. Read it today as a standalone routing utility with a tested, CI-gated core, not as a component with years of production mileage behind it elsewhere.

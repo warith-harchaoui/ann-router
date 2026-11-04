@@ -9,13 +9,18 @@ MCP server call, so every door answers the same way.
 ```bash
 ann-router route --n-vectors N --dim D \
                  [--dynamic] [--metadata-filtering] [--persistence] \
-                 [--target-recall 0.95] [--memory-budget-gb 2] \
-                 [--markdown] [--json]
+                 [--batch-queries] [--target-recall 0.95] \
+                 [--latency-budget-ms 10] [--memory-budget-gb 2] \
+                 [--hardware cpu|gpu|apple_silicon] [--metric cosine|l2|ip] \
+                 [--markdown]
 ```
 
-Prints the chosen backend, the rationale (which criteria drove it), and the
-alternatives considered — including any preferred-but-uninstalled engine it
-fell back from. `--markdown` renders a human-readable report.
+Prints JSON by default: the chosen backend, the rationale (which criteria
+drove it), and the alternatives considered — including any
+preferred-but-uninstalled engine it fell back from. `--markdown` renders a
+human-readable report instead. Without `--hardware`, the machine is probed.
+The group option `-v` / `-vv` (before the subcommand) raises the log level;
+logs go to stderr.
 
 **The rationale is the deliverable.** Report *why* a backend won, not just its
 name: that is what makes the choice discussable instead of arbitrary.
@@ -23,11 +28,14 @@ name: that is what makes the choice discussable instead of arbitrary.
 ## `build` — route, then construct the index
 
 ```bash
-ann-router build --vectors vectors.npy --out index/ [route flags…]
+ann-router build --vectors vectors.npy --index my.index \
+                 --n-vectors N --dim D [route flags…] [--backend hnsw]
 ```
 
-Writes the index plus a `*.meta.json` sidecar recording the criteria and the
-backend, so a later reader knows how the index was chosen.
+Takes the same criteria options as `route` (`--n-vectors` and `--dim` are
+required); `--backend` forces an engine and skips routing. Writes the index
+plus a `<index>.meta.json` sidecar recording the backend, the dimension and
+the metric, which `search` reads to reopen it with the right adapter.
 
 ## `search` — query a built index
 
@@ -38,17 +46,17 @@ ann-router search --index index/ --queries q.npy -k 10
 ## `bench` — measure recall against exact truth
 
 ```bash
-ann-router bench --n 5000 --dim 128 -k 10 [--backends hnsw,faiss,annoy]
+ann-router bench --n 5000 --dim 128 -k 10
 ```
 
-Compares each available backend against brute-force ground truth. This is how
+Compares every installed backend against brute-force ground truth. This is how
 the thresholds in `policy.yaml` get calibrated — from measurements, not
 guesses. See `bench/README.md` in the repo.
 
 ## `capabilities` — what is installed, and what each engine can do
 
 ```bash
-ann-router capabilities [--json]
+ann-router capabilities
 ```
 
 The matrix of backends against the properties that matter: dynamic updates,
@@ -81,7 +89,7 @@ pip install 'ann-router[annoy]'        # Annoy
 pip install 'ann-router[turbovec]'     # turbovec
 pip install 'ann-router[qdrant]'       # Qdrant client
 pip install 'ann-router[pgvector]'     # pgvector client
-pip install 'ann-router[cli,api,mcp]'  # click CLI, FastAPI, MCP tools
+pip install 'ann-router[api,mcp]'      # FastAPI, MCP tools (click is core)
 pip install 'ann-router[all]'          # every pip-installable engine
 ```
 
@@ -90,8 +98,9 @@ Platform caveats (Apple-Silicon annoy, a pgvector server) are in the repo's
 
 ## Output contract
 
-- `route` prints the backend, the rationale and the alternatives; `--json`
-  for parsing, `--markdown` for a person.
-- `build` prints the index path and the sidecar path.
-- `bench` prints a recall table.
-- Failures are logged through `os_helper` and exit non-zero.
+- Every command prints JSON on stdout; `route --markdown` prints a report for
+  a person instead.
+- `build` prints the backend, the rationale, `index_path`, `n`, `dim` and
+  `build_seconds`.
+- `bench` prints recall and timing per installed backend.
+- A failure prints `Error: …` on stderr and exits non-zero; logs go to stderr.

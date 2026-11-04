@@ -1,13 +1,15 @@
 # ann-router — Compose entry point for the container image next to this file.
 #
-#   docker compose up --build                      # API + MCP on http://localhost:8018
+#   docker compose up --build                      # HTTP API on http://localhost:8018
 #   docker compose --profile backends up --build   # ... plus the two backends that need a server
 #   docker compose run --rm ann-router ann-router --help
 #
 # The image installs the [all] extra, so every backend the router can
 # recommend is also importable here. Per the suite's rule, MCP is never a
 # second implementation: fastapi-mcp mounts /mcp onto the same FastAPI app
-# api.py serves, and each MCP tool *is* one of its routes.
+# api.py serves, and each MCP tool *is* one of its routes. This image serves
+# api.py alone (Dockerfile CMD); for the MCP door, run `ann-router-mcp`, which
+# serves the same app with /mcp mounted, on 8019.
 #
 # The `backends` profile
 # ----------------------

@@ -54,8 +54,8 @@ From Python:
 ```python
 import ann_router as ar
 
-choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True))
-choice.backend  # 'turbovec'
+choice = ar.route(ar.Criteria(n_vectors=2_000_000, dim=768, dynamic=True, target_recall=0.85))
+choice.backend  # 'turbovec' (at the default target_recall=0.95: 'hnsw')
 choice.rationale  # the justification
 ```
 
