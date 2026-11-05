@@ -33,7 +33,7 @@ conda activate ann-router
 ## 2. Install os-helper and ann-router (editable)
 
 ```bash
-cd ~/ann-router
+cd ann-router
 pip install -e .                    # core only (library + click CLI)
 ```
 
