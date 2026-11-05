@@ -88,11 +88,25 @@ app = create_app()
 build_server(app)
 
 
-def main() -> None:
-    """Run the MCP-mounted app over HTTP (the ``python -m ann_router.mcp_server`` path)."""
-    import uvicorn
+def main(argv: list[str] | None = None) -> None:
+    """Run the MCP-mounted app over HTTP (the ``python -m ann_router.mcp_server`` path).
 
-    uvicorn.run(app, host="127.0.0.1", port=8019)
+    Binds to ``127.0.0.1:8019`` by default (override with ``--host`` /
+    ``--port``). A click command, so ``--help`` answers instead of starting
+    the server.
+    """
+    import click
+
+    @click.command(context_settings={"help_option_names": ["-h", "--help"]})
+    @click.option("--host", default="127.0.0.1", show_default=True)
+    @click.option("--port", default=8019, type=int, show_default=True)
+    def serve(host: str, port: int) -> None:
+        """Serve the ann-router API and its MCP endpoint (/mcp)."""
+        import uvicorn
+
+        uvicorn.run(app, host=host, port=port)
+
+    serve.main(args=argv, prog_name="ann-router-mcp")
 
 
 if __name__ == "__main__":  # pragma: no cover

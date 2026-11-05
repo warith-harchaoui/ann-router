@@ -1,18 +1,16 @@
 # When to reach for ann-router
 
-A discoverability catalogue (mirrors the sibling `best-engine-ai-helper`'s
-`TRIGGERS.md`): the intents that should fire ann-router, in English and French,
-plus what it does and does not do.
+The exhaustive catalogue of the intents that should fire ann-router, in English
+and French, plus what it does and does not do. It exists twice, identical:
+`TRIGGERS.md` at the repo root for users and
+`skills/ann-router/references/triggers.md` for agents. The `description:` in
+the skill's `SKILL.md` is what a host model actually sees and is capped at 1024
+characters; this file carries the full list.
 
 ## What it does
 Given a *measured* description of a vector-search problem, it selects the right
 ANN backend (exact / turbovec / HNSW / FAISS / Annoy / Qdrant /
 pgvector), explains why, and can build the index, all behind one interface.
-
-## What it does NOT do
-- It does not embed text/images (bring your own vectors).
-- It does not serve a vector database or manage infrastructure.
-- It does not replace FAISS/Qdrant/etc: it *orchestrates* them.
 
 ## Commands and how to invoke them
 
@@ -48,4 +46,17 @@ pgvector), explains why, and can build the index, all behind one interface.
 
 | Reads | Writes |
 | --- | --- |
-| `ann_router/policy.yaml`, `backends.yaml`, `hardware.yaml`; `$ANN_ROUTER_POLICY` | index files + `*.meta.json` sidecars (via `build`) |
+| `ann_router/policy.yaml`, `backends.yaml`, `hardware.yaml`; `$ANN_ROUTER_POLICY`; `$ANN_ROUTER_PG_DSN` (pgvector) | index files + `*.meta.json` sidecars (via `build`) |
+
+## When NOT to use ann-router (SKIP)
+
+- **Embedding** text or images into vectors — bring your own; ann-router never
+  calls a model.
+- **Serving** a vector database, provisioning it, or operating it in
+  production. It chooses and builds; it is not infrastructure.
+- Replacing FAISS / Qdrant / HNSW — it *orchestrates* them, and a user who has
+  already measured their way to one engine does not need a router.
+- Picking a **local LLM or VLM** → `best-engine-ai-helper`, the sibling that
+  answers the same shape of question for models.
+- Deciding how many clusters or where a curve bends → `elbow-helper`.
+- Plain similarity maths with no index in play.

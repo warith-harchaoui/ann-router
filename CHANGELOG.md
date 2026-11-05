@@ -6,6 +6,20 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **`ann-router-mcp --help` started a server on 8019 and never returned.** The
+  entry point called uvicorn straight away and ignored its arguments. It is
+  now a click command: `--help` answers, `--host` / `--port` override the bind,
+  and a bare run serves on `127.0.0.1:8019` exactly as before. A test runs
+  every console script with `--help`.
+- **`TRIGGERS.md` and the skill's `references/triggers.md` are identical
+  again.** The skill copy carried a "When NOT to use ann-router (SKIP)"
+  section the root lacked; both now hold it (it replaces the shorter "What it
+  does NOT do" list), and the files read section names `ANN_ROUTER_PG_DSN`.
+  `scripts/check_triggers.py` and the skill test now fail when the two
+  copies differ.
+
 ## [0.3.2] - 2026-11-01
 
 ### Fixed
