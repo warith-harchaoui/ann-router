@@ -6,6 +6,8 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-05
+
 ### Fixed
 
 - **`ann-router-mcp --help` started a server on 8019 and never returned.** The
