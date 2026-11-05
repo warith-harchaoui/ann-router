@@ -13,6 +13,7 @@ Warith HARCHAOUI <warithmetics@deraison.ai>
 
 from __future__ import annotations
 
+import importlib.util
 import re
 import subprocess
 import sys
@@ -21,6 +22,12 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# A script whose module needs an extra: without it the import fails with an
+# install hint, which is the right answer and not the defect under test. The
+# light CI installs the bare package, so the MCP door is checked by the
+# pre-push hook, where the [mcp] extra is present.
+_NEEDS = {"ann_router.mcp_server": ("fastapi_mcp", "[mcp]")}
 
 
 def _scripts() -> list[tuple[str, str]]:
@@ -32,6 +39,8 @@ def _scripts() -> list[tuple[str, str]]:
 
 @pytest.mark.parametrize(("name", "module", "func"), _scripts())
 def test_the_command_answers_help(name: str, module: str, func: str) -> None:
+    if module in _NEEDS and importlib.util.find_spec(_NEEDS[module][0]) is None:
+        pytest.skip(f"{name} needs the {_NEEDS[module][1]} extra, not installed here")
     code = f"import sys; from {module} import {func}; sys.argv[0] = {name!r}; {func}()"
     proc = subprocess.run(
         [sys.executable, "-c", code, "--help"],
