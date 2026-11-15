@@ -6,6 +6,14 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-11-15
+
+### Changed
+
+- **No upper bound on Python any more.** `requires-python` was capped at
+  `>=3.10,<3.14` with no recorded reason, which refused every newer Python at install
+  time; it is now `>=3.10`. Badges and prerequisites say "Python 3.10 or later".
+
 ## [0.3.3] - 2026-11-05
 
 ### Fixed

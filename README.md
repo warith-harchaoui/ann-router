@@ -4,7 +4,7 @@
 [🇫🇷](https://github.com/warith-harchaoui/ann-router/blob/main/LISEZMOI.md)&nbsp;&nbsp;|&nbsp;&nbsp;[🇬🇧](https://github.com/warith-harchaoui/ann-router/blob/main/README.md)
 
 ![License](https://img.shields.io/badge/license-BSD--3--Clause-blue)
-![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Local-first](https://img.shields.io/badge/local--first-yes-brightgreen)
 [![tests](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml/badge.svg)](https://github.com/warith-harchaoui/ann-router/actions/workflows/tests.yml)
 
