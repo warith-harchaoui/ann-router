@@ -101,7 +101,10 @@ def _criteria_options(func):
 # ``-h`` beside ``--help`` and ``-V`` beside ``--version``: the short forms are
 # the ones people type, and the suite spells them the same way everywhere.
 # ``-v`` is already --verbose, hence the capital for the version.
-@click.group(context_settings={"help_option_names": ["-h", "--help"]})
+@click.group(
+    context_settings={"help_option_names": ["-h", "--help"]},
+    epilog="⭐️ on GitHub: https://github.com/warith-harchaoui/ann-router",
+)
 # Single-sourced from ``__version__``, not from the installed distribution
 # metadata: an editable checkout reports whatever was last pip-installed, so
 # ``-V`` would disagree with the package it is actually running.

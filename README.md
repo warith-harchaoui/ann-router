@@ -10,6 +10,8 @@
 
 Turning a photo, a sentence or a product into a **vector** — a list of numbers placed so that similar things land close together — is how most AI search works. A search engine, a recommendation system finding "more like this", a chatbot pulling the right paragraph out of a document: all of them do this.
 
+Drop a [⭐️](https://github.com/warith-harchaoui/ann-router) on GitHub if my help deserves it.
+
 The hard part comes next: finding the closest vectors to a query inside a database of millions or billions of them.
 
 Checking every one of them does not scale, so real systems run an *approximate* search instead — trading a small, controlled amount of accuracy for a search that stays fast no matter how large the database grows.

@@ -11,6 +11,8 @@
 
 Transformer une photo, une phrase ou un produit en **vecteur** — une liste de nombres placée de telle sorte que deux choses semblables tombent à proximité l'une de l'autre — c'est ainsi que fonctionne la plupart des recherches en intelligence artificielle. Un moteur de recherche, un système de recommandation qui trouve « encore comme ça », un agent conversationnel qui va chercher le bon paragraphe dans un document : tous procèdent ainsi.
 
+Laissez une [⭐️](https://github.com/warith-harchaoui/ann-router) sur GitHub si mon aide le mérite.
+
 La difficulté vient ensuite : retrouver, parmi des millions voire des milliards de vecteurs, ceux qui sont les plus proches d'un vecteur de requête.
 
 Les vérifier un par un ne tient pas la charge. On effectue donc une recherche *approchée*, qui échange une petite part d'exactitude, contrôlée, contre une recherche qui reste rapide quelle que soit la taille de la base.
