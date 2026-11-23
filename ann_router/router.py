@@ -20,15 +20,17 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 
 from __future__ import annotations
 
+import logging
 from dataclasses import replace
 
 import numpy as np
-import os_helper as osh
 
 from .base import ANNIndex
 from .policy import POLICY_VERSION, rank_backends, sensitivity
 from .registry import BACKENDS, get_backend
 from .spec import BackendChoice, Criteria
+
+logger = logging.getLogger(__name__)
 
 
 def _recommended_config(backend: str, c: Criteria) -> dict:
@@ -149,7 +151,7 @@ def route(c: Criteria, thresholds: dict[str, float] | None = None) -> BackendCho
             f"Preferred backend '{top}' is not installed here, so the router fell back. "
             + rationale
         )
-        osh.info(f"ann-router: preferred '{top}' unavailable, using '{backend}'")
+        logger.info(f"ann-router: preferred '{top}' unavailable, using '{backend}'")
 
     config = _recommended_config(backend, c)
     return BackendChoice(

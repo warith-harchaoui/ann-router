@@ -6,9 +6,16 @@ All notable changes to `ann-router` are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-23
+
 ### Added
 
 - Every command line ends its `--help` on one line, after a blank one: `⭐️ on GitHub: https://github.com/warith-harchaoui/ann-router`. A test checks it for each console script. README.md and LISEZMOI.md carry one invitation to star the repository, right after the paragraph that says what the tool does.
+
+### Changed
+
+- Every module that logs declares `logger = logging.getLogger(__name__)` at the top and logs through it instead of `osh.info(...)`, so each record carries the module's dotted name rather than `os_helper`, and a CLI that configures its own package logger now sees them. Logging is still configured only in the entry point.
+- CODING.md states the logging rule (a module logger, configuration only in the entry point).
 
 ## [0.3.4] - 2026-11-15
 

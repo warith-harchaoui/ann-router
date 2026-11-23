@@ -17,16 +17,18 @@ Author: Warith Harchaoui <warithmetics@deraison.ai>
 from __future__ import annotations
 
 import json
+import logging
 import os
 import tempfile
 import time
 
 import numpy as np
-import os_helper as osh
 
 from .registry import BACKENDS, all_capabilities, available_backends
 from .router import auto_index, route, to_markdown
 from .spec import Criteria
+
+logger = logging.getLogger(__name__)
 
 
 def _atomic_write_json(path: str, payload: dict) -> None:
@@ -178,7 +180,7 @@ def do_build(
     index.save(index_path)
     # Sidecar metadata lets `search` rebuild the same adapter without guessing.
     meta = {"backend": backend, "dim": int(vectors.shape[1]), "metric": c.metric}
-    osh.info(f"ann-router: built '{backend}' index at {index_path} in {elapsed:.3f}s")
+    logger.info(f"ann-router: built '{backend}' index at {index_path} in {elapsed:.3f}s")
     _atomic_write_json(index_path + ".meta.json", meta)
     return {
         "backend": backend,

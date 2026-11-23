@@ -37,7 +37,8 @@ id-mapping a backend needs), never parrot trivial code.
 A self-contained, runnable cookbook in English, linked from the README.
 
 ## 6. Avoid bare `print(...)` in library and script code
-Use `os_helper` logging (`osh.info` / `osh.error`) or `logging.getLogger`.
+Each module that logs declares `logger = logging.getLogger(__name__)` at the top;
+only the CLI entry point configures logging (`osh.init_logging`).
 Exception: docs, README, EXAMPLES, docstrings. The CLIs log to **stderr** and
 emit data (JSON) to **stdout** so output stays pipeable.
 
